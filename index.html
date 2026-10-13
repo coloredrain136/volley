@@ -172,10 +172,15 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
   transform:translateX(100%);transition:transform .38s cubic-bezier(.2,.9,.25,1);will-change:transform}
 .screen.open{transform:none}
 .screen .bg{position:absolute}
-.topbar{position:relative;z-index:2;display:flex;align-items:center;gap:10px;padding:calc(var(--safe-t) + 8px) 12px 8px}
+.topbar{position:relative;z-index:2;display:flex;align-items:center;gap:10px;padding:calc(var(--safe-t) + 4px) 12px 6px}
+.topbar .icon-btn{width:40px;height:40px;border-radius:20px}
 .topbar .t{flex:1;text-align:center;min-width:0}
-.topbar .t b{display:block;font-size:17px}
-.topbar .t span{font-size:12.5px;color:var(--sub)}
+.topbar .t b{display:block;font-size:17px;letter-spacing:-.01em}
+.topbar .t span{display:block;font-size:12px;color:var(--sub)}
+.topbar .t span:empty{display:none}
+/* blends the phone's status bar into the page so there's no hard line at the top */
+.topfade{position:fixed;left:0;right:0;top:0;height:calc(var(--safe-t) + 110px);background:linear-gradient(180deg,var(--bg) 0,var(--bg) calc(var(--safe-t) + 2px),transparent 100%);z-index:0;pointer-events:none}
+.screen .topfade{position:absolute;z-index:1}
 .gbody{position:relative;z-index:1;flex:1;overflow-y:auto;padding:4px 16px calc(var(--safe-b) + 18px);display:flex;flex-direction:column;align-items:center;gap:10px}
 .gbody > *{width:100%;max-width:480px}
 .pbar{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 8px;border-radius:20px;transition:box-shadow .3s}
@@ -274,6 +279,20 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
 .scorebar b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .scorebar small{display:block;font-size:12px;color:var(--sub);white-space:nowrap}
 .scorebar .mid{text-align:center;padding:0 2px}.scorebar .mid b{font-size:15px}
+.gbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:6px;border-radius:22px}
+.gp{display:flex;align-items:center;gap:8px;min-width:0;padding:7px 8px;border-radius:16px;transition:box-shadow .3s,background .3s}
+.gp.me{flex-direction:row-reverse;text-align:right}
+.gp.turn{background:var(--glass-2);box-shadow:0 0 0 2px var(--accent),0 4px 14px rgba(91,108,255,.25)}
+.gp .av{font-size:26px;line-height:1;flex:none}
+.gpn{display:flex;flex-direction:column;min-width:0;line-height:1.2}
+.gpn b{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gps{font-size:12px;color:var(--sub);white-space:nowrap}.gps em{font-style:normal;font-weight:800;color:var(--text);font-size:14px}
+.pp{font-style:normal;font-size:11px;font-weight:700;border-radius:8px;padding:1px 6px;margin-top:2px;align-self:flex-start;white-space:nowrap}
+.gp.me .pp{align-self:flex-end}
+.pp.over{background:rgba(242,68,95,.14);color:var(--bad)}.pp.under{background:rgba(31,174,121,.15);color:var(--good)}.pp.even{background:var(--hair);color:var(--sub)}
+.gmid{display:flex;flex-direction:column;align-items:center;line-height:1.1;padding:0 4px}
+.gmid span{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--sub);font-weight:700}
+.gmid b{font-size:24px;font-weight:800;letter-spacing:-.02em}.gmid b small{font-size:13px;color:var(--sub);font-weight:600}
 .pgwrap{position:relative;padding:5px;border-radius:22px;display:flex;justify-content:center}
 .pgwrap canvas{display:block;border-radius:16px;touch-action:none;-webkit-user-select:none;user-select:none}
 .pg-ov{position:absolute;left:50%;top:14px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:18px;background:rgba(14,18,34,.66);color:#fff;font-size:13.5px;font-weight:600;text-align:center;width:max-content;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);animation:fade .2s;max-width:calc(100% - 24px);pointer-events:auto}
@@ -311,6 +330,7 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
 </head>
 <body>
 <div class="bg"></div>
+<div class="topfade"></div>
 <main id="view"></main>
 
 <nav id="tabs" class="glass" hidden>
@@ -323,6 +343,7 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
 
 <section id="game" class="screen">
   <div class="bg"></div>
+  <div class="topfade"></div>
   <div class="topbar">
     <button class="icon-btn glass press" data-act="close-game" aria-label="Back"></button>
     <div class="t"><b id="g-title">Checkers</b><span id="g-sub"></span></div>
@@ -339,7 +360,7 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
 <script>
 'use strict';
 /* ========================== Basics ========================== */
-const VERSION = 'volley-7';
+const VERSION = 'volley-8';
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -458,7 +479,8 @@ const S = {
   vapid: store.get('vapid', ''), push: true,
   dev: store.get('dev', ''),
   tab: 'games', showAllFinished: false,
-  newGame: { type: 'checkers', timer: 0, hints: true, holes: 9 },
+  newGame: { type: 'checkers', timer: 0, hints: true, holes: 9, max: 8 },
+  defaults: Object.assign({ holes: 9, max: 8, timer: 0, hints: true }, store.get('defaults', {})),
 };
 const nameOf = (p) => (S.players[p] && S.players[p].name) || (p === 'a' ? 'Player 1' : 'Player 2');
 const emojiOf = (p) => (S.players[p] && S.players[p].emoji) || '🙂';
@@ -616,6 +638,7 @@ async function refreshList() {
   try {
     const r = await api('list');
     S.players = r.players; S.games = r.games; S.unread = r.unread; S.requests = r.requests; S.vapid = r.vapid; S.push = r.push;
+    if (r.defaults) { S.defaults = Object.assign({ holes: 9, max: 8, timer: 0, hints: true }, r.defaults); store.set('defaults', S.defaults); }
     store.set('players', S.players); store.set('games', S.games); store.set('vapid', S.vapid);
     if (!S.players[S.me]) { stopPolling(); closeGame(true); store.del('me'); S.me = ''; gateWho(); return; }
     if (S.tab === 'games' || S.tab === 'stats') renderTab();
@@ -649,6 +672,7 @@ function setupTabs() {
   });
 }
 function setTab(t) {
+  if (t === 'new' && S.tab !== 'new') S.newGame = { ...S.newGame, ...S.defaults }; // start from your shared defaults
   S.tab = t; const idx = ['games', 'new', 'stats', 'settings'].indexOf(t);
   $$('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
   $('#tabs .ind').style.transform = `translateX(${idx * 100}%)`;
@@ -769,7 +793,10 @@ function renderNew() {
     <div class="group glass">
       ${gdef.holes ? `<div class="optrow"><div class="lbl">Holes</div>
         <div class="seg">${[3, 6, 9].map((n) => `<button data-holes="${n}" class="${N.holes === n ? 'on' : ''}">${n} holes</button>`).join('')}</div>
-        <div class="hint">A brand-new random course every game. Moving obstacles, slopes, water. It's hard.</div></div>` : ''}
+        <div class="hint">A brand-new random course every game: windmills, tunnels, moving bumpers, water. It's hard.</div></div>
+      <div class="optrow"><div class="lbl">Max strokes per hole</div>
+        <div class="seg">${[[0, 'No limit'], [6, '6'], [8, '8'], [10, '10']].map(([v, l]) => `<button data-max="${v}" class="${N.max === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+        <div class="hint">${N.max ? `Miss shot ${N.max} and you take a ${N.max + 1} for the hole.` : 'Keep putting until it drops.'}</div></div>` : ''}
       <div class="optrow"><div class="lbl">Turn timer</div>
         <div class="seg" id="seg-timer">${segs.map(([v, l]) => `<button data-timer="${v}" class="${N.timer === v ? 'on' : ''}">${l}</button>`).join('')}</div>
         <div class="hint">${N.timer ? `Run out of time and you forfeit. You'll get a warning a few hours before.` : 'Take as long as you want.'}</div>
@@ -847,6 +874,14 @@ function renderSettings() {
       <span class="grow"><b style="font-size:19px">${esc(me.name || 'You')}</b><div class="sub" style="font-size:14px">Tap to change your name or emoji</div></span>
       <span class="chev">${I.chev}</span>
     </button>
+    <h2>Game defaults</h2>
+    <div class="group glass">
+      <div class="optrow"><div class="lbl">Mini Golf holes</div><div class="seg">${[3, 6, 9].map((n) => `<button data-def="holes:${n}" class="${S.defaults.holes === n ? 'on' : ''}">${n}</button>`).join('')}</div></div>
+      <div class="optrow"><div class="lbl">Mini Golf max strokes</div><div class="seg">${[[0, 'No limit'], [6, '6'], [8, '8'], [10, '10']].map(([v, l]) => `<button data-def="max:${v}" class="${S.defaults.max === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+      <div class="optrow"><div class="lbl">Turn timer</div><div class="seg">${[[0, 'None'], [24, '1 day'], [72, '3 days']].map(([v, l]) => `<button data-def="timer:${v}" class="${S.defaults.timer === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+      <button class="item" data-def="hints:1"><span class="lbl">Checkers move hints</span><span class="switch ${S.defaults.hints ? 'on' : ''}"></span></button>
+    </div>
+    <p class="sub" style="font-size:12.5px;margin:8px 10px 0">Shared by both of you. New Game starts with these, and you can still change them per game.</p>
     <h2>Look</h2>
     <div class="group glass"><div class="optrow"><div class="seg">
       <button data-theme-set="light" class="${P.theme === 'light' ? 'on' : ''}">☀️ Light</button>
@@ -1105,13 +1140,51 @@ function moverSweep(m, pad) {
   return [Math.min(...xs) - pad, Math.min(...ys) - pad, Math.max(...xs) + pad, Math.max(...ys) + pad];
 }
 const golfHoleObj = (h) => (typeof h === 'number' ? GOLF.holes[h] : h);
+const DPI = 3.141592653589793, DTAU = 6.283185307179586;
+function dsin(x) {
+  x = x % DTAU; if (x < 0) x += DTAU; if (x > DPI) x -= DTAU;
+  if (x > DPI / 2) x = DPI - x; else if (x < -DPI / 2) x = -DPI - x;
+  const x2 = x * x;
+  return x * (1 - x2 / 6 * (1 - x2 / 20 * (1 - x2 / 42 * (1 - x2 / 72 * (1 - x2 / 110)))));
+}
+const dcos = (x) => dsin(x + DPI / 2);
+// Windmill arms at a phase (in physics steps). Returns each arm as a segment plus the turn rate.
+function spinnerArms(sp, phase) {
+  const ph = phase % sp.p, w = sp.dir * DTAU / sp.p, out = [];
+  for (let k = 0; k < sp.arms; k++) {
+    const ang = sp.dir * DTAU * ph / sp.p + k * DPI / sp.arms, ca = dcos(ang), sa = dsin(ang);
+    out.push([sp.c[0] - ca * sp.L, sp.c[1] - sa * sp.L, sp.c[0] + ca * sp.L, sp.c[1] + sa * sp.L]);
+  }
+  return { arms: out, w };
+}
+function mbumperAt(m, phase) {
+  const ph = (phase % m.p) / m.p, up = ph < 0.5, tri = up ? ph * 2 : 2 - ph * 2, s = up ? 2 / m.p : -2 / m.p;
+  return { x: m.a[0] + m.dx * tri, y: m.a[1] + m.dy * tri, ux: m.dx * s, uy: m.dy * s };
+}
+// Ball vs a spinning arm: the arm's speed depends on where along it you get hit
+function segHitRot(b, x1, y1, x2, y2, rad, e, cx, cy, w) {
+  const ex = x2 - x1, ey = y2 - y1, L2 = ex * ex + ey * ey;
+  let t = ((b.x - x1) * ex + (b.y - y1) * ey) / L2;
+  if (t < 0) t = 0; else if (t > 1) t = 1;
+  const qx = x1 + t * ex, qy = y1 + t * ey, dx = b.x - qx, dy = b.y - qy, d2 = dx * dx + dy * dy;
+  if (d2 >= rad * rad) return 0;
+  let nx, ny;
+  if (d2 < 1e-12) { const L = SQ(L2); nx = -ey / L; ny = ex / L; } else { const d = SQ(d2); nx = dx / d; ny = dy / d; }
+  b.x = qx + nx * rad; b.y = qy + ny * rad;
+  const ux = -w * (qy - cy), uy = w * (qx - cx);
+  const vn = (b.vx - ux) * nx + (b.vy - uy) * ny;
+  if (vn < 0) { b.vx -= (1 + e) * vn * nx; b.vy -= (1 + e) * vn * ny; return -vn; }
+  return 0;
+}
 
 function golfSim(hole, x, y, vx, vy, t0 = 0, pv = 1) {
   const F = GOLF.PHYS[pv] || GOLF.PHYS[1];
   const H = golfHoleObj(hole), R = GOLF.R, CR = GOLF.CR, poly = H.poly, cup = H.cup;
   const movers = H.movers || [], slopes = H.slopes || [];
+  const spinners = H.spinners || [], mbumpers = H.mbumpers || [], hills = H.hills || [], portals = H.portals || [], boosts = H.boosts || [];
   const b = { x, y, vx, vy };
   const sim = { b, done: false, res: null, ev: [], steps: 0, t0 };
+  let plock = null; // tunnel exit we just came out of
   let slow = 0;
   const stop = () => {
     b.vx = 0; b.vy = 0; sim.done = true; sim.res = 'stop';
@@ -1123,6 +1196,19 @@ function golfSim(hole, x, y, vx, vy, t0 = 0, pv = 1) {
           .map((p) => ({ p, d: (p[0] - b.x) * (p[0] - b.x) + (p[1] - b.y) * (p[1] - b.y) }))
           .filter((o) => inPoly(poly, o.p[0], o.p[1]) && !inRects(H.water, o.p[0], o.p[1]))
           .sort((u, v) => u.d - v.d);
+        if (opts.length) { b.x = opts[0].p[0]; b.y = opts[0].p[1]; }
+      }
+    }
+    for (const sp of spinners) {
+      const dx = b.x - sp.c[0], dy = b.y - sp.c[1], rr = sp.L + sp.w + R + 0.1, d2 = dx * dx + dy * dy;
+      if (d2 < rr * rr) { const d = SQ(d2) || 1e-6, px = sp.c[0] + dx / d * rr, py = sp.c[1] + dy / d * rr; if (inPoly(poly, px, py) && !inRects(H.water, px, py)) { b.x = px; b.y = py; } }
+    }
+    for (const m of mbumpers) {
+      const z = moverSweep({ a: m.a, b: m.a, dx: m.dx, dy: m.dy }, R + m.r + 0.05);
+      if (b.x > z[0] && b.x < z[2] && b.y > z[1] && b.y < z[3]) {
+        const opts = [[z[0], b.y], [z[2], b.y], [b.x, z[1]], [b.x, z[3]]]
+          .map((p) => ({ p, d: (p[0] - b.x) * (p[0] - b.x) + (p[1] - b.y) * (p[1] - b.y) }))
+          .filter((o) => inPoly(poly, o.p[0], o.p[1]) && !inRects(H.water, o.p[0], o.p[1])).sort((u, v) => u.d - v.d);
         if (opts.length) { b.x = opts[0].p[0]; b.y = opts[0].p[1]; }
       }
     }
@@ -1147,6 +1233,33 @@ function golfSim(hole, x, y, vx, vy, t0 = 0, pv = 1) {
         const hit = segHitV(b, at.x1, at.y1, at.x2, at.y2, R + m.w, 0.75, at.ux, at.uy);
         if (hit > 0.12) sim.ev.push(['bump', hit]);
       }
+      for (const sp of spinners) {
+        const at = spinnerArms(sp, t0 + sim.steps + (k + 1) / n);
+        for (const a of at.arms) { const hit = segHitRot(b, a[0], a[1], a[2], a[3], R + sp.w, 0.8, sp.c[0], sp.c[1], at.w); if (hit > 0.12) sim.ev.push(['bump', hit]); }
+        const dx = b.x - sp.c[0], dy = b.y - sp.c[1], rr = R + 2.2, d2 = dx * dx + dy * dy;
+        if (d2 < rr * rr) { const d = SQ(d2) || 1e-6, nx = dx / d, ny = dy / d; b.x = sp.c[0] + nx * rr; b.y = sp.c[1] + ny * rr; const vn = b.vx * nx + b.vy * ny; if (vn < 0) { b.vx -= 1.7 * vn * nx; b.vy -= 1.7 * vn * ny; } }
+      }
+      for (const m of mbumpers) {
+        const at = mbumperAt(m, t0 + sim.steps + (k + 1) / n);
+        const dx = b.x - at.x, dy = b.y - at.y, rr = R + m.r, d2 = dx * dx + dy * dy;
+        if (d2 < rr * rr) {
+          const d = SQ(d2) || 1e-6, nx = dx / d, ny = dy / d;
+          b.x = at.x + nx * rr; b.y = at.y + ny * rr;
+          const vn = (b.vx - at.ux) * nx + (b.vy - at.uy) * ny;
+          if (vn < 0) { b.vx -= 2 * vn * nx; b.vy -= 2 * vn * ny; b.vx += nx * 0.25; b.vy += ny * 0.25; sim.ev.push(['bump', -vn]); }
+        }
+      }
+      if (portals.length) {
+        if (plock && (b.x - plock[0]) * (b.x - plock[0]) + (b.y - plock[1]) * (b.y - plock[1]) > 49) plock = null;
+        for (const pt of portals) for (const [from, to] of [[pt.a, pt.b], [pt.b, pt.a]]) {
+          if (plock === to || plock === from) continue;
+          const dx = b.x - from[0], dy = b.y - from[1];
+          if (dx * dx + dy * dy < pt.r * pt.r) {
+            const sp = SQ(b.vx * b.vx + b.vy * b.vy) || 1e-6, off = pt.r + R + 0.6;
+            b.x = to[0] + b.vx / sp * off; b.y = to[1] + b.vy / sp * off; plock = to; sim.ev.push(['portal']);
+          }
+        }
+      }
       for (const c of H.bumpers || []) {
         const dx = b.x - c[0], dy = b.y - c[1], rr = R + c[2], d2 = dx * dx + dy * dy;
         if (d2 < rr * rr) {
@@ -1168,9 +1281,17 @@ function golfSim(hole, x, y, vx, vy, t0 = 0, pv = 1) {
     const px = cup[0] - b.x, py = cup[1] - b.y, pd2 = px * px + py * py, pr = CR * 1.25;
     if (pd2 < pr * pr) { b.vx += px * 0.008; b.vy += py * 0.008; }
     for (const z of slopes) if (b.x >= z[0] && b.x <= z[2] && b.y >= z[1] && b.y <= z[3]) { b.vx += z[4]; b.vy += z[5]; }
+    for (const h of hills) {
+      const dx = b.x - h.c[0], dy = b.y - h.c[1], d2 = dx * dx + dy * dy;
+      if (d2 < h.r * h.r && d2 > 1e-6) { const d = SQ(d2), f = h.s * (1 - d / h.r); b.vx += dx / d * f; b.vy += dy / d * f; }
+    }
+    for (const z of boosts) if (b.x >= z[0] && b.x <= z[2] && b.y >= z[1] && b.y <= z[3]) {
+      b.vx += z[4] * 0.09; b.vy += z[5] * 0.09;
+      const s2 = SQ(b.vx * b.vx + b.vy * b.vy); if (s2 > 4.6) { b.vx *= 4.6 / s2; b.vy *= 4.6 / s2; }
+    }
     sp = SQ(b.vx * b.vx + b.vy * b.vy);
     const sand = inRects(H.sand, b.x, b.y);
-    const ns = sand ? sp * F.sa - F.sc : sp * F.a - F.c;
+    const ns = sand ? sp * F.sa - F.sc : inRects(H.ice, b.x, b.y) ? sp * 0.997 - 0.0025 : sp * F.a - F.c;
     if (ns <= F.stop) stop();
     else { const f = ns / sp; b.vx *= f; b.vy *= f; }
     slow = sp < 0.06 ? slow + 1 : 0;
@@ -1196,7 +1317,7 @@ function genHole(seed, ver = 1) {
   if (HOLE_CACHE.has(key)) return HOLE_CACHE.get(key);
   const r = mulberry32(seed);
   let h = null;
-  for (let tries = 0; tries < 60 && !h; tries++) h = ver >= 2 ? buildHole2(r) : buildHole(r);
+  for (let tries = 0; tries < 60 && !h; tries++) h = ver >= 3 ? buildHole3(r) : ver >= 2 ? buildHole2(r) : buildHole(r);
   if (!h) h = { ...GOLF.holes[8], name: 'Finale' };
   HOLE_CACHE.set(key, h);
   return h;
@@ -1542,11 +1663,249 @@ function buildHole2(r) {
   H.type = type;
   return H;
 }
+function buildHole3(r) {
+  const R = GOLF.R;
+  const U = (a, b) => a + (b - a) * r();
+  const I = (a, b) => Math.floor(U(a, b + 1));
+  const q = (v) => Math.round(v * 2) / 2;
+  const pick = (arr) => arr[Math.floor(r() * arr.length) % arr.length];
+  const LEN = pick([150, 150, 210, 260]), BOT = LEN - 10, TEE = LEN - 22, X = LEN / 150;
+  const H = { gen: true, h: LEN, walls: [], bumpers: [], sand: [], water: [], slopes: [], movers: [], spinners: [], mbumpers: [], hills: [], ice: [], boosts: [], portals: [] };
+  let features = 0;
+  // Adds one obstacle in a band of a corridor. a1..a2 = across the corridor, b1..b2 = along it.
+  // horiz: the corridor runs left/right, so swap axes on the way out.
+  const feature = (kind, a1, a2, b1, b2, horiz) => {
+    const P = (a, b) => (horiz ? [q(b), q(a)] : [q(a), q(b)]);
+    const box = (aa1, bb1, aa2, bb2) => { const p1 = P(Math.min(aa1, aa2), Math.min(bb1, bb2)), p2 = P(Math.max(aa1, aa2), Math.max(bb1, bb2)); return [Math.min(p1[0], p2[0]), Math.min(p1[1], p2[1]), Math.max(p1[0], p2[0]), Math.max(p1[1], p2[1])]; };
+    const wdt = a2 - a1, mid = (b1 + b2) / 2;
+    features++;
+    if (kind === 'stubs') {
+      const gap = U(15, 20), left = r() < 0.5;
+      const w = left ? [...P(a1, mid), ...P(a2 - gap, mid)] : [...P(a1 + gap, mid), ...P(a2, mid)];
+      H.walls.push(w);
+      if (b2 - b1 > 26 && r() < 0.6) { const m2 = mid + (r() < 0.5 ? -11 : 11); H.walls.push(left ? [...P(a1 + gap, m2), ...P(a2, m2)] : [...P(a1, m2), ...P(a2 - gap, m2)]); }
+    } else if (kind === 'bumpers') {
+      const n = wdt > 40 ? I(2, 3) : 2;
+      for (let i = 0; i < n; i++) { const rad = U(3.2, 4.8), a = a1 + (i + 0.5) * wdt / n + U(-2, 2), b = mid + U(-6, 6); const c = P(a, b); H.bumpers.push([c[0], c[1], q(rad)]); }
+    } else if (kind === 'bigbump') {
+      const c = P(a1 + wdt * U(0.35, 0.65), mid); H.bumpers.push([c[0], c[1], q(U(5.5, 7))]);
+    } else if (kind === 'slider') {
+      const len = U(16, 23), a0 = a1 + 1.5, travel = wdt - 3 - len, p = I(100, 160);
+      const A = P(a0, mid), B = P(a0 + len, mid), d = P(travel, 0), d0 = P(0, 0);
+      H.movers.push({ a: A, b: B, dx: q(d[0] - d0[0]), dy: q(d[1] - d0[1]), p, w: 1.7 });
+    } else if (kind === 'gate') {
+      const gap = U(15, 19), g1 = a1 + U(4, wdt - gap - 4);
+      if (g1 - a1 > 1) H.walls.push([...P(a1, mid), ...P(g1, mid)]);
+      if (a2 - (g1 + gap) > 1) H.walls.push([...P(g1 + gap, mid), ...P(a2, mid)]);
+      const A = P(g1 + 2.2, mid - 5), B = P(g1 + 2.2, mid + 5), d = P(gap - 4.4, 0), d0 = P(0, 0);
+      H.movers.push({ a: A, b: B, dx: q(d[0] - d0[0]), dy: q(d[1] - d0[1]), p: I(70, 110), w: 1.8 });
+    } else if (kind === 'water') {
+      const span = wdt * U(0.38, 0.55), h = U(10, 16), left = r() < 0.5;
+      H.water.push(left ? box(a1, mid - h / 2, a1 + span, mid + h / 2) : box(a2 - span, mid - h / 2, a2, mid + h / 2));
+    } else if (kind === 'sand') {
+      const h = U(9, 15), full = r() < 0.5, span = full ? wdt : wdt * U(0.5, 0.75), st = full ? a1 : (r() < 0.5 ? a1 : a2 - span);
+      H.sand.push(box(st, mid - h / 2, st + span, mid + h / 2));
+    } else if (kind === 'slope') {
+      const h = U(14, 22), push = U(0.024, 0.032) * (r() < 0.5 ? 1 : -1), z = box(a1, mid - h / 2, a2, mid + h / 2);
+      const acc = horiz ? [0, push] : [push, 0];
+      H.slopes.push([...z, r5(acc[0]), r5(acc[1])]);
+    } else if (kind === 'spinner') {
+      // windmill: two crossed arms turning around a hub
+      const L = Math.min(wdt / 2 - 3, (b2 - b1) / 2 + 2, U(10, 14)); // may reach a little into the next stretch
+      if (L < 7) return feature('mbumper', a1, a2, b1, b2, horiz);
+      const c = P(a1 + wdt / 2 + U(-2, 2), mid);
+      H.spinners.push({ c, L: q(L), p: I(150, 230), dir: r() < 0.5 ? 1 : -1, arms: 2, w: 1.3 });
+    } else if (kind === 'mbumper') {
+      const rad = q(U(3.5, 4.8)), a0 = a1 + rad + 1.5, travel = wdt - 2 * (rad + 1.5);
+      const A = P(a0, mid), d = P(travel, 0), d0 = P(0, 0);
+      H.mbumpers.push({ a: A, dx: q(d[0] - d0[0]), dy: q(d[1] - d0[1]), p: I(90, 150), r: rad });
+    } else if (kind === 'hill') {
+      const rad = Math.min(wdt / 2 - 1, (b2 - b1) / 2, U(8, 12)), c = P(a1 + wdt * U(0.3, 0.7), mid);
+      H.hills.push({ c, r: q(rad), s: r5(U(0.035, 0.05)) });
+    } else if (kind === 'ice') {
+      const h = U(16, 24); H.ice.push(box(a1, mid - h / 2, a2, mid + h / 2));
+    } else if (kind === 'boost') {
+      const span = Math.min(wdt - 4, U(14, 20)), st = a1 + U(2, wdt - span - 2), z = box(st, mid - 4.5, st + span, mid + 4.5);
+      const cx = (z[0] + z[2]) / 2, cy = (z[1] + z[3]) / 2;
+      const dir = horiz ? [H.cup[0] > cx ? 1 : -1, 0] : [0, H.cup[1] > cy ? 1 : -1];
+      H.boosts.push([...z, dir[0], dir[1]]);
+    }
+  };
+  const KINDS = ['stubs', 'bumpers', 'slider', 'gate', 'water', 'sand', 'slope', 'bigbump', 'spinner', 'spinner', 'mbumper', 'hill', 'ice', 'boost'];
+  const SPECIAL = ['spinner', 'spinner', 'mbumper', 'slider', 'gate', 'hill'];
+  const used = new Set();
+  const pickKind = (list) => {
+    const fresh = list.filter((k) => !used.has(k) && !(k === 'bigbump' && used.has('bumpers')) && !(k === 'bumpers' && used.has('bigbump')));
+    const k = pick(fresh.length ? fresh : list); used.add(k); return k;
+  };
+  const bandFeatures = (a1, a2, b1, b2, count, horiz) => {
+    const L = (b2 - b1) / count;
+    for (let i = 0; i < count; i++) {
+      const special = !SPECIAL.some((k) => used.has(k));
+      feature(pickKind(special ? SPECIAL : KINDS), a1, a2, b1 + i * L + 2, b1 + (i + 1) * L - 2, horiz);
+    }
+  };
+  const type = pick(['lane', 'lane', 'dogleg', 'dogleg', 'zigzag', 'island', 'uturn', 'angled', 'angled']);
+  let mirror = r() < 0.5;
+  if (type === 'lane') {
+    const w = U(42, 62), cx = U(8 + w / 2, 92 - w / 2), x1 = q(cx - w / 2), x2 = q(cx + w / 2);
+    H.poly = [[x1, 10], [x2, 10], [x2, BOT], [x1, BOT]];
+    H.tee = [q(cx + U(-w / 5, w / 5)), TEE]; H.cup = [q(U(x1 + 10, x2 - 10)), q(U(22, 30))];
+    bandFeatures(x1, x2, 38, LEN - 32, Math.max(4, Math.round((LEN - 70) / 20)), false);
+  } else if (type === 'dogleg') {
+    const w = U(32, 42), x2 = 10 + w, y2 = 10 + w;
+    H.poly = [[10, 10], [90, 10], [90, y2], [x2, y2], [x2, BOT], [10, BOT]];
+    H.tee = [q(10 + w / 2), TEE]; H.cup = [q(U(74, 80)), q(10 + w / 2)];
+    bandFeatures(10, x2, y2 + 6, LEN - 32, LEN > 150 ? 4 : 3, false);
+    bandFeatures(10, y2, x2 + 6, 68, 1, true);
+    if (r() < 0.5) { H.bumpers.push([q(10 + w * 0.62), q(10 + w * 0.62), q(U(3.5, 4.5))]); features++; }
+  } else if (type === 'zigzag') {
+    const nW = LEN === 150 ? (r() < 0.5 ? 2 : 3) : LEN === 210 ? 4 : 5, top = 50, botY = LEN - 40;
+    const ys = []; for (let k = 0; k < nW; k++) ys.push(q(botY - (botY - top) * k / Math.max(1, nW - 1)));
+    let fromLeft = r() < 0.5, lastGapLeft = false;
+    H.poly = [[10, 10], [90, 10], [90, BOT], [10, BOT]];
+    for (const y of ys) {
+      const gap = U(19, 24);
+      H.walls.push(fromLeft ? [10, y, q(90 - gap), y] : [q(10 + gap), y, 90, y]);
+      lastGapLeft = !fromLeft; fromLeft = !fromLeft; features++;
+    }
+    H.tee = [q(U(28, 72)), TEE]; H.cup = [q(lastGapLeft ? U(66, 78) : U(22, 34)), q(U(22, 28))];
+    const lane = I(0, ys.length - 2);
+    // something in every lane between the walls, plus the stretch below the first wall
+    void lane;
+    for (let l = 0; l < ys.length - 1; l++) feature(pickKind(['spinner', 'mbumper', 'hill', 'ice', 'bumpers', 'slope', 'boost', 'sand']), 10, 90, ys[l + 1] + 5, ys[l] - 5, false);
+    feature(pickKind(['mbumper', 'hill', 'bumpers', 'boost', 'slope']), 10, 90, ys[0] + 5, Math.min(ys[0] + 26, LEN - 34), false);
+  } else if (type === 'island') {
+    H.poly = [[10, 10], [90, 10], [90, BOT], [10, BOT]];
+    if (LEN > 150) { // an extra moat lower down on long holes
+      const yw2 = U(LEN - 80, LEN - 62), h2 = U(12, 16), bw2 = U(12, 15), bx2 = U(16, 90 - bw2 - 6);
+      H.water.push([10, q(yw2), q(bx2), q(yw2 + h2)], [q(bx2 + bw2), q(yw2), 90, q(yw2 + h2)]);
+      feature(pickKind(['spinner', 'mbumper', 'slider', 'hill']), 10, 90, yw2 - 30, yw2 - 6, false);
+    }
+    const yw = U(58, 86), h = U(14, 20), bw = U(12, 16), bx = U(16, 90 - bw - 6);
+    H.water.push([10, q(yw), q(bx), q(yw + h)], [q(bx + bw), q(yw), 90, q(yw + h)]); features++;
+    H.tee = [q(U(25, 75)), TEE]; H.cup = [q(U(25, 75)), q(U(22, 30))];
+    if (r() < 0.6) { const len = U(6, 8); H.movers.push({ a: [q(bx + 1.5), q(yw - 4.5)], b: [q(bx + 1.5 + len), q(yw - 4.5)], dx: q(bw - 3 - len), dy: 0, p: I(80, 120), w: 1.7 }); features++; }
+    else feature(pickKind(['mbumper', 'bigbump', 'boost']), 16, 84, yw + h + 6, Math.min(116, LEN - 96 > yw + h + 30 ? LEN - 96 : 116), false);
+    feature(pickKind(['spinner', 'hill', 'ice', 'sand', 'stubs']), 10, 90, 34, yw - 6, false);
+  } else if (type === 'uturn') {
+    const yt = U(46, 60);
+    H.poly = [[10, 10], [90, 10], [90, BOT], [10, BOT]];
+    H.walls.push([50, BOT, 50, q(yt)]);
+    H.tee = [q(U(24, 36)), TEE]; H.cup = [q(U(64, 76)), q(U(LEN - 32, LEN - 22))];
+    feature(pickKind(['spinner', 'mbumper', 'slider', 'gate']), 10, q(yt) - 2, 14, 86, true);
+    bandFeatures(10, 48.5, q(yt) + 6, LEN - 38, LEN > 150 ? 3 : 2, false);
+    bandFeatures(51.5, 90, q(yt) + 6, LEN - 50, LEN > 150 ? 3 : 2, false);
+    features++;
+  } else {
+    const bl = q(U(12, 28)), br = q(U(66, 88)), tl = q(U(12, 36)), tr = q(U(62, 88)), ry = q(U(60, 100) * X), ly = q(U(40, 90) * X);
+    H.poly = [[bl, BOT], [br, BOT], [92, ry], [tr, 10], [tl, 10], [8, ly]];
+    H.tee = [q((bl + br) / 2), TEE]; H.cup = [q((tl + tr) / 2 + U(-6, 6)), q(U(24, 30))];
+    bandFeatures(26, 74, 40, LEN - 34, Math.max(4, Math.round((LEN - 74) / 20)), false);
+  }
+  // Cup guard: three short walls around the cup, open on one side
+  let guard = false;
+  if (type !== 'uturn' && r() < 0.5) {
+    const s = 6.5, [cx, cy] = H.cup, dirs = [[0, -1], [-1, 0], [1, 0], [0, 1]], open = pick([0, 1, 2, 3, 3]);
+    const sides = [[cx - s, cy - s, cx + s, cy - s], [cx - s, cy - s, cx - s, cy + s], [cx + s, cy - s, cx + s, cy + s], [cx - s, cy + s, cx + s, cy + s]];
+    sides.forEach((w, i) => { if (i !== open) H.walls.push(w.map(q)); });
+    guard = true; features++;
+    void dirs;
+  }
+  // Tunnel: ball goes in one ring and comes out the other, same speed and direction
+  const nearAny = (x, y, pad) => {
+    const segD = (x1, y1, x2, y2) => { const ex = x2 - x1, ey = y2 - y1, L2 = ex * ex + ey * ey || 1e-9; let t = ((x - x1) * ex + (y - y1) * ey) / L2; t = t < 0 ? 0 : t > 1 ? 1 : t; const dx = x - x1 - t * ex, dy = y - y1 - t * ey; return Math.sqrt(dx * dx + dy * dy); };
+    for (let i = 0; i < H.poly.length; i++) { const a = H.poly[i], o = H.poly[(i + 1) % H.poly.length]; if (segD(a[0], a[1], o[0], o[1]) < pad + 3) return true; }
+    for (const w of H.walls) if (segD(w[0], w[1], w[2], w[3]) < pad + 2) return true;
+    for (const b of H.bumpers) if (Math.sqrt((b[0] - x) * (b[0] - x) + (b[1] - y) * (b[1] - y)) < b[2] + pad) return true;
+    for (const sp of H.spinners) if (Math.sqrt((sp.c[0] - x) * (sp.c[0] - x) + (sp.c[1] - y) * (sp.c[1] - y)) < sp.L + sp.w + pad) return true;
+    for (const h of H.hills) if (Math.sqrt((h.c[0] - x) * (h.c[0] - x) + (h.c[1] - y) * (h.c[1] - y)) < h.r + pad) return true;
+    for (const m of H.movers) { const z = moverSweep(m, m.w + pad); if (x > z[0] && x < z[2] && y > z[1] && y < z[3]) return true; }
+    for (const m of H.mbumpers) { const z = moverSweep({ a: m.a, b: m.a, dx: m.dx, dy: m.dy }, m.r + pad); if (x > z[0] && x < z[2] && y > z[1] && y < z[3]) return true; }
+    const inZ = (zs) => zs.some((z) => x > z[0] - pad && x < z[2] + pad && y > z[1] - pad && y < z[3] + pad);
+    return inZ(H.water) || inZ(H.sand) || inZ(H.slopes) || inZ(H.ice) || inZ(H.boosts) || !inPoly(H.poly, x, y);
+  };
+  if (r() < (LEN > 150 ? 0.45 : 0.3)) {
+    let A = null, B = null;
+    for (let t = 0; t < 25 && !A; t++) { const x = q(U(14, 86)), y = q(U(LEN * 0.55, TEE - 14)); if (!nearAny(x, y, 6) && Math.sqrt((x - H.tee[0]) * (x - H.tee[0]) + (y - H.tee[1]) * (y - H.tee[1])) > 14) A = [x, y]; }
+    for (let t = 0; t < 25 && !B && A; t++) { const x = q(U(14, 86)), y = q(U(H.cup[1] + 16, LEN * 0.45)); if (!nearAny(x, y, 6) && Math.sqrt((x - H.cup[0]) * (x - H.cup[0]) + (y - H.cup[1]) * (y - H.cup[1])) > 16) B = [x, y]; }
+    if (A && B) { H.portals.push({ a: A, b: B, r: 3.2 }); features++; }
+  }
+  if (mirror) {
+    const mx = (x) => q(100 - x);
+    H.poly = H.poly.map(([x, y]) => [mx(x), y]).reverse();
+    H.tee = [mx(H.tee[0]), H.tee[1]]; H.cup = [mx(H.cup[0]), H.cup[1]];
+    H.walls = H.walls.map(([x1, y1, x2, y2]) => [mx(x1), y1, mx(x2), y2]);
+    H.bumpers = H.bumpers.map(([x, y, rr]) => [mx(x), y, rr]);
+    const mr = ([x1, y1, x2, y2, ...rest]) => [mx(x2), y1, mx(x1), y2, ...rest];
+    H.sand = H.sand.map(mr); H.water = H.water.map(mr);
+    H.slopes = H.slopes.map((z) => { const m = mr(z); m[4] = -z[4]; return m; });
+    H.movers = H.movers.map((m) => ({ ...m, a: [mx(m.a[0]), m.a[1]], b: [mx(m.b[0]), m.b[1]], dx: -m.dx }));
+    H.spinners = H.spinners.map((sp) => ({ ...sp, c: [mx(sp.c[0]), sp.c[1]], dir: -sp.dir }));
+    H.mbumpers = H.mbumpers.map((m) => ({ ...m, a: [mx(m.a[0]), m.a[1]], dx: -m.dx }));
+    H.hills = H.hills.map((h) => ({ ...h, c: [mx(h.c[0]), h.c[1]] }));
+    H.ice = H.ice.map(mr);
+    H.boosts = H.boosts.map((z) => { const m = mr(z); m[4] = -z[4]; return m; });
+    H.portals = H.portals.map((pt) => ({ ...pt, a: [mx(pt.a[0]), pt.a[1]], b: [mx(pt.b[0]), pt.b[1]] }));
+  }
+  // Tee and cup must be clear
+  const clearAt = ([x, y], pad) => inPoly(H.poly, x, y) && !inRects(H.water, x, y) && !inRects(H.sand, x, y)
+    && !H.slopes.some((z) => x >= z[0] - pad && x <= z[2] + pad && y >= z[1] - pad && y <= z[3] + pad)
+    && !H.movers.some((m) => { const z = moverSweep(m, R + m.w + pad); return x > z[0] && x < z[2] && y > z[1] && y < z[3]; })
+    && !H.bumpers.some(([bx, by, rr]) => (bx - x) * (bx - x) + (by - y) * (by - y) < (rr + R + pad) * (rr + R + pad))
+    && !H.spinners.some((sp) => Math.sqrt((sp.c[0] - x) * (sp.c[0] - x) + (sp.c[1] - y) * (sp.c[1] - y)) < sp.L + sp.w + R + pad)
+    && !H.mbumpers.some((m) => { const z = moverSweep({ a: m.a, b: m.a, dx: m.dx, dy: m.dy }, m.r + R + pad); return x > z[0] && x < z[2] && y > z[1] && y < z[3]; })
+    && !H.hills.some((h) => Math.sqrt((h.c[0] - x) * (h.c[0] - x) + (h.c[1] - y) * (h.c[1] - y)) < h.r + pad)
+    && !inRects(H.ice, x, y) && !H.boosts.some((z) => x >= z[0] - pad && x <= z[2] + pad && y >= z[1] - pad && y <= z[3] + pad)
+    && !H.portals.some((pt) => Math.sqrt((pt.a[0] - x) * (pt.a[0] - x) + (pt.a[1] - y) * (pt.a[1] - y)) < 8 || Math.sqrt((pt.b[0] - x) * (pt.b[0] - x) + (pt.b[1] - y) * (pt.b[1] - y)) < 8);
+  if (!clearAt(H.tee, 3) || !clearAt(H.cup, 1)) return null;
+  // Is there a path the ball fits through? (moving bars ignored, they move out of the way)
+  const C = 2, cols = 50, rows = Math.ceil(LEN / C), free = new Uint8Array(cols * rows);
+  const segD2 = (px, py, x1, y1, x2, y2) => { const ex = x2 - x1, ey = y2 - y1, L2 = ex * ex + ey * ey || 1e-9; let t = ((px - x1) * ex + (py - y1) * ey) / L2; t = t < 0 ? 0 : t > 1 ? 1 : t; const dx = px - x1 - t * ex, dy = py - y1 - t * ey; return dx * dx + dy * dy; };
+  for (let gy = 0; gy < rows; gy++) for (let gx = 0; gx < cols; gx++) {
+    const x = gx * C + 1, y = gy * C + 1;
+    if (!inPoly(H.poly, x, y) || inRects(H.water, x, y)) continue;
+    let ok = true;
+    for (let i = 0; i < H.poly.length && ok; i++) { const p = H.poly[i], o = H.poly[(i + 1) % H.poly.length]; if (segD2(x, y, p[0], p[1], o[0], o[1]) < (R + 0.2) * (R + 0.2)) ok = false; }
+    for (const w of H.walls) if (ok && segD2(x, y, w[0], w[1], w[2], w[3]) < (R + 1.1) * (R + 1.1)) ok = false;
+    for (const bb of H.bumpers) if (ok && (bb[0] - x) * (bb[0] - x) + (bb[1] - y) * (bb[1] - y) < (bb[2] + R + 0.2) * (bb[2] + R + 0.2)) ok = false;
+    for (const sp of H.spinners) if (ok && (sp.c[0] - x) * (sp.c[0] - x) + (sp.c[1] - y) * (sp.c[1] - y) < (2.4 + R) * (2.4 + R)) ok = false;
+    if (ok) free[gy * cols + gx] = 1;
+  }
+  const cell = ([x, y]) => Math.min(rows - 1, Math.max(0, Math.floor(y / C))) * cols + Math.min(cols - 1, Math.max(0, Math.floor(x / C)));
+  const start = cell(H.tee), dist = new Int16Array(cols * rows).fill(-1), queue = [start];
+  if (!free[start]) return null;
+  dist[start] = 0;
+  let found = -1;
+  const cupX = H.cup[0], cupY = H.cup[1];
+  for (let qi = 0; qi < queue.length; qi++) {
+    const c = queue[qi], gx = c % cols, gy = (c - gx) / cols, x = gx * C + 1, y = gy * C + 1;
+    if ((x - cupX) * (x - cupX) + (y - cupY) * (y - cupY) < 9) { found = dist[c]; break; }
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = gx + dx, ny = gy + dy; if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
+      const nc = ny * cols + nx; if (!free[nc] || dist[nc] >= 0) continue;
+      dist[nc] = dist[c] + 1; queue.push(nc);
+    }
+    for (const pt of H.portals) for (const [from, to] of [[pt.a, pt.b], [pt.b, pt.a]]) {
+      if ((x - from[0]) * (x - from[0]) + (y - from[1]) * (y - from[1]) > pt.r * pt.r) continue;
+      const nc = cell(to); if (free[nc] && dist[nc] < 0) { dist[nc] = dist[c] + 1; queue.push(nc); }
+    }
+  }
+  if (found < 0) return null;
+  const len = found * C;
+  if (features < 3) return null;
+  H.len = len;
+  H.par = Math.min(6, 2 + (len > 125 ? 1 : 0) + (len > 205 ? 1 : 0) + (len > 300 ? 1 : 0) + (guard && len > 90 ? 1 : 0));
+  H.name = pick(NAMES[type]);
+  H.type = type;
+  return H;
+}
 const golfSeed = (st, i) => (st.rseed ^ Math.imul(i + 1, 0x9E3779B1)) >>> 0;
 // New games get a fresh random course. max/pen: up to 8 strokes, miss the 8th and you take a 9.
-const golfNew = (first, n = 9, seed = (Math.random() * 4294967296) >>> 0) => {
+const golfNew = (first, n = 9, seed = (Math.random() * 4294967296) >>> 0, max = 8) => {
   n = [3, 6, 9].includes(n) ? n : 9;
-  return { course: 'random', rseed: seed, gen: 2, phys: 2, first, scores: { a: Array(n).fill(null), b: Array(n).fill(null) }, cur: null, max: 9, pen: 10 };
+  max = [0, 6, 8, 10].includes(max) ? max : 8;
+  return { course: 'random', rseed: seed, gen: 3, phys: 2, first, scores: { a: Array(n).fill(null), b: Array(n).fill(null) }, cur: null, max, pen: max ? max + 1 : 0 };
 };
 const golfNextHole = (st, p) => st.scores[p].findIndex((v) => v == null);
 const golfTotal = (st, p) => st.scores[p].reduce((a, v) => a + (v || 0), 0);
@@ -1561,9 +1920,10 @@ function golfApply(st, me, h, from, res) {
   const strokes = cur.strokes + 1 + (res.res === 'water' ? 1 : 0);
   const end = res.res === 'water' ? from : [r3(res.b.x), r3(res.b.y)];
   let holeDone = false, score = null;
-  const MAX = st.max || GOLF.MAX, PEN = st.pen || GOLF.PEN;
-  if (res.res === 'cup') { holeDone = true; score = Math.min(strokes, PEN); }
-  else if (strokes >= MAX) { holeDone = true; score = PEN; }
+  // max 0 = no limit. Games from before max was a setting (max missing) keep 6 strokes / 7.
+  const MAX = st.max == null ? GOLF.MAX : st.max, PEN = st.pen || MAX + 1;
+  if (res.res === 'cup') { holeDone = true; score = MAX ? Math.min(strokes, PEN) : strokes; }
+  else if (MAX && strokes >= MAX) { holeDone = true; score = PEN; }
   let keep = true, result = null, passed = false;
   if (holeDone) {
     ns.scores[me][h] = score; ns.cur = null;
@@ -1790,6 +2150,7 @@ function pgSounds(ev) {
     else if (e[0] === 'pocket') { tone(150, 0.16, 'sine', 0.22, 0, 70); haptic(); }
     else if (e[0] === 'cup') { [880, 1175, 1568].forEach((f, i) => tone(f, 0.1, 'triangle', 0.1, 0.05 + i * 0.06)); haptic(true); }
     else if (e[0] === 'water') noise(0.4, 0.14);
+    else if (e[0] === 'portal') { tone(300, 0.18, 'sine', 0.12, 0, 1200); tone(900, 0.14, 'triangle', 0.06, 0.08, 300); haptic(); }
   }
 }
 function noise(dur, vol) {
@@ -1834,6 +2195,7 @@ const canvasPt = (P, e, off = 0) => { const r = P.canvas.getBoundingClientRect()
 /* ---------------------------------- Mini Golf ---------------------------------- */
 const pgClock = () => Math.floor(performance.now() / (1000 / 60)); // obstacle clock, in physics steps
 function golfScoreName(score, par, pen = GOLF.PEN) {
+  if (!pen) pen = Infinity; // no stroke limit
   if (score === 1) return 'Hole in one! 🎉';
   if (score >= pen) return 'Max strokes';
   const d = score - par;
@@ -1852,14 +2214,17 @@ function golfCard(st) {
 const Golf = {
   hud(g, hole, myTurn) {
     const st = g.state, me = S.me, o = opp(), act = g.status === 'active', H = golfCourse(st, hole), n = st.scores[me].length;
-    const tp = (p) => { const n = st.scores[p].filter((x) => x != null).length, v = golfToPar(st, p); return n ? (v === 0 ? 'E' : v > 0 ? '+' + v : String(v)) : '–'; };
-    const chip = (p, mine) => `<div class="sp ${mine ? 'r' : ''} ${act && g.turn === p ? 'turn' : ''}">
-      ${mine ? '' : `<span class="av">${esc(emojiOf(p))}</span>`}
-      <span class="pn"><b>${mine ? 'You' : esc(nameOf(p))}</b><small>${golfTotal(st, p)} · ${tp(p)}</small></span>
-      ${mine ? `<span class="av">${esc(emojiOf(p))}</span>` : ''}</div>`;
-    const cur = st.cur && st.cur.player === me && st.cur.hole === hole ? st.cur : null;
-    return `<div class="scorebar glass">${chip(o, false)}
-      <div class="mid"><b>Hole ${hole + 1}${n < 9 ? `<span style="font-weight:500;color:var(--sub)"> of ${n}</span>` : ''}</b><small>Par ${H.par}${myTurn ? ` · Shot ${(cur ? cur.strokes : 0) + 1}` : ''}</small></div>
+    // "13 strokes" + a plain-word pill: "4 over" / "2 under" / "even" (compared to par for the holes played)
+    const pill = (p) => {
+      const played = st.scores[p].filter((x) => x != null).length, v = golfToPar(st, p);
+      if (!played) return '';
+      return v === 0 ? '<i class="pp even">even</i>' : v > 0 ? `<i class="pp over">${v} over</i>` : `<i class="pp under">${-v} under</i>`;
+    };
+    const chip = (p, mine) => `<div class="gp ${mine ? 'me' : ''} ${act && g.turn === p ? 'turn' : ''}">
+      <span class="av">${esc(emojiOf(p))}</span>
+      <span class="gpn"><b>${mine ? 'You' : esc(nameOf(p))}</b><span class="gps"><em>${golfTotal(st, p)}</em> stroke${golfTotal(st, p) === 1 ? '' : 's'}</span>${pill(p)}</span></div>`;
+    return `<div class="gbar glass">${chip(o, false)}
+      <div class="gmid"><span>Hole</span><b>${hole + 1}<small>/${n}</small></b><span>Par ${H.par}</span></div>
       ${chip(me, true)}</div>`;
   },
   ballFor(st, hole, who, me) {
@@ -1884,7 +2249,7 @@ const Golf = {
     P.draw = () => golfDraw(P);
     P.pv = st.phys || 1;
     // keep animating while anything moves: sliding bars, slope arrows, or the camera gliding
-    P.idle = () => !!(P.camMoving || (P.H && ((P.H.movers && P.H.movers.length) || (P.H.slopes && P.H.slopes.length))));
+    P.idle = () => !!(P.camMoving || (P.H && ['movers', 'slopes', 'spinners', 'mbumpers', 'portals', 'boosts'].some((k) => P.H[k] && P.H[k].length)));
     pgSetup(P, GOLF.W, GOLF.H, 300);
     P.ball = Golf.ballFor(st, hole, myTurn ? me : o, me);
     P.onResize();
@@ -1896,7 +2261,8 @@ const Golf = {
       P.canPlay = myTurn && !d.partial;
       Golf.zoomBtn(P);
       if (P.canPlay) {
-        pgHint('Drag back anywhere to aim. Let go to putt.');
+        const shotN = (st.cur && st.cur.player === me && st.cur.hole === hole ? st.cur.strokes : 0) + 1;
+        pgHint(`Shot ${shotN}${st.max ? ` of ${st.max}` : ''} · Drag back anywhere to aim, let go to putt`);
         if (!(st.cur && st.cur.player === me && st.cur.hole === hole)) {
           pgOverlay(`<b>Hole ${hole + 1}</b> · ${esc(golfCourse(st, hole).name)} · Par ${golfCourse(st, hole).par}`);
           P.t2 = setTimeout(() => PG === P && pgOverlay(''), 1800);
@@ -2060,6 +2426,35 @@ function golfDraw(P) {
     c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 0.5; c.lineCap = 'round';
     for (let y = z[1] + 5; y < z[3] - 2; y += 7) { c.beginPath(); for (let x = z[0] + 4; x < z[2] - 4; x += 1) c.lineTo(x, y + Math.sin(x * 0.6) * 0.7); c.stroke(); }
   }
+  for (const z of H.ice || []) {
+    rrect(c, z[0], z[1], z[2] - z[0], z[3] - z[1], 3);
+    gr = c.createLinearGradient(z[0], z[1], z[2], z[3]); gr.addColorStop(0, '#e8f8ff'); gr.addColorStop(1, '#bfe8fb');
+    c.fillStyle = gr; c.fill(); c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 0.5; c.stroke();
+    c.save(); rrect(c, z[0], z[1], z[2] - z[0], z[3] - z[1], 3); c.clip(); c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 0.6;
+    for (let x = z[0] - 20; x < z[2]; x += 9) { c.beginPath(); c.moveTo(x, z[3]); c.lineTo(x + (z[3] - z[1]) * 0.6, z[1]); c.stroke(); }
+    c.restore();
+  }
+  for (const h of H.hills || []) {
+    gr = c.createRadialGradient(h.c[0] - h.r * 0.2, h.c[1] - h.r * 0.25, 0.5, h.c[0], h.c[1], h.r);
+    gr.addColorStop(0, 'rgba(255,255,255,.42)'); gr.addColorStop(0.55, 'rgba(255,255,255,.12)'); gr.addColorStop(1, 'rgba(0,40,10,.12)');
+    c.beginPath(); c.arc(h.c[0], h.c[1], h.r, 0, Math.PI * 2); c.fillStyle = gr; c.fill();
+    c.setLineDash([1, 1.3]); c.strokeStyle = 'rgba(255,255,255,.45)'; c.lineWidth = 0.35;
+    for (const f of [0.35, 0.68, 1]) { c.beginPath(); c.arc(h.c[0], h.c[1], h.r * f, 0, Math.PI * 2); c.stroke(); }
+    c.setLineDash([]);
+  }
+  for (const z of H.boosts || []) {
+    rrect(c, z[0], z[1], z[2] - z[0], z[3] - z[1], 2); c.fillStyle = '#ffd23f'; c.fill(); c.strokeStyle = '#e0a400'; c.lineWidth = 0.5; c.stroke();
+    const dx = z[4], dy = z[5], off = (phase * 0.35) % 5;
+    c.save(); rrect(c, z[0], z[1], z[2] - z[0], z[3] - z[1], 2); c.clip(); c.strokeStyle = 'rgba(150,90,0,.75)'; c.lineWidth = 0.8; c.lineCap = 'round'; c.lineJoin = 'round';
+    const cx = (z[0] + z[2]) / 2, cy = (z[1] + z[3]) / 2, len = dx ? z[2] - z[0] : z[3] - z[1], wid = dx ? z[3] - z[1] : z[2] - z[0];
+    for (let t = -len / 2 - 5 + off; t < len / 2 + 5; t += 5) {
+      for (let s2 = -wid / 2 + 3; s2 <= wid / 2 - 2; s2 += 6) {
+        const px = cx + dx * t + (dx ? 0 : s2), py = cy + dy * t + (dx ? s2 : 0);
+        c.beginPath(); c.moveTo(px - dx * 1.4 - dy * 1.6, py - dy * 1.4 + dx * 1.6); c.lineTo(px, py); c.lineTo(px - dx * 1.4 + dy * 1.6, py - dy * 1.4 - dx * 1.6); c.stroke();
+      }
+    }
+    c.restore();
+  }
   for (const z of H.slopes || []) {
     // slopes: darker band with chevrons drifting downhill
     rrect(c, z[0], z[1], z[2] - z[0], z[3] - z[1], 3); c.fillStyle = 'rgba(20,90,50,.28)'; c.fill();
@@ -2089,6 +2484,39 @@ function golfDraw(P) {
   }
   c.restore();
   for (const b of H.bumpers || []) { c.beginPath(); c.arc(b[0], b[1], b[2] - 1.2, 0, Math.PI * 2); c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 0.5; c.stroke(); }
+  for (const pt of H.portals || []) {
+    for (const e of [pt.a, pt.b]) {
+      gr = c.createRadialGradient(e[0], e[1], 0.3, e[0], e[1], pt.r + 1.6);
+      gr.addColorStop(0, '#1e0b45'); gr.addColorStop(0.62, '#4c1d95'); gr.addColorStop(1, 'rgba(139,92,246,0)');
+      c.beginPath(); c.arc(e[0], e[1], pt.r + 1.6, 0, Math.PI * 2); c.fillStyle = gr; c.fill();
+      c.save(); c.setLineDash([1.3, 1.1]); c.lineDashOffset = -phase * 0.12; c.strokeStyle = '#c4b5fd'; c.lineWidth = 0.7;
+      c.beginPath(); c.arc(e[0], e[1], pt.r, 0, Math.PI * 2); c.stroke(); c.restore();
+    }
+  }
+  for (const sp of H.spinners || []) {
+    c.beginPath(); c.arc(sp.c[0], sp.c[1], sp.L + sp.w, 0, Math.PI * 2); c.fillStyle = 'rgba(0,0,0,.07)'; c.fill();
+    const at = spinnerArms(sp, phase);
+    c.save(); c.lineCap = 'round'; c.shadowColor = 'rgba(0,0,0,.4)'; c.shadowBlur = 2.5 * T; c.shadowOffsetY = 0.8 * T;
+    for (const a of at.arms) { c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(a[2], a[3]); c.lineWidth = sp.w * 2 + 0.6; c.strokeStyle = '#7c2d12'; c.stroke(); }
+    c.restore();
+    c.save(); c.lineCap = 'round';
+    for (const a of at.arms) {
+      c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(a[2], a[3]); c.lineWidth = sp.w * 2; c.strokeStyle = '#fff7ed'; c.stroke();
+      c.setLineDash([2.2, 2.2]); c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(a[2], a[3]); c.lineWidth = sp.w * 1.2; c.strokeStyle = '#ef4444'; c.stroke(); c.setLineDash([]);
+    }
+    c.restore();
+    c.beginPath(); c.arc(sp.c[0], sp.c[1], 2.2, 0, Math.PI * 2); c.fillStyle = '#b91c1c'; c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 0.5; c.stroke();
+    c.beginPath(); c.arc(sp.c[0], sp.c[1], 0.7, 0, Math.PI * 2); c.fillStyle = '#fff'; c.fill();
+  }
+  for (const m of H.mbumpers || []) {
+    const z = moverSweep({ a: m.a, b: m.a, dx: m.dx, dy: m.dy }, m.r); rrect(c, z[0], z[1], z[2] - z[0], z[3] - z[1], m.r); c.fillStyle = 'rgba(0,0,0,.1)'; c.fill();
+    const at = mbumperAt(m, phase);
+    c.save(); c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = 2 * T; c.shadowOffsetY = 0.6 * T;
+    c.beginPath(); c.arc(at.x, at.y, m.r, 0, Math.PI * 2);
+    gr = c.createRadialGradient(at.x - m.r * 0.3, at.y - m.r * 0.35, 0.5, at.x, at.y, m.r); gr.addColorStop(0, '#c4b5fd'); gr.addColorStop(1, '#7c3aed');
+    c.fillStyle = gr; c.fill(); c.restore();
+    c.beginPath(); c.arc(at.x, at.y, m.r - 1.1, 0, Math.PI * 2); c.strokeStyle = 'rgba(255,255,255,.8)'; c.lineWidth = 0.5; c.stroke();
+  }
   for (const m of H.movers || []) {
     // moving bars: faint track, then the bar itself
     const z = moverSweep(m, m.w); rrect(c, z[0], z[1], z[2] - z[0], z[3] - z[1], m.w); c.fillStyle = 'rgba(0,0,0,.13)'; c.fill();
@@ -2506,10 +2934,10 @@ function renderGame(animateTheirMove) {
   destroyPG();
   $('#g-title').textContent = GNAME[g.type] || g.type;
   $('#g-more').style.visibility = g.status === 'active' ? 'visible' : 'hidden';
-  const timer = g.options && g.options.timer ? (g.options.timer === 24 ? '1-day turns' : '3-day turns') : 'No timer';
-  let sub = timer;
-  if (g.status === 'active' && g.turn_deadline) sub += ' · ' + left(g.turn_deadline);
-  $('#g-sub').textContent = `vs ${nameOf(o)} · ${sub}`;
+  // second line only when there's a turn timer (the players are already in the score bar)
+  let sub = g.options && g.options.timer ? (g.options.timer === 24 ? '1-day turns' : '3-day turns') : '';
+  if (sub && g.status === 'active' && g.turn_deadline) sub += ' · ' + left(g.turn_deadline);
+  $('#g-sub').textContent = sub;
   updateChatBadge();
 
   if (g.status === 'invited') return renderInvite(g);
@@ -2599,7 +3027,7 @@ function renderBroken(g) {
 function renderInvite(g) {
   const me = S.me, o = opp(), incoming = g.created_by !== me;
   let t = g.options.timer ? (g.options.timer === 24 ? '1 day per turn' : '3 days per turn') : 'No turn timer';
-  if (g.type === 'golf') { const n = g.options.holes || 9; t = `${n} holes · random course · ` + t; }
+  if (g.type === 'golf') { const n = g.options.holes || 9, mx = g.options.max != null ? g.options.max : 8; t = `${n} holes · ${mx ? `max ${mx} strokes` : 'no stroke limit'} · ` + t; }
   G.acceptHints = g.options.hints;
   $('#g-body').innerHTML = `<div class="glass card" style="text-align:center;padding:26px 18px;margin-top:12px">
       <div class="thumb" style="width:96px;height:96px;margin:0 auto 14px;border-radius:22px">${thumb(g)}</div>
@@ -2878,7 +3306,7 @@ if (window.visualViewport) {
 async function run(fn) { try { await fn(); } catch (e) { if (e.status === 409) { toast(errText(e)); await loadGame(); } else toast(errText(e), 3200); fx('err'); } }
 
 document.addEventListener('click', (e) => {
-  const t = e.target.closest('[data-act],[data-open],[data-pick],[data-timer],[data-holes],[data-theme-set],[data-answer],[data-rp]');
+  const t = e.target.closest('[data-act],[data-open],[data-pick],[data-timer],[data-holes],[data-max],[data-def],[data-theme-set],[data-answer],[data-rp]');
   if (!t) return;
   audio(); // unlock sound on first tap
   if (t.dataset.open) { fx('tap'); return openGame(t.dataset.open); }
@@ -2886,6 +3314,13 @@ document.addEventListener('click', (e) => {
     const gd = GAME_LIST.find((x) => x.type === t.dataset.pick);
     if (!gd.ready) { toast(`${gd.name} is coming in a later build`); fx('err'); return; }
     S.newGame.type = gd.type; fx('tap'); return renderNew();
+  }
+  if (t.dataset.max != null) { S.newGame.max = Number(t.dataset.max); fx('tap'); return renderNew(); }
+  if (t.dataset.def) { // Settings → Game defaults (shared by both of you)
+    const [k, v] = t.dataset.def.split(':'); S.defaults[k] = k === 'hints' ? !S.defaults.hints : Number(v);
+    store.set('defaults', S.defaults); fx('tap'); renderSettings();
+    api('set_defaults', { defaults: S.defaults }).then(() => toast('Saved for both of you')).catch((err) => toast(errText(err)));
+    return;
   }
   if (t.dataset.holes != null) { S.newGame.holes = Number(t.dataset.holes); fx('tap'); return renderNew(); }
   if (t.dataset.timer != null) { S.newGame.timer = Number(t.dataset.timer); fx('tap'); return renderNew(); }
@@ -2913,7 +3348,7 @@ document.addEventListener('click', (e) => {
     'send-invite': () => run(async () => {
       t.disabled = true;
       const gd = GAME_LIST.find((x) => x.type === S.newGame.type);
-      const r = await api('create', { type: S.newGame.type, options: { timer: S.newGame.timer, hints: !!gd.hints && S.newGame.hints, ...(gd.holes ? { holes: S.newGame.holes } : {}) } });
+      const r = await api('create', { type: S.newGame.type, options: { timer: S.newGame.timer, hints: !!gd.hints && S.newGame.hints, ...(gd.holes ? { holes: S.newGame.holes, max: S.newGame.max } : {}) } });
       S.games.unshift(r.game); fx('sent'); toast(`Invite sent to ${nameOf(opp())}`); setTab('games');
     }).finally(() => { t.disabled = false; }),
     'toggle-sound': () => { P.sound = !P.sound; savePrefs(); fx('tap'); renderSettings(); },
@@ -2944,7 +3379,7 @@ document.addEventListener('click', (e) => {
       const g = G.data.game;
       let state, turn;
       const first = g.options.first || (Math.random() < 0.5 ? 'a' : 'b');
-      if (g.type === 'golf') { state = golfNew(first, g.options.holes || 9); turn = first; }
+      if (g.type === 'golf') { state = golfNew(first, g.options.holes || 9, undefined, g.options.max != null ? g.options.max : 8); turn = first; }
       else if (g.type === 'pool') { state = poolNew(first); turn = first; }
       else {
         const colors = g.options.colors || (Math.random() < 0.5 ? { a: 'r', b: 'k' } : { a: 'k', b: 'r' });

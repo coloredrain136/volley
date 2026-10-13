@@ -86,15 +86,30 @@ const handlers = {
   },
 
   async list(b, me, ctx) {
-    const [players, games, unreadRows, reqs] = await Promise.all([
+    const [players, games, unreadRows, reqs, defRows] = await Promise.all([
       getPlayers(),
       sb(`volley_games?status=in.(invited,active,finished)&order=updated_at.desc&limit=500&select=${GAME_COLS}`),
       sb(`volley_messages?read_at=is.null&player=eq.${other(me)}&select=game_id`),
       sb(`volley_requests?status=eq.pending&select=id,game_id,kind,from_player,created_at`),
+      sb('volley_settings?key=eq.defaults&select=value'),
     ]);
     const unread = {};
     for (const r of unreadRows || []) unread[r.game_id] = (unread[r.game_id] || 0) + 1;
-    return { players, games: games || [], unread, requests: reqs || [], vapid: VAPID_PUBLIC, push: pushReady(), now: nowIso() };
+    const defaults = defRows && defRows[0] ? defRows[0].value : null;
+    return { players, games: games || [], unread, requests: reqs || [], defaults, vapid: VAPID_PUBLIC, push: pushReady(), now: nowIso() };
+  },
+
+  // Game defaults shared by both players (Settings → Game defaults)
+  async set_defaults(b) {
+    const d = b.defaults || {};
+    const value = {
+      holes: [3, 6, 9].includes(Number(d.holes)) ? Number(d.holes) : 9,
+      max: [0, 6, 8, 10].includes(Number(d.max)) ? Number(d.max) : 8,
+      timer: [0, 24, 72].includes(Number(d.timer)) ? Number(d.timer) : 0,
+      hints: d.hints !== false,
+    };
+    await sb('volley_settings', { method: 'POST', prefer: 'resolution=merge-duplicates', body: { key: 'defaults', value, updated_at: nowIso() } });
+    return { defaults: value };
   },
 
   async game(b) {
@@ -111,7 +126,10 @@ const handlers = {
     if (!TYPES.includes(b.type)) fail(400, 'bad_type');
     const o = b.options || {};
     const options = { timer: TIMERS.includes(Number(o.timer)) ? Number(o.timer) : 0, hints: !!o.hints };
-    if (b.type === 'golf') options.holes = [3, 6, 9].includes(Number(o.holes)) ? Number(o.holes) : 9;
+    if (b.type === 'golf') {
+      options.holes = [3, 6, 9].includes(Number(o.holes)) ? Number(o.holes) : 9;
+      options.max = [0, 6, 8, 10].includes(Number(o.max)) ? Number(o.max) : 8; // 0 = no stroke limit
+    }
     const rows = await sb(`volley_games?select=${GAME_COLS}`, {
       method: 'POST', prefer: 'return=representation',
       body: { type: b.type, status: 'invited', options, turn: other(me), created_by: me },
@@ -300,6 +318,7 @@ const handlers = {
     if (existing && existing.length) return { game: existing[0], existing: true };
     const options = { timer: g.options.timer || 0, hints: !!g.options.hints };
     if (g.options.holes) options.holes = g.options.holes;
+    if (g.options.max != null) options.max = g.options.max;
     // Swap sides from last game so you take turns going first
     if (g.state && g.state.colors) {
       const c = g.state.colors; options.colors = { a: c.b, b: c.a };
