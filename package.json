@@ -1,0 +1,9 @@
+{
+  "name": "volley",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Two-player turn-based games for two people",
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
+}

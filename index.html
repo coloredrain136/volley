@@ -1,0 +1,1435 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Volley">
+<meta name="theme-color" content="#eef1f8">
+<title>Volley</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/favicon.png">
+<style>
+:root{
+  --bg:#eef1f8; --blob1:#b9c6ff; --blob2:#f5c3e1; --blob3:#bfe9f2;
+  --glass:rgba(255,255,255,.55); --glass-2:rgba(255,255,255,.78); --glass-3:rgba(255,255,255,.35);
+  --stroke:rgba(255,255,255,.75); --hair:rgba(24,32,70,.08); --hair-2:rgba(24,32,70,.14);
+  --text:#121630; --sub:#5d6483; --faint:#8f95ad;
+  --accent:#5b6cff; --accent-2:#9b5cff; --accent-ink:#fff; --accent-soft:rgba(91,108,255,.14);
+  --good:#1fae79; --warn:#f29a1f; --bad:#f2445f;
+  --shadow:0 10px 30px rgba(40,50,120,.12), 0 1px 2px rgba(40,50,120,.08);
+  --shadow-lg:0 24px 60px rgba(40,50,120,.18);
+  --hl:inset 0 1px 0 rgba(255,255,255,.9);
+  --blur:saturate(180%) blur(22px);
+  --r-lg:26px; --r-md:18px; --r-sm:12px;
+  --sq-light:#f4eee4; --sq-dark:#8a95b8; --sq-dark-2:#7884aa;
+  --safe-t:env(safe-area-inset-top); --safe-b:env(safe-area-inset-bottom);
+  --tabbar:68px;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0c0e18; --blob1:#2b2f7a; --blob2:#5a2251; --blob3:#123e4c;
+  --glass:rgba(34,38,60,.55); --glass-2:rgba(44,48,74,.82); --glass-3:rgba(255,255,255,.06);
+  --stroke:rgba(255,255,255,.10); --hair:rgba(255,255,255,.08); --hair-2:rgba(255,255,255,.14);
+  --text:#eef0fb; --sub:#a5abc8; --faint:#737a99;
+  --accent:#7c8bff; --accent-2:#b07cff; --accent-soft:rgba(124,139,255,.18);
+  --shadow:0 10px 30px rgba(0,0,0,.35), 0 1px 2px rgba(0,0,0,.3);
+  --shadow-lg:0 24px 60px rgba(0,0,0,.5);
+  --hl:inset 0 1px 0 rgba(255,255,255,.08);
+  --sq-light:#c9c3ba; --sq-dark:#3f4766; --sq-dark-2:#363d5a;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font:16px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;overscroll-behavior:none}
+body{overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea{-webkit-user-select:text;user-select:text;font:inherit;color:inherit}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
+[hidden]{display:none!important}
+
+/* Wallpaper */
+.bg{position:fixed;inset:-20%;z-index:0;pointer-events:none;
+  background:
+   radial-gradient(40% 35% at 18% 18%, var(--blob1), transparent 70%),
+   radial-gradient(38% 32% at 86% 30%, var(--blob2), transparent 70%),
+   radial-gradient(45% 40% at 40% 92%, var(--blob3), transparent 70%),
+   var(--bg)}
+
+/* Glass */
+.glass{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:1px solid var(--stroke);box-shadow:var(--shadow),var(--hl)}
+.card{border-radius:var(--r-lg);padding:16px}
+
+/* Main scroller */
+#view{position:fixed;inset:0;z-index:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:calc(var(--safe-t) + 14px) 16px calc(var(--tabbar) + var(--safe-b) + 34px)}
+.page{max-width:560px;margin:0 auto;animation:fade .28s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h1{font-size:34px;letter-spacing:-.02em;margin:8px 4px 16px;font-weight:800}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--sub);font-weight:700;margin:22px 8px 8px;display:flex;align-items:center;gap:8px}
+h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;padding:1px 7px;font-size:11px}
+.sub{color:var(--sub)} .faint{color:var(--faint)}
+.row{display:flex;align-items:center;gap:12px}
+.grow{flex:1;min-width:0}
+.ellipsis{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Tab bar */
+#tabs{position:fixed;z-index:5;left:16px;right:16px;bottom:calc(var(--safe-b) + 10px);height:var(--tabbar);
+  max-width:520px;margin:0 auto;border-radius:34px;display:grid;grid-template-columns:repeat(4,1fr);padding:6px}
+#tabs .ind{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/4);border-radius:28px;
+  background:var(--glass-2);box-shadow:var(--hl),0 2px 8px rgba(40,50,120,.08);transition:transform .35s cubic-bezier(.3,1.3,.5,1)}
+#tabs button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-size:11px;font-weight:600;color:var(--sub);border-radius:28px;transition:color .2s}
+#tabs button.on{color:var(--accent)}
+#tabs svg{width:24px;height:24px}
+#tabs .dot{position:absolute;top:6px;right:calc(50% - 20px);min-width:17px;height:17px;border-radius:9px;background:var(--bad);color:#fff;
+  font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 20px;border-radius:25px;
+  font-weight:650;font-size:16px;transition:transform .12s ease, opacity .2s;background:var(--glass-2);border:1px solid var(--stroke);box-shadow:var(--hl),0 2px 10px rgba(40,50,120,.06)}
+.btn:active,.press:active{transform:scale(.96)}
+.btn svg{width:20px;height:20px;flex:none}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:var(--accent-ink);border-color:transparent;
+  box-shadow:0 8px 22px rgba(91,108,255,.35), inset 0 1px 0 rgba(255,255,255,.35)}
+.btn.danger{color:var(--bad)}
+.btn.block{width:100%}
+.btn.sm{height:38px;padding:0 14px;font-size:14px;border-radius:19px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.icon-btn{width:44px;height:44px;border-radius:22px;display:inline-flex;align-items:center;justify-content:center;position:relative}
+.icon-btn svg{width:22px;height:22px}
+.badge{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid var(--bg)}
+
+/* Game cards */
+.list{display:flex;flex-direction:column;gap:10px}
+.gcard{display:flex;align-items:center;gap:14px;padding:12px 14px 12px 12px;border-radius:22px;width:100%;text-align:left;transition:transform .12s}
+.gcard:active{transform:scale(.98)}
+.thumb{width:58px;height:58px;border-radius:14px;flex:none;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.thumb svg{display:block;width:100%;height:100%}
+.gtitle{font-weight:700;font-size:17px;display:flex;align-items:center;gap:6px}
+.gline{font-size:14px;color:var(--sub);margin-top:2px}
+.pill{display:inline-flex;align-items:center;gap:4px;border-radius:10px;padding:2px 8px;font-size:12px;font-weight:650;background:var(--accent-soft);color:var(--accent)}
+.pill.warn{background:rgba(242,154,31,.15);color:var(--warn)} .pill.bad{background:rgba(242,68,95,.14);color:var(--bad)}
+.pill.good{background:rgba(31,174,121,.15);color:var(--good)} .pill.grey{background:var(--hair);color:var(--sub)}
+.unread{width:10px;height:10px;border-radius:5px;background:var(--accent);flex:none;box-shadow:0 0 0 3px var(--accent-soft)}
+.chev{color:var(--faint);flex:none}
+.empty{text-align:center;padding:42px 22px;border-radius:30px;margin-top:30px}
+.empty .big{font-size:64px;line-height:1;margin-bottom:12px}
+.empty h3{font-size:24px;margin:0 0 6px}
+.more-link{display:block;margin:6px auto 0;color:var(--accent);font-weight:600;font-size:15px;padding:10px}
+
+/* Forms / settings */
+.group{border-radius:var(--r-lg);overflow:hidden}
+.item{display:flex;align-items:center;gap:12px;min-height:56px;padding:10px 16px;width:100%;text-align:left}
+.item + .item{border-top:1px solid var(--hair)}
+.item .lbl{flex:1;font-weight:550}
+.item .val{color:var(--sub);font-size:15px}
+.switch{position:relative;width:52px;height:32px;border-radius:16px;background:var(--hair-2);transition:background .25s;flex:none}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:28px;height:28px;border-radius:14px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .25s cubic-bezier(.3,1.3,.5,1)}
+.switch.on{background:var(--good)} .switch.on::after{transform:translateX(20px)}
+.seg{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;padding:3px;border-radius:14px;background:var(--hair);gap:2px}
+.seg button{height:34px;border-radius:11px;font-size:14px;font-weight:600;color:var(--sub);position:relative;z-index:1;transition:color .2s}
+.seg button.on{color:var(--text);background:var(--glass-2);box-shadow:0 2px 8px rgba(0,0,0,.08),var(--hl)}
+.field{width:100%;height:52px;border-radius:16px;border:1px solid var(--hair-2);background:var(--glass-2);padding:0 16px;font-size:17px;outline:none}
+.field:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:12px}
+.emoji-grid button{aspect-ratio:1;border-radius:12px;font-size:24px;display:flex;align-items:center;justify-content:center;transition:transform .12s}
+.emoji-grid button.on{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
+.emoji-grid button:active{transform:scale(.88)}
+
+/* New game */
+.picker{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.gtile{border-radius:22px;padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;font-weight:700;font-size:15px;position:relative;transition:transform .15s, box-shadow .2s}
+.gtile .art{width:62px;height:62px;border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.14)}
+.gtile .art svg{width:100%;height:100%;display:block}
+.gtile.on{box-shadow:0 0 0 2.5px var(--accent),var(--shadow)}
+.gtile.soon{opacity:.55}
+.gtile small{font-size:11px;color:var(--sub);font-weight:600;margin-top:-4px}
+.optrow{display:flex;flex-direction:column;gap:8px;padding:14px 16px}
+.optrow + .optrow{border-top:1px solid var(--hair)}
+.optrow .lbl{font-weight:600}
+.optrow .hint{font-size:13px;color:var(--sub)}
+
+/* Stats */
+.h2h{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;text-align:center;padding:22px 12px}
+.h2h .av{font-size:44px;line-height:1}
+.h2h .nm{font-weight:650;margin-top:6px}
+.h2h .w{font-size:44px;font-weight:800;letter-spacing:-.03em;margin-top:4px}
+.h2h .vs{font-size:13px;color:var(--faint);font-weight:700}
+.statrow{display:flex;align-items:center;gap:12px;padding:14px 16px}
+.statrow + .statrow{border-top:1px solid var(--hair)}
+.bar{height:8px;border-radius:4px;background:var(--hair);overflow:hidden;display:flex;margin-top:8px}
+.bar i{display:block;height:100%}
+
+/* Screens (game) */
+.screen{position:fixed;inset:0;z-index:10;overflow:hidden;display:flex;flex-direction:column;background:transparent;
+  transform:translateX(100%);transition:transform .38s cubic-bezier(.2,.9,.25,1);will-change:transform}
+.screen.open{transform:none}
+.screen .bg{position:absolute}
+.topbar{position:relative;z-index:2;display:flex;align-items:center;gap:10px;padding:calc(var(--safe-t) + 8px) 12px 8px}
+.topbar .t{flex:1;text-align:center;min-width:0}
+.topbar .t b{display:block;font-size:17px}
+.topbar .t span{font-size:12.5px;color:var(--sub)}
+.gbody{position:relative;z-index:1;flex:1;overflow-y:auto;padding:4px 16px calc(var(--safe-b) + 18px);display:flex;flex-direction:column;align-items:center;gap:10px}
+.gbody > *{width:100%;max-width:480px}
+.pbar{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 8px;border-radius:20px;transition:box-shadow .3s}
+.pbar .av{width:40px;height:40px;border-radius:20px;background:var(--glass-2);display:flex;align-items:center;justify-content:center;font-size:24px;flex:none}
+.pbar .nm{font-weight:700}
+.pbar .meta{font-size:12.5px;color:var(--sub);display:flex;align-items:center;gap:6px}
+.pbar.turn{box-shadow:0 0 0 2px var(--accent),0 0 24px rgba(91,108,255,.35),var(--hl)}
+.chip-dot{width:12px;height:12px;border-radius:6px;display:inline-block}
+.banner{border-radius:20px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;animation:fade .25s}
+.banner .msg{font-weight:600;text-align:center}
+.banner .acts{display:flex;gap:8px}
+.banner .acts .btn{flex:1;height:42px}
+.actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.actions .btn{height:42px;font-size:14.5px;padding:0 14px;border-radius:21px}
+.actions .btn svg{width:18px;height:18px}
+
+/* Board */
+.board-wrap{padding:8px;border-radius:22px}
+.board{position:relative;width:100%;aspect-ratio:1;border-radius:14px;overflow:hidden;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);touch-action:manipulation}
+.sq{position:relative;background:var(--sq-light)}
+.sq.d{background:linear-gradient(145deg,var(--sq-dark),var(--sq-dark-2))}
+.sq.last::before{content:"";position:absolute;inset:0;background:rgba(255,214,90,.32)}
+.sq.sel::before{content:"";position:absolute;inset:0;background:rgba(124,139,255,.45)}
+.sq.dest::after{content:"";position:absolute;left:50%;top:50%;width:30%;height:30%;margin:-15% 0 0 -15%;border-radius:50%;background:rgba(255,255,255,.75);box-shadow:0 0 0 3px rgba(91,108,255,.5)}
+.sq.must::before{content:"";position:absolute;inset:4%;border-radius:50%;box-shadow:0 0 0 3px rgba(255,214,90,.95),0 0 14px rgba(255,214,90,.8);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45}}
+.pieces{position:absolute;inset:0;pointer-events:none}
+.pc{position:absolute;left:0;top:0;width:12.5%;height:12.5%;transition:transform .22s cubic-bezier(.3,.8,.3,1),opacity .25s;will-change:transform}
+.pc i{position:absolute;inset:11%;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.pc.r i{background:radial-gradient(circle at 35% 30%,#ff8a8f,#e02b48 55%,#a8122d);box-shadow:0 3px 0 #7d0b20,0 5px 10px rgba(0,0,0,.35),inset 0 0 0 3px rgba(255,255,255,.18)}
+.pc.k i{background:radial-gradient(circle at 35% 30%,#6c7183,#262935 55%,#101117);box-shadow:0 3px 0 #050507,0 5px 10px rgba(0,0,0,.4),inset 0 0 0 3px rgba(255,255,255,.12)}
+.pc i::before{content:"";position:absolute;inset:18%;border-radius:50%;border:2px solid rgba(255,255,255,.18)}
+.pc svg{width:52%;height:52%;position:relative;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+.pc.gone{opacity:0;transform-origin:center}
+.pc.lift i{transform:translateY(-6%) scale(1.06);transition:transform .15s}
+.board.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* Sheets */
+.backdrop{position:fixed;inset:0;z-index:20;background:rgba(10,14,30,.28);opacity:0;transition:opacity .3s;pointer-events:none}
+.backdrop.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-width:600px;margin:0 auto;border-radius:30px 30px 0 0;
+  padding:8px 16px calc(var(--safe-b) + 16px);transform:translateY(105%);transition:transform .38s cubic-bezier(.2,.9,.25,1);
+  background:var(--glass-2);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid var(--stroke);box-shadow:var(--shadow-lg);max-height:88dvh;display:flex;flex-direction:column}
+.sheet.open{transform:none}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--hair-2);margin:2px auto 10px;flex:none}
+.sheet h3{margin:4px 4px 12px;font-size:20px}
+.menu{display:flex;flex-direction:column;gap:8px}
+.menu .btn{justify-content:flex-start;height:54px;border-radius:18px}
+
+/* Chat */
+.chat{height:72dvh}
+.msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px 2px 10px;-webkit-user-select:text;user-select:text}
+.bub{max-width:78%;padding:9px 13px;border-radius:20px;font-size:16px;line-height:1.3;word-wrap:break-word;white-space:pre-wrap;animation:pop .2s ease}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
+.bub.me{align-self:flex-end;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-bottom-right-radius:6px}
+.bub.them{align-self:flex-start;background:var(--glass);border:1px solid var(--stroke);border-bottom-left-radius:6px}
+.stamp{text-align:center;font-size:11.5px;color:var(--faint);margin:8px 0 2px}
+.composer{display:flex;gap:8px;align-items:flex-end;padding-top:8px;border-top:1px solid var(--hair)}
+.composer textarea{flex:1;resize:none;max-height:120px;min-height:44px;border-radius:22px;border:1px solid var(--hair-2);background:var(--glass);padding:11px 16px;font-size:16px;outline:none}
+.send{width:44px;height:44px;border-radius:22px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+.send svg{width:20px;height:20px}
+
+/* Lock / setup */
+#gate{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:24px}
+.gate-card{width:100%;max-width:400px;border-radius:32px;padding:28px 22px;text-align:center;animation:fade .3s}
+.logo{width:84px;height:84px;border-radius:22px;margin:0 auto 14px;box-shadow:0 12px 30px rgba(91,108,255,.35);display:block}
+.gate-card h1{margin:0 0 4px;font-size:30px}
+.gate-card p{margin:0 0 18px;color:var(--sub)}
+.who{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.who button{border-radius:24px;padding:20px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;font-weight:700}
+.who .e{font-size:46px;line-height:1}
+.who .add{width:52px;height:52px;border-radius:26px;border:2px dashed var(--hair-2);display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--faint)}
+.shake{animation:shake .3s}
+
+/* Toast */
+#toast{position:fixed;z-index:50;left:50%;top:calc(var(--safe-t) + 10px);transform:translate(-50%,-140%);transition:transform .35s cubic-bezier(.3,1.3,.5,1);
+  padding:12px 18px;border-radius:22px;font-weight:600;font-size:15px;max-width:calc(100% - 32px);text-align:center;background:var(--glass-2)}
+#toast.show{transform:translate(-50%,0)}
+
+/* Replay bar */
+.replay{display:flex;align-items:center;gap:6px;padding:6px;border-radius:26px}
+.replay .icon-btn{width:42px;height:42px}
+.replay .pos{flex:1;text-align:center;font-weight:650;font-size:14px}
+
+.result{text-align:center;padding:16px}
+.result .big{font-size:44px;line-height:1}
+.result b{display:block;font-size:22px;margin-top:6px}
+
+.spinner{width:22px;height:22px;border-radius:50%;border:3px solid var(--hair-2);border-top-color:var(--accent);animation:spin .8s linear infinite;margin:30px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<main id="view"></main>
+
+<nav id="tabs" class="glass" hidden>
+  <div class="ind"></div>
+  <button data-tab="games"><span class="ico"></span>Games</button>
+  <button data-tab="new"><span class="ico"></span>New Game</button>
+  <button data-tab="stats"><span class="ico"></span>Stats</button>
+  <button data-tab="settings"><span class="ico"></span>Settings</button>
+</nav>
+
+<section id="game" class="screen">
+  <div class="bg"></div>
+  <div class="topbar">
+    <button class="icon-btn glass press" data-act="close-game" aria-label="Back"></button>
+    <div class="t"><b id="g-title">Checkers</b><span id="g-sub"></span></div>
+    <button class="icon-btn glass press" data-act="open-chat" aria-label="Chat"></button>
+  </div>
+  <div class="gbody" id="g-body"></div>
+</section>
+
+<div class="backdrop" id="backdrop"></div>
+<div class="sheet" id="sheet"></div>
+<div id="gate" hidden></div>
+<div id="toast" class="glass"></div>
+
+<script>
+'use strict';
+/* ========================== Basics ========================== */
+const VERSION = 'volley-1';
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('volley.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('volley.' + k, JSON.stringify(v)); } catch {} },
+  del(k) { try { localStorage.removeItem('volley.' + k); } catch {} },
+};
+const other = (p) => (p === 'a' ? 'b' : 'a');
+const isStandalone = () => window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+
+function ago(iso) {
+  if (!iso) return '';
+  const s = Math.max(0, (Date.now() - new Date(iso)) / 1000);
+  if (s < 50) return 'just now';
+  if (s < 3600) return Math.round(s / 60) + 'm ago';
+  if (s < 86400) return Math.round(s / 3600) + 'h ago';
+  if (s < 86400 * 7) return Math.round(s / 86400) + 'd ago';
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+function left(iso) {
+  const s = (new Date(iso) - Date.now()) / 1000;
+  if (s <= 0) return 'out of time';
+  if (s < 3600) return Math.max(1, Math.round(s / 60)) + 'm left';
+  if (s < 86400 * 1.5) return Math.round(s / 3600) + 'h left';
+  return Math.round(s / 86400) + 'd left';
+}
+const hoursLeft = (iso) => (new Date(iso) - Date.now()) / 3600e3;
+
+/* ========================== Icons ========================== */
+const I = {
+  games: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>',
+  new: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
+  stats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>',
+  settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1.2-4.4A8 8 0 1 1 21 12z"/></svg>',
+  send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
+  chev: '<svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2 2l6 6-6 6"/></svg>',
+  crown: '<svg viewBox="0 0 24 24" fill="#ffd45a"><path d="M3 18h18l-1.5-10-5 4.5L12 5l-2.5 7.5-5-4.5z"/></svg>',
+  undo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>',
+  flag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h12l-2 4 2 4H5"/></svg>',
+  hand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h8M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z"/></svg>',
+  more: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+  wave: '👋',
+  first: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 5l-8 7 8 7"/></svg>',
+  prev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  next: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  last: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 5v14M6 5l8 7-8 7"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>',
+};
+
+/* ========================== Prefs: theme, sound, haptics ========================== */
+const P = Object.assign({ theme: 'light', sound: true, haptic: true }, store.get('prefs', {}));
+function savePrefs() { store.set('prefs', P); }
+function applyTheme() {
+  document.documentElement.dataset.theme = P.theme;
+  const m = $('meta[name=theme-color]'); if (m) m.content = P.theme === 'dark' ? '#0c0e18' : '#eef1f8';
+  const sb = $('meta[name=apple-mobile-web-app-status-bar-style]'); if (sb) sb.content = P.theme === 'dark' ? 'black-translucent' : 'default';
+}
+applyTheme();
+
+let AC = null;
+function audio() {
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } }
+  if (AC.state === 'suspended') AC.resume().catch(() => {});
+  return AC;
+}
+function tone(freq, dur = 0.08, type = 'sine', vol = 0.12, when = 0, slide) {
+  const ac = audio(); if (!ac) return;
+  const t = ac.currentTime + when, o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + 0.02);
+}
+const SFX = {
+  tap() { tone(880, 0.04, 'sine', 0.05); },
+  move() { tone(420, 0.07, 'triangle', 0.16, 0, 300); tone(220, 0.05, 'sine', 0.08, 0.01); },
+  capture() { tone(300, 0.09, 'square', 0.07, 0, 160); tone(640, 0.08, 'triangle', 0.1, 0.06, 420); },
+  king() { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.12, 'triangle', 0.1, i * 0.07)); },
+  win() { [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, 0.22, 'triangle', 0.12, i * 0.09)); },
+  lose() { [392, 330, 262].forEach((f, i) => tone(f, 0.25, 'sine', 0.12, i * 0.14)); },
+  msg() { tone(1046, 0.07, 'sine', 0.08); tone(1568, 0.09, 'sine', 0.06, 0.06); },
+  sent() { tone(660, 0.06, 'sine', 0.06, 0, 990); },
+  err() { tone(180, 0.12, 'square', 0.05); },
+  nudge() { tone(700, 0.06, 'triangle', 0.1); tone(700, 0.06, 'triangle', 0.1, 0.1); },
+};
+function sfx(name) { if (P.sound) try { SFX[name](); } catch {} }
+let hapEl = null;
+function haptic(strong) {
+  if (!P.haptic) return;
+  try {
+    if (navigator.vibrate) { navigator.vibrate(strong ? [12, 40, 12] : 10); return; }
+    // iOS Safari has no vibrate(); toggling a native switch control gives a light tap on recent iOS (best effort)
+    if (!hapEl) {
+      hapEl = document.createElement('label');
+      hapEl.style.cssText = 'position:fixed;left:-200px;top:0;opacity:0;pointer-events:none';
+      hapEl.innerHTML = '<input type="checkbox" switch>';
+      document.body.appendChild(hapEl);
+    }
+    hapEl.click();
+  } catch {}
+}
+function fx(name, strong) { sfx(name); haptic(strong); }
+
+/* ========================== State + API ========================== */
+const S = {
+  key: store.get('key', ''), me: store.get('me', ''),
+  players: store.get('players', { a: null, b: null }),
+  games: store.get('games', []), unread: {}, requests: [],
+  vapid: store.get('vapid', ''), push: true,
+  tab: 'games', showAllFinished: false,
+  newGame: { type: 'checkers', timer: 0, hints: true },
+};
+const nameOf = (p) => (S.players[p] && S.players[p].name) || (p === 'a' ? 'Player 1' : 'Player 2');
+const emojiOf = (p) => (S.players[p] && S.players[p].emoji) || '🙂';
+const opp = () => other(S.me);
+
+async function call(path, action, data = {}) {
+  let r;
+  try {
+    r = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-volley-key': S.key, 'x-volley-player': S.me || '' },
+      body: JSON.stringify({ action, ...data }),
+    });
+  } catch (e) { const err = new Error('offline'); err.status = 0; throw err; }
+  let j = {};
+  try { j = await r.json(); } catch {}
+  if (!r.ok) { const err = new Error(j.error || 'HTTP ' + r.status); err.status = r.status; throw err; }
+  return j;
+}
+const api = (action, data) => call('/api/db', action, data).catch((e) => {
+  if (e.status === 401) { lockDevice(true); }
+  throw e;
+});
+const pushApi = (action, data) => call('/api/push', action, data);
+
+function errText(e) {
+  const m = e && e.message;
+  return ({
+    offline: "Can't reach Volley. Check your connection.",
+    game_changed: 'The game changed. Refreshed it for you.',
+    not_your_turn: "It's not your turn anymore.",
+    nudged_recently: 'You already nudged in the last hour.',
+    request_pending: "There's already a request waiting.",
+    nothing_to_undo: 'Nothing to take back.',
+    not_configured: 'Server not set up yet. Add the env vars in Vercel and redeploy.',
+    push_not_configured: 'Push keys are missing on the server.',
+  })[m] || 'Something went wrong (' + m + ')';
+}
+
+let toastT;
+function toast(msg, ms = 2400) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+/* ========================== Gate: passcode + who are you ========================== */
+const EMOJIS = ['😎','🦊','🐼','🐸','🐯','🦄','🐙','🐧','🦋','🌸','🌙','⭐️','🔥','🍓','🍑','🥑','🍕','🧁','☕️','🎮','🎲','🏓','🎧','💜','💙','💚','🧡','❤️','🐶','🐱','🐻','🐨','🦁','🐵','🦖','👻','🤖','👑','🌈','🍀'];
+
+function showGate(html) {
+  const g = $('#gate'); g.hidden = false; g.innerHTML = html;
+  $('#tabs').hidden = true; $('#view').innerHTML = '';
+}
+function hideGate() { $('#gate').hidden = true; $('#gate').innerHTML = ''; }
+
+function gatePasscode(msg) {
+  showGate(`<form class="gate-card glass" id="pass-form" autocomplete="off">
+    <img class="logo" src="/icon-512.png" alt="">
+    <h1>Volley</h1><p>${esc(msg || 'Enter your passcode to get started.')}</p>
+    <input class="field" id="pass" type="password" inputmode="text" placeholder="Passcode" autocapitalize="off" autocorrect="off" spellcheck="false">
+    <button class="btn primary block" style="margin-top:12px" type="submit">Continue</button>
+  </form>`);
+  const f = $('#pass-form');
+  f.onsubmit = async (e) => {
+    e.preventDefault();
+    const val = $('#pass').value.trim(); if (!val) return;
+    S.key = val;
+    const btn = f.querySelector('button'); btn.disabled = true;
+    try {
+      const r = await call('/api/db', 'hello');
+      store.set('key', val); S.players = r.players; S.vapid = r.vapid; store.set('vapid', r.vapid); store.set('players', r.players);
+      gateWho();
+    } catch (err) {
+      btn.disabled = false;
+      if (err.status === 401) { f.classList.remove('shake'); void f.offsetWidth; f.classList.add('shake'); fx('err'); $('#pass').value = ''; $('#pass').placeholder = 'Wrong passcode, try again'; }
+      else toast(errText(err), 4000);
+    }
+  };
+  setTimeout(() => $('#pass') && $('#pass').focus(), 300);
+}
+
+function gateWho() {
+  const tile = (p) => {
+    const pl = S.players[p];
+    return `<button class="glass press" data-who="${p}">
+      ${pl ? `<span class="e">${esc(pl.emoji)}</span><span>${esc(pl.name)}</span>` : `<span class="add">+</span><span class="sub">Set up ${p === 'a' ? 'Player 1' : 'Player 2'}</span>`}
+    </button>`;
+  };
+  showGate(`<div class="gate-card glass">
+    <img class="logo" src="/icon-512.png" alt="">
+    <h1>Who are you?</h1><p>Pick yourself. This phone will remember.</p>
+    <div class="who">${tile('a')}${tile('b')}</div>
+  </div>`);
+  $$('[data-who]').forEach((b) => b.onclick = () => {
+    const p = b.dataset.who; fx('tap');
+    if (S.players[p]) { chooseMe(p); } else gateProfile(p);
+  });
+}
+
+function profileForm(p, initial) {
+  const cur = initial || { name: '', emoji: EMOJIS[Math.floor(Math.random() * 12)] };
+  return `<input class="field" id="pf-name" maxlength="24" placeholder="Your name" value="${esc(cur.name)}" autocapitalize="words">
+    <div class="emoji-grid" id="pf-emoji">${EMOJIS.map((e) => `<button type="button" data-e="${e}" class="${e === cur.emoji ? 'on' : ''}">${e}</button>`).join('')}</div>`;
+}
+function wireProfile(root) {
+  $$('#pf-emoji button', root).forEach((b) => b.onclick = () => { $$('#pf-emoji button', root).forEach((x) => x.classList.remove('on')); b.classList.add('on'); fx('tap'); });
+  return () => ({ name: $('#pf-name', root).value.trim(), emoji: ($('#pf-emoji .on', root) || {}).dataset?.e || '🙂' });
+}
+
+function gateProfile(p) {
+  showGate(`<form class="gate-card glass" id="prof">
+    <h1 style="font-size:26px">Make your player</h1><p>Pick a name and an emoji.</p>
+    ${profileForm(p)}
+    <button class="btn primary block" style="margin-top:16px" type="submit">That's me</button>
+    <button class="btn block" style="margin-top:8px" type="button" id="prof-back">Back</button>
+  </form>`);
+  const read = wireProfile($('#prof'));
+  $('#prof-back').onclick = gateWho;
+  $('#prof').onsubmit = async (e) => {
+    e.preventDefault();
+    const v = read(); if (!v.name) { $('#pf-name').focus(); return; }
+    try {
+      const r = await call('/api/db', 'set_player', { slot: p, ...v });
+      S.players = r.players; store.set('players', r.players); chooseMe(p);
+    } catch (err) { toast(errText(err)); }
+  };
+}
+
+function chooseMe(p) {
+  S.me = p; store.set('me', p); hideGate(); startApp(); fx('win');
+}
+
+function lockDevice(badKey) {
+  stopPolling();
+  store.del('key'); store.del('me'); store.del('games');
+  S.key = ''; S.me = ''; S.games = [];
+  closeGame(true); closeSheet();
+  gatePasscode(badKey ? 'The passcode changed. Enter the new one.' : 'This phone is locked. Enter the passcode to unlock.');
+}
+
+/* ========================== Data loading ========================== */
+async function refreshList() {
+  try {
+    const r = await api('list');
+    S.players = r.players; S.games = r.games; S.unread = r.unread; S.requests = r.requests; S.vapid = r.vapid; S.push = r.push;
+    store.set('players', S.players); store.set('games', S.games); store.set('vapid', S.vapid);
+    if (!S.players[S.me]) { gateWho(); return; }
+    if (S.tab === 'games' || S.tab === 'stats') renderTab();
+    updateBadges();
+  } catch (e) { if (e.status !== 401 && S.tab === 'games') renderTab(); }
+}
+function sections() {
+  const me = S.me, g = S.games;
+  const yourTurn = g.filter((x) => x.status === 'active' && x.turn === me);
+  const invites = g.filter((x) => x.status === 'invited').sort((a, b) => (a.created_by === me) - (b.created_by === me));
+  const theirTurn = g.filter((x) => x.status === 'active' && x.turn !== me);
+  const finished = g.filter((x) => x.status === 'finished').sort((a, b) => new Date(b.finished_at || b.updated_at) - new Date(a.finished_at || a.updated_at));
+  return { yourTurn, invites, theirTurn, finished };
+}
+function updateBadges() {
+  const s = sections();
+  const n = s.yourTurn.length + s.invites.filter((x) => x.created_by !== S.me).length;
+  const unread = Object.values(S.unread || {}).reduce((a, b) => a + b, 0);
+  const dot = $('#tabs [data-tab=games] .dot');
+  const total = n;
+  if (dot) { dot.hidden = !total; dot.textContent = total; }
+  try { if (navigator.setAppBadge) { (n + unread) ? navigator.setAppBadge(n + unread) : navigator.clearAppBadge(); } } catch {}
+}
+
+/* ========================== Tabs ========================== */
+function setupTabs() {
+  $$('#tabs button').forEach((b) => {
+    $('.ico', b).innerHTML = I[b.dataset.tab];
+    if (b.dataset.tab === 'games' && !$('.dot', b)) b.insertAdjacentHTML('beforeend', '<span class="dot" hidden></span>');
+    b.onclick = () => { if (S.tab !== b.dataset.tab) { fx('tap'); setTab(b.dataset.tab); } else $('#view').scrollTo({ top: 0, behavior: 'smooth' }); };
+  });
+}
+function setTab(t) {
+  S.tab = t; const idx = ['games', 'new', 'stats', 'settings'].indexOf(t);
+  $$('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
+  $('#tabs .ind').style.transform = `translateX(${idx * 100}%)`;
+  $('#view').scrollTop = 0; renderTab();
+}
+function renderTab() {
+  if (!S.me) return;
+  ({ games: renderGames, new: renderNew, stats: renderStats, settings: renderSettings })[S.tab]();
+}
+
+/* ---------- Thumbnails ---------- */
+function thumb(g) {
+  if (g.type === 'checkers') {
+    const board = g.state && g.state.board;
+    const flip = g.state && g.state.colors && g.state.colors[S.me] === 'k';
+    let s = '<svg viewBox="0 0 80 80">';
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      const dark = (r + c) % 2 === 1;
+      s += `<rect x="${c * 10}" y="${r * 10}" width="10" height="10" fill="${dark ? '#8a95b8' : '#f4eee4'}"/>`;
+    }
+    const b = board || CK.init();
+    b.forEach((p, i) => {
+      if (!p) return; let r = i >> 3, c = i & 7; if (flip) { r = 7 - r; c = 7 - c; }
+      s += `<circle cx="${c * 10 + 5}" cy="${r * 10 + 5}" r="3.8" fill="${p.c === 'r' ? '#e02b48' : '#22252f'}" ${p.k ? 'stroke="#ffd45a" stroke-width="1.4"' : ''}/>`;
+    });
+    return s + '</svg>';
+  }
+  if (g.type === 'chess') return '<svg viewBox="0 0 80 80"><rect width="80" height="80" fill="#e9e3d6"/><text x="40" y="56" font-size="44" text-anchor="middle">♞</text></svg>';
+  return '<svg viewBox="0 0 80 80"><defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6fd18a"/><stop offset="1" stop-color="#2f9e5b"/></linearGradient></defs><rect width="80" height="80" fill="url(#gg)"/><circle cx="54" cy="26" r="7" fill="#123"/><path d="M54 26V8l12 5-12 5" fill="#f2445f" stroke="#fff" stroke-width="1"/><circle cx="24" cy="58" r="6" fill="#fff"/></svg>';
+}
+const GNAME = { checkers: 'Checkers', chess: 'Chess', golf: 'Mini Golf' };
+
+function gameLine(g) {
+  const me = S.me, them = nameOf(opp());
+  if (g.status === 'invited') return g.created_by === me ? `Invite sent · waiting on ${esc(them)}` : `${esc(them)} invited you`;
+  if (g.status === 'active') return g.turn === me ? `Your move · ${ago(g.last_move_at)}` : `Waiting on ${esc(them)} · ${ago(g.last_move_at)}`;
+  if (g.winner === 'draw') return 'Draw';
+  const why = g.end_reason === 'resign' ? ' · resigned' : g.end_reason === 'timeout' ? ' · timer ran out' : '';
+  return (g.winner === me ? 'You won' : `${esc(them)} won`) + why + ` · ${ago(g.finished_at)}`;
+}
+function gameCard(g) {
+  const unread = S.unread[g.id];
+  const req = S.requests.find((r) => r.game_id === g.id && r.from_player !== S.me);
+  let chip = '';
+  if (g.status === 'active' && g.turn_deadline) {
+    const h = hoursLeft(g.turn_deadline);
+    chip = `<span class="pill ${h < 3 ? 'bad' : h < 12 ? 'warn' : 'grey'}">⏱ ${left(g.turn_deadline)}</span>`;
+  }
+  if (req) chip = `<span class="pill warn">${req.kind === 'undo' ? 'Undo request' : 'Draw offer'}</span>`;
+  if (g.status === 'invited' && g.created_by !== S.me) chip = '<span class="pill">New</span>';
+  if (g.status === 'finished') chip = g.winner === S.me ? '<span class="pill good">Win</span>' : g.winner === 'draw' ? '<span class="pill grey">Draw</span>' : '<span class="pill bad">Loss</span>';
+  return `<button class="gcard glass" data-open="${g.id}">
+    <div class="thumb">${thumb(g)}</div>
+    <div class="grow">
+      <div class="gtitle">${GNAME[g.type] || g.type} <span style="font-size:15px">${esc(emojiOf(opp()))}</span></div>
+      <div class="gline ellipsis">${gameLine(g)}</div>
+      ${chip ? `<div style="margin-top:6px">${chip}</div>` : ''}
+    </div>
+    ${unread ? '<span class="unread" aria-label="unread messages"></span>' : ''}
+    <span class="chev">${I.chev}</span>
+  </button>`;
+}
+
+function renderGames() {
+  const s = sections();
+  const active = s.yourTurn.length + s.invites.length + s.theirTurn.length;
+  let html = '<div class="page"><h1>Games</h1>';
+  if (!active) {
+    html += `<div class="empty glass">
+      <div class="big">🏓</div>
+      <h3>Nothing going right now</h3>
+      <p class="sub" style="margin:0 0 18px">Start a game with ${esc(nameOf(opp()))}. They'll get a notification.</p>
+      <button class="btn primary block" data-act="go-new">Start a game</button>
+    </div>`;
+  }
+  const sec = (title, list, n) => list.length ? `<h2>${title}${n ? `<span class="count">${list.length}</span>` : ''}</h2><div class="list">${list.map(gameCard).join('')}</div>` : '';
+  html += sec('Your turn', s.yourTurn, true) + sec('Invites', s.invites) + sec(`${esc(nameOf(opp()))}'s turn`, s.theirTurn);
+  if (s.finished.length) {
+    const shown = S.showAllFinished ? s.finished : s.finished.slice(0, 8);
+    html += `<h2>Finished</h2><div class="list">${shown.map(gameCard).join('')}</div>`;
+    if (s.finished.length > shown.length) html += `<button class="more-link" data-act="show-finished">Show all ${s.finished.length}</button>`;
+  }
+  html += '</div>';
+  $('#view').innerHTML = html;
+}
+
+/* ---------- New Game ---------- */
+const GAME_LIST = [
+  { type: 'checkers', name: 'Checkers', ready: true, hints: true },
+  { type: 'chess', name: 'Chess', ready: false, soon: 'Coming next' },
+  { type: 'golf', name: 'Mini Golf', ready: false, soon: 'Coming soon' },
+];
+function renderNew() {
+  const N = S.newGame;
+  const gdef = GAME_LIST.find((x) => x.type === N.type);
+  const segs = [[0, 'None'], [24, '1 day'], [72, '3 days']];
+  $('#view').innerHTML = `<div class="page"><h1>New Game</h1>
+    <h2>Pick a game</h2>
+    <div class="picker">${GAME_LIST.map((g) => `<button class="gtile glass press ${g.type === N.type ? 'on' : ''} ${g.ready ? '' : 'soon'}" data-pick="${g.type}">
+      <div class="art">${thumb({ type: g.type })}</div>${g.name}${g.ready ? '' : `<small>${g.soon}</small>`}</button>`).join('')}</div>
+    <h2>Options</h2>
+    <div class="group glass">
+      <div class="optrow"><div class="lbl">Turn timer</div>
+        <div class="seg" id="seg-timer">${segs.map(([v, l]) => `<button data-timer="${v}" class="${N.timer === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+        <div class="hint">${N.timer ? `Run out of time and you forfeit. You'll get a warning a few hours before.` : 'Take as long as you want.'}</div>
+      </div>
+      ${gdef.hints ? `<button class="item" data-act="toggle-hints"><span class="lbl">Move hints<div class="hint sub" style="font-weight:400;font-size:13px">Show legal moves when you tap a piece</div></span><span class="switch ${N.hints ? 'on' : ''}"></span></button>` : ''}
+    </div>
+    <div style="margin-top:20px"><button class="btn primary block" data-act="send-invite" ${gdef.ready ? '' : 'disabled'}>Send invite to ${esc(nameOf(opp()))} ${esc(emojiOf(opp()))}</button></div>
+    ${S.players[opp()] ? '' : `<p class="sub" style="text-align:center;font-size:14px">${esc(nameOf(opp()))} hasn't set up Volley yet. They'll see the invite once they do.</p>`}
+  </div>`;
+}
+
+/* ---------- Stats ---------- */
+function computeStats() {
+  const fin = S.games.filter((g) => g.status === 'finished').sort((a, b) => new Date(a.finished_at || a.updated_at) - new Date(b.finished_at || b.updated_at));
+  const st = { a: 0, b: 0, draw: 0, by: {}, longest: { a: 0, b: 0 }, cur: { p: null, n: 0 } };
+  let run = { p: null, n: 0 };
+  for (const g of fin) {
+    const t = (st.by[g.type] = st.by[g.type] || { a: 0, b: 0, draw: 0 });
+    if (g.winner === 'draw') { st.draw++; t.draw++; run = { p: null, n: 0 }; continue; }
+    if (g.winner !== 'a' && g.winner !== 'b') continue;
+    st[g.winner]++; t[g.winner]++;
+    run = run.p === g.winner ? { p: run.p, n: run.n + 1 } : { p: g.winner, n: 1 };
+    st.longest[g.winner] = Math.max(st.longest[g.winner], run.n);
+  }
+  st.cur = run; st.total = fin.length;
+  return st;
+}
+function renderStats() {
+  const st = computeStats(), me = S.me, o = opp();
+  const pct = (x) => (st.a + st.b + st.draw) ? (x / (st.a + st.b + st.draw) * 100) : 0;
+  const streak = st.cur.n ? `${esc(emojiOf(st.cur.p))} <b>${st.cur.p === me ? 'You' : esc(nameOf(st.cur.p))}</b> ${st.cur.n === 1 ? 'won the last game' : `${st.cur.p === me ? 'have' : 'has'} won ${st.cur.n} in a row${st.cur.n >= 3 ? ' 🔥' : ''}`}` : 'No streak going right now';
+  const rows = GAME_LIST.map((g) => {
+    const t = st.by[g.type] || { a: 0, b: 0, draw: 0 };
+    const extra = g.type === 'golf' ? `<span class="sub">Best score: —</span>` : `<span class="sub">${t[me]}–${t[o]}${t.draw ? ` · ${t.draw} draw${t.draw > 1 ? 's' : ''}` : ''}</span>`;
+    return `<div class="statrow"><div class="thumb" style="width:44px;height:44px;border-radius:11px">${thumb({ type: g.type })}</div><div class="grow"><b>${g.name}</b><div>${extra}</div></div></div>`;
+  }).join('');
+  $('#view').innerHTML = `<div class="page"><h1>Stats</h1>
+    <div class="glass card h2h">
+      <div><div class="av">${esc(emojiOf(me))}</div><div class="nm">You</div><div class="w">${st[me]}</div></div>
+      <div class="vs">VS</div>
+      <div><div class="av">${esc(emojiOf(o))}</div><div class="nm">${esc(nameOf(o))}</div><div class="w">${st[o]}</div></div>
+    </div>
+    <div class="bar" style="margin:10px 6px 0"><i style="width:${pct(st[me])}%;background:var(--accent)"></i><i style="width:${pct(st.draw)}%;background:var(--faint)"></i><i style="width:${pct(st[o])}%;background:var(--accent-2);opacity:.6"></i></div>
+    <p class="sub" style="text-align:center;font-size:13px;margin:8px 0 0">${st.total} game${st.total === 1 ? '' : 's'} finished${st.draw ? ` · ${st.draw} draw${st.draw > 1 ? 's' : ''}` : ''}</p>
+    <h2>Streaks</h2>
+    <div class="group glass">
+      <div class="statrow"><span class="grow">${streak}</span></div>
+      <div class="statrow"><span class="grow">Your longest streak</span><b>${st.longest[me]}</b></div>
+      <div class="statrow"><span class="grow">${esc(nameOf(o))}'s longest streak</span><b>${st.longest[o]}</b></div>
+    </div>
+    <h2>By game</h2><div class="group glass">${rows}</div>
+  </div>`;
+}
+
+/* ---------- Settings ---------- */
+function pushStatus() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return isStandalone() ? 'unsupported' : 'needs-home';
+  return Notification.permission; // default | granted | denied
+}
+function renderSettings() {
+  const me = S.players[S.me] || {};
+  const ps = pushStatus();
+  const pushRow = ps === 'granted'
+    ? `<button class="item" data-act="push-test"><span class="lbl">Notifications</span><span class="val">On · Send a test</span></button>`
+    : ps === 'denied' ? `<div class="item"><span class="lbl">Notifications</span><span class="val">Blocked in iPhone Settings</span></div>`
+    : ps === 'needs-home' ? `<div class="item"><span class="lbl">Notifications<div class="sub" style="font-weight:400;font-size:13px">Add Volley to your Home Screen, then open it from the icon</div></span></div>`
+    : ps === 'unsupported' ? `<div class="item"><span class="lbl">Notifications</span><span class="val">Not supported here</span></div>`
+    : `<div class="item"><span class="lbl">Notifications</span><button class="btn primary sm" data-act="push-on">Turn on</button></div>`;
+  $('#view').innerHTML = `<div class="page"><h1>Settings</h1>
+    <button class="glass card row press" style="width:100%;text-align:left;border-radius:var(--r-lg)" data-act="edit-profile">
+      <span style="font-size:44px;line-height:1">${esc(me.emoji || '🙂')}</span>
+      <span class="grow"><b style="font-size:19px">${esc(me.name || 'You')}</b><div class="sub" style="font-size:14px">Tap to change your name or emoji</div></span>
+      <span class="chev">${I.chev}</span>
+    </button>
+    <h2>Look</h2>
+    <div class="group glass"><div class="optrow"><div class="seg">
+      <button data-theme-set="light" class="${P.theme === 'light' ? 'on' : ''}">☀️ Light</button>
+      <button data-theme-set="dark" class="${P.theme === 'dark' ? 'on' : ''}">🌙 Dark</button>
+    </div></div></div>
+    <h2>Feel</h2>
+    <div class="group glass">
+      <button class="item" data-act="toggle-sound"><span class="lbl">Sounds</span><span class="switch ${P.sound ? 'on' : ''}"></span></button>
+      <button class="item" data-act="toggle-haptic"><span class="lbl">Haptics<div class="sub" style="font-weight:400;font-size:13px">Best effort on iPhone</div></span><span class="switch ${P.haptic ? 'on' : ''}"></span></button>
+    </div>
+    <h2>Notifications</h2>
+    <div class="group glass">${pushRow}</div>
+    <h2>This phone</h2>
+    <div class="group glass">
+      <button class="item" data-act="lock"><span class="lbl" style="color:var(--bad)">Lock this device</span></button>
+    </div>
+    <p class="faint" style="text-align:center;font-size:12px;margin-top:22px">${VERSION}</p>
+  </div>`;
+}
+function editProfile() {
+  openSheet(`<div class="grab"></div><h3>Your player</h3><form id="prof2">${profileForm(S.me, S.players[S.me])}
+    <button class="btn primary block" style="margin-top:16px" type="submit">Save</button></form>`);
+  const read = wireProfile($('#sheet'));
+  $('#prof2').onsubmit = async (e) => {
+    e.preventDefault(); const v = read(); if (!v.name) return;
+    try { const r = await api('set_player', { slot: S.me, ...v }); S.players = r.players; store.set('players', S.players); closeSheet(); renderTab(); fx('sent'); }
+    catch (err) { toast(errText(err)); }
+  };
+}
+
+/* ========================== Push ========================== */
+function b64ToU8(b) {
+  const pad = '='.repeat((4 - (b.length % 4)) % 4);
+  const raw = atob((b + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+async function subscribePush(ask) {
+  if (pushStatus() !== 'granted' && !ask) return false;
+  if (!S.vapid) { if (ask) toast('Push keys are missing on the server.'); return false; }
+  if (ask) {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { toast('Notifications were not allowed.'); renderTab(); return false; }
+  }
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  const keyMatches = sub && sub.options && sub.options.applicationServerKey &&
+    btoa(String.fromCharCode(...new Uint8Array(sub.options.applicationServerKey))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') === S.vapid;
+  if (sub && sub.options && sub.options.applicationServerKey && !keyMatches) { await sub.unsubscribe().catch(() => {}); sub = null; }
+  if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToU8(S.vapid) });
+  await pushApi('subscribe', { subscription: sub.toJSON() });
+  return true;
+}
+
+/* ========================== Checkers engine ========================== */
+// Board: 64 squares, index = row*8 + col. Playable squares: (row+col) odd.
+// 'r' = Red, moves first, starts on rows 5-7 and moves up. 'k' = Black, rows 0-2, moves down.
+const CK = {
+  init() {
+    const b = Array(64).fill(null); let n = 0;
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      if ((r + c) % 2 !== 1) continue;
+      if (r < 3) b[r * 8 + c] = { id: 'k' + n++, c: 'k', k: false };
+      else if (r > 4) b[r * 8 + c] = { id: 'r' + n++, c: 'r', k: false };
+    }
+    return b;
+  },
+  dirs(p) { const f = p.c === 'r' ? -1 : 1; return p.k ? [[-1, -1], [-1, 1], [1, -1], [1, 1]] : [[f, -1], [f, 1]]; },
+  kingRow(p) { return p.c === 'r' ? 0 : 7; },
+  // b has the moving piece already lifted off its start square; caps = squares captured so far (can't be jumped twice or landed on)
+  jumps(b, from, p, caps) {
+    const r0 = from >> 3, c0 = from & 7, out = [];
+    for (const [dr, dc] of this.dirs(p)) {
+      const r2 = r0 + 2 * dr, c2 = c0 + 2 * dc;
+      if (r2 < 0 || r2 > 7 || c2 < 0 || c2 > 7) continue;
+      const mid = (r0 + dr) * 8 + (c0 + dc), to = r2 * 8 + c2, m = b[mid];
+      if (!m || m.c === p.c || caps.includes(mid) || b[to]) continue;
+      const nc = caps.concat(mid);
+      const crowned = !p.k && r2 === this.kingRow(p); // reaching the king row ends the turn
+      const more = crowned ? [] : this.jumps(b, to, p, nc);
+      if (more.length) more.forEach((s) => out.push({ path: [from].concat(s.path), caps: s.caps }));
+      else out.push({ path: [from, to], caps: nc });
+    }
+    return out;
+  },
+  moves(b, color) {
+    const jumps = [], steps = [];
+    for (let i = 0; i < 64; i++) {
+      const p = b[i]; if (!p || p.c !== color) continue;
+      const lifted = b.slice(); lifted[i] = null;
+      jumps.push(...this.jumps(lifted, i, p, []));
+      for (const [dr, dc] of this.dirs(p)) {
+        const r = (i >> 3) + dr, c = (i & 7) + dc;
+        if (r < 0 || r > 7 || c < 0 || c > 7) continue;
+        if (!b[r * 8 + c]) steps.push({ path: [i, r * 8 + c], caps: [] });
+      }
+    }
+    return jumps.length ? jumps : steps; // jumps are forced
+  },
+  apply(b, m) {
+    const nb = b.slice(), p = { ...nb[m.path[0]] };
+    nb[m.path[0]] = null; m.caps.forEach((x) => (nb[x] = null));
+    const to = m.path[m.path.length - 1];
+    const crowned = !p.k && (to >> 3) === this.kingRow(p);
+    if (crowned) p.k = true;
+    nb[to] = p;
+    return { board: nb, crowned };
+  },
+  count(b, color) { return b.filter((p) => p && p.c === color).length; },
+};
+
+/* ========================== Game screen ========================== */
+const G = { id: null, data: null, sel: null, partial: null, replay: null, busy: false, lastSig: '', chatOpen: false, lastMsgId: 0 };
+
+function openGame(id, opts = {}) {
+  G.id = id; G.data = null; G.sel = null; G.partial = null; G.replay = null; G.lastSig = ''; G.lastMsgId = 0; G.pieceEls = {};
+  const cached = S.games.find((g) => g.id === id);
+  if (cached) { G.data = { game: cached, moves: [], messages: [], requests: S.requests.filter((r) => r.game_id === id) }; }
+  $('#g-body').innerHTML = cached ? '' : '<div class="spinner"></div>';
+  if (cached) renderGame();
+  $('#game').classList.add('open');
+  loadGame().then(() => { if (opts.chat) openChat(); });
+  startPolling();
+}
+function closeGame(silent) {
+  $('#game').classList.remove('open');
+  G.id = null; stopReplay(); closeSheet();
+  if (!silent) { refreshList(); }
+}
+async function loadGame() {
+  if (!G.id) return;
+  const id = G.id;
+  try {
+    const r = await api('game', { id });
+    if (G.id !== id) return;
+    const prev = G.data && G.data.game;
+    const temps = ((G.data && G.data.messages) || []).filter((m) => String(m.id).startsWith('tmp'));
+    r.messages = r.messages.concat(temps);
+    if (G.busy && G.data) { r.game = G.data.game; r.moves = G.data.moves; }
+    G.data = r;
+    // keep list cache in sync
+    const i = S.games.findIndex((g) => g.id === id);
+    if (i >= 0) S.games[i] = r.game; else S.games.unshift(r.game);
+    S.requests = S.requests.filter((x) => x.game_id !== id).concat(r.requests.map((x) => ({ ...x, game_id: id })));
+    const sig = [r.game.ply, r.game.status, r.game.turn, r.requests.map((x) => x.id).join(','), r.game.updated_at].join('|');
+    const changed = sig !== G.lastSig && !G.busy;
+    if (changed) {
+      const theirMove = prev && r.game.ply > prev.ply && prev.turn !== S.me;
+      const finishedNow = prev && prev.status !== 'finished' && r.game.status === 'finished';
+      G.lastSig = sig;
+      G.sel = null; G.partial = null;
+      renderGame(theirMove);
+      if (finishedNow) fx(r.game.winner === S.me ? 'win' : r.game.winner === 'draw' ? 'move' : 'lose', true);
+    }
+    // chat
+    const real = r.messages.filter((m) => typeof m.id === 'number');
+    const newest = real.length ? real[real.length - 1].id : 0;
+    if (G.lastMsgId && newest > G.lastMsgId) {
+      const fresh = real.filter((m) => m.id > G.lastMsgId && m.player !== S.me);
+      if (fresh.length) { if (G.chatOpen) sfx('msg'); else { fx('msg'); toast(`${emojiOf(opp())} ${fresh[fresh.length - 1].body.slice(0, 60)}`); } }
+    }
+    G.lastMsgId = newest;
+    S.unread[id] = r.messages.filter((m) => m.player !== S.me && !m.read_at).length;
+    if (G.chatOpen) { renderChat(); if (S.unread[id]) markRead(); }
+    updateChatBadge(); updateBadges();
+  } catch (e) {
+    if (e.status === 404) { toast('That game is gone.'); closeGame(); }
+  }
+}
+function updateChatBadge() {
+  const b = $('[data-act=open-chat]'); if (!b) return;
+  const n = (G.id && S.unread[G.id]) || 0;
+  b.innerHTML = I.chat + (n ? `<span class="badge">${n}</span>` : '');
+}
+
+function myColor(g) { return g.state && g.state.colors ? g.state.colors[S.me] : 'r'; }
+
+function renderGame(animateTheirMove) {
+  const d = G.data; if (!d) return;
+  const g = d.game, me = S.me, o = opp();
+  $('#g-title').textContent = GNAME[g.type] || g.type;
+  const timer = g.options && g.options.timer ? (g.options.timer === 24 ? '1-day turns' : '3-day turns') : 'No timer';
+  let sub = timer;
+  if (g.status === 'active' && g.turn_deadline) sub += ' · ' + left(g.turn_deadline);
+  $('#g-sub').textContent = `vs ${nameOf(o)} · ${sub}`;
+  updateChatBadge();
+
+  if (g.status === 'invited') return renderInvite(g);
+
+  const myC = myColor(g), oC = myC === 'r' ? 'k' : 'r';
+  const st = G.replay ? G.replay.frames[G.replay.i] : g.state;
+  const board = st.board;
+  const isMyTurn = g.status === 'active' && g.turn === me && !G.replay;
+  const pbar = (p, c, mine) => {
+    const active = g.status === 'active' && g.turn === p && !G.replay;
+    const lost = 12 - CK.count(board, c === 'r' ? 'k' : 'r');
+    return `<div class="pbar glass ${active ? 'turn' : ''}">
+      <div class="av">${esc(emojiOf(p))}</div>
+      <div class="grow"><div class="nm">${mine ? 'You' : esc(nameOf(p))}</div>
+        <div class="meta"><span class="chip-dot" style="background:${c === 'r' ? '#e02b48' : '#22252f'}"></span>${c === 'r' ? 'Red' : 'Black'} · captured ${lost}</div></div>
+      ${active ? `<span class="pill">${mine ? 'Your move' : 'Their move'}</span>` : ''}
+    </div>`;
+  };
+
+  let banner = '';
+  const req = d.requests[0];
+  if (g.status === 'active' && req && !G.replay) {
+    if (req.from_player !== me) {
+      banner = `<div class="banner glass"><div class="msg">${esc(emojiOf(o))} ${req.kind === 'undo' ? `${esc(nameOf(o))} wants to take back their last move` : `${esc(nameOf(o))} offered a draw`}</div>
+        <div class="acts"><button class="btn" data-answer="0" data-req="${req.id}">${req.kind === 'undo' ? 'Deny' : 'Decline'}</button>
+        <button class="btn primary" data-answer="1" data-req="${req.id}">${req.kind === 'undo' ? 'Allow' : 'Accept draw'}</button></div></div>`;
+    } else {
+      banner = `<div class="banner glass"><div class="msg">${req.kind === 'undo' ? 'Undo requested' : 'Draw offered'} · waiting on ${esc(nameOf(o))}</div>
+        <div class="acts"><button class="btn" data-act="cancel-req" data-req="${req.id}">Cancel request</button></div></div>`;
+    }
+  }
+  if (g.status === 'finished' && !G.replay) {
+    const won = g.winner === me, draw = g.winner === 'draw';
+    const why = g.end_reason === 'resign' ? (won ? `${nameOf(o)} resigned` : 'You resigned') : g.end_reason === 'timeout' ? (won ? `${nameOf(o)}'s timer ran out` : 'Your timer ran out') : draw ? 'Agreed to a draw' : '';
+    banner = `<div class="banner glass result"><div class="big">${draw ? '🤝' : won ? '🏆' : esc(emojiOf(o))}</div>
+      <b>${draw ? "It's a draw" : won ? 'You won!' : `${esc(nameOf(o))} won`}</b><div class="sub">${esc(why)}</div></div>`;
+  }
+
+  let actions = '';
+  if (G.replay) {
+    const R = G.replay;
+    actions = `<div class="replay glass">
+      <button class="icon-btn press" data-rp="first">${I.first}</button><button class="icon-btn press" data-rp="prev">${I.prev}</button>
+      <div class="pos">${R.i === 0 ? 'Start' : `Move ${R.i} of ${R.frames.length - 1}`}</div>
+      <button class="icon-btn press" data-rp="play">${R.timer ? I.pause : I.play}</button>
+      <button class="icon-btn press" data-rp="next">${I.next}</button><button class="icon-btn press" data-rp="last">${I.last}</button>
+    </div><div class="actions"><button class="btn" data-act="replay-done">Done</button></div>`;
+  } else if (g.status === 'active') {
+    const lastMine = d.moves.length ? d.moves[d.moves.length - 1].player === me : (g.turn !== me && g.ply > 0);
+    const canUndo = g.turn !== me && g.ply > 0 && lastMine && !req;
+    const canNudge = g.turn !== me && (!g.nudged_at || Date.now() - new Date(g.nudged_at) > 3600e3);
+    actions = `<div class="actions">
+      ${g.turn !== me ? `<button class="btn" data-act="nudge" ${canNudge ? '' : 'disabled'}>👋 Nudge</button>` : ''}
+      ${canUndo ? `<button class="btn" data-act="req-undo">${I.undo} Take back</button>` : ''}
+      <button class="btn" data-act="more">${I.more} More</button>
+    </div>`;
+  } else if (g.status === 'finished') {
+    actions = `<div class="actions"><button class="btn primary" data-act="rematch">🔁 Rematch</button>
+      ${d.moves.length ? `<button class="btn" data-act="replay">${I.play} Replay</button>` : ''}</div>`;
+  }
+
+  const hints = !!(g.options && g.options.hints);
+  $('#g-body').innerHTML = `${pbar(o, oC, false)}${banner}
+    <div class="board-wrap glass"><div class="board" id="board"></div></div>
+    ${pbar(me, myC, true)}${actions}`;
+  drawBoard(st, { flip: myC === 'k', interactive: isMyTurn, hints, animate: animateTheirMove, color: myC });
+  if (animateTheirMove && g.state.last) fx(g.state.last.caps && g.state.last.caps.length ? 'capture' : 'move');
+}
+
+function renderInvite(g) {
+  const me = S.me, o = opp(), incoming = g.created_by !== me;
+  const t = g.options.timer ? (g.options.timer === 24 ? '1 day per turn' : '3 days per turn') : 'No turn timer';
+  G.acceptHints = g.options.hints;
+  $('#g-body').innerHTML = `<div class="glass card" style="text-align:center;padding:26px 18px;margin-top:12px">
+      <div class="thumb" style="width:96px;height:96px;margin:0 auto 14px;border-radius:22px">${thumb(g)}</div>
+      <h2 style="justify-content:center;margin:0 0 4px;font-size:13px">${incoming ? 'Game invite' : 'Invite sent'}</h2>
+      <div style="font-size:22px;font-weight:750">${incoming ? `${esc(emojiOf(o))} ${esc(nameOf(o))} wants to play ${GNAME[g.type]}` : `Waiting on ${esc(nameOf(o))} ${esc(emojiOf(o))}`}</div>
+      <p class="sub" style="margin:6px 0 0">${t}${g.rematch_of ? ' · Rematch' : ''}</p>
+    </div>
+    ${g.options.hints ? `<div class="group glass">${incoming
+      ? `<button class="item" data-act="accept-hints"><span class="lbl">Move hints<div class="sub" style="font-weight:400;font-size:13px">${esc(nameOf(o))} turned these on. Keep them?</div></span><span class="switch on" id="acc-hints"></span></button>`
+      : `<div class="item"><span class="lbl">Move hints</span><span class="val">On if ${esc(nameOf(o))} keeps them</span></div>`}</div>` : ''}
+    <div class="actions" style="margin-top:6px">${incoming
+      ? `<button class="btn" data-act="decline">Decline</button><button class="btn primary" data-act="accept" style="min-width:150px">Accept</button>`
+      : `<button class="btn" data-act="nudge" ${!g.nudged_at || Date.now() - new Date(g.nudged_at) > 3600e3 ? '' : 'disabled'}>👋 Nudge</button><button class="btn danger" data-act="cancel-invite">Cancel invite</button>`}</div>`;
+}
+
+/* ---------- Board drawing + input ---------- */
+function sqToDisp(i, flip) { let r = i >> 3, c = i & 7; if (flip) { r = 7 - r; c = 7 - c; } return [r, c]; }
+function drawBoard(st, o) {
+  const el = $('#board'); if (!el) return;
+  G.view = o;
+  let html = '';
+  for (let dr = 0; dr < 8; dr++) for (let dc = 0; dc < 8; dc++) {
+    const r = o.flip ? 7 - dr : dr, c = o.flip ? 7 - dc : dc, i = r * 8 + c;
+    html += `<div class="sq ${(r + c) % 2 ? 'd' : ''}" data-i="${i}"></div>`;
+  }
+  el.innerHTML = html + '<div class="pieces" id="pieces"></div>';
+  G.pieceEls = {};
+  // animate their move: start from the board before it, then hop along the path
+  const last = st.last;
+  if (o.animate && last && G.data.moves.length) {
+    const before = G.data.moves[G.data.moves.length - 1].state_before;
+    if (before && before.board) {
+      placePieces(before.board);
+      requestAnimationFrame(() => requestAnimationFrame(() => animatePath(last, before.board, st.board)));
+      highlight(st);
+      el.onclick = (e) => onBoardTap(e);
+      return;
+    }
+  }
+  placePieces(st.board);
+  highlight(st);
+  el.onclick = (e) => onBoardTap(e);
+}
+function pieceHTML(p) { return `<i>${p.k ? I.crown : ''}</i>`; }
+function posStyle(i) { const [r, c] = sqToDisp(i, G.view.flip); return `translate(${c * 100}%, ${r * 100}%)`; }
+function placePieces(board) {
+  const layer = $('#pieces'); if (!layer) return;
+  const seen = new Set();
+  board.forEach((p, i) => {
+    if (!p) return; seen.add(p.id);
+    let e = G.pieceEls[p.id];
+    if (!e) { e = document.createElement('div'); layer.appendChild(e); G.pieceEls[p.id] = e; }
+    e.className = 'pc ' + p.c; e.dataset.k = p.k ? 1 : 0;
+    e.innerHTML = pieceHTML(p); e.style.transform = posStyle(i); e.style.opacity = 1;
+  });
+  for (const id in G.pieceEls) if (!seen.has(id)) { G.pieceEls[id].remove(); delete G.pieceEls[id]; }
+}
+const elAt = (board, sq) => board && board[sq] ? G.pieceEls[board[sq].id] : null;
+function animatePath(m, beforeBoard, finalBoard) {
+  const mover = elAt(beforeBoard, m.path[0]);
+  const steps = m.path.slice(1);
+  let k = 0;
+  const hop = () => {
+    if (!$('#pieces')) return;
+    if (k >= steps.length) { setTimeout(() => placePieces(finalBoard), 60); return; }
+    if (mover) mover.style.transform = posStyle(steps[k]);
+    const from = k ? steps[k - 1] : m.path[0], to = steps[k];
+    if (Math.abs((to >> 3) - (from >> 3)) === 2) {
+      const ce = elAt(beforeBoard, (from + to) / 2);
+      if (ce) setTimeout(() => (ce.style.opacity = 0), 120);
+    }
+    k++; setTimeout(hop, 240);
+  };
+  hop();
+}
+function highlight(st) {
+  const el = $('#board'); if (!el) return;
+  $$('.sq', el).forEach((s) => s.classList.remove('sel', 'dest', 'last', 'must'));
+  const last = st.last;
+  if (last && last.path) last.path.forEach((i) => { const s = $(`.sq[data-i="${i}"]`, el); if (s) s.classList.add('last'); });
+  if (!G.view.interactive) return;
+  const mv = currentMoves();
+  if (G.sel != null) {
+    const s = $(`.sq[data-i="${G.sel}"]`, el); if (s) s.classList.add('sel');
+    if (G.view.hints) destsFor(mv).forEach((i) => { const d = $(`.sq[data-i="${i}"]`, el); if (d) d.classList.add('dest'); });
+  } else if (G.view.hints && mv.length && mv[0].caps.length) {
+    [...new Set(mv.map((m) => m.path[0]))].forEach((i) => { const s = $(`.sq[data-i="${i}"]`, el); if (s) s.classList.add('must'); });
+  }
+}
+function legalMoves() { const g = G.data.game; return CK.moves(g.state.board, myColor(g)); }
+function currentMoves() {
+  const all = legalMoves();
+  if (!G.partial) return all;
+  return all.filter((m) => G.partial.every((x, i) => m.path[i] === x));
+}
+function destsFor(mv) {
+  const len = G.partial ? G.partial.length : 1;
+  return [...new Set(mv.filter((m) => G.sel == null || m.path[len - 1] === G.sel).map((m) => m.path[len]).filter((x) => x != null))];
+}
+function shakeBoard() { const b = $('#board'); if (!b) return; b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); }
+
+function onBoardTap(e) {
+  const sq = e.target.closest('.sq'); if (!sq || !G.view || !G.view.interactive || G.busy) return;
+  const i = Number(sq.dataset.i), g = G.data.game, board = g.state.board, color = myColor(g);
+  const all = legalMoves();
+  // Mid multi-jump: only the next landing square counts
+  if (G.partial && G.partial.length > 1) {
+    const cand = currentMoves().filter((m) => m.path[G.partial.length] === i);
+    if (!cand.length) { shakeBoard(); fx('err'); if (G.partial.length > 1) toast('Keep jumping with the same piece'); return; }
+    return stepTo(i, cand);
+  }
+  const p = board[i];
+  if (p && p.c === color) {
+    const mine = all.filter((m) => m.path[0] === i);
+    if (!mine.length) {
+      shakeBoard(); fx('err');
+      if (all.length && all[0].caps.length) toast('You have to jump when you can');
+      G.sel = null; G.partial = null; highlight(g.state); return;
+    }
+    G.sel = i; G.partial = [i]; fx('tap'); liftSel(); highlight(g.state); return;
+  }
+  if (G.sel != null) {
+    const cand = currentMoves().filter((m) => m.path[1] === i);
+    if (!cand.length) { shakeBoard(); fx('err'); return; }
+    return stepTo(i, cand);
+  }
+}
+function liftSel() {
+  Object.values(G.pieceEls).forEach((e) => e.classList.remove('lift'));
+  if (!G.partial) return;
+  const e = elAt(G.data.game.state.board, G.partial[0]);
+  if (e) e.classList.add('lift');
+}
+function stepTo(i, cand) {
+  const board = G.data.game.state.board;
+  const from = G.partial[G.partial.length - 1];
+  const pieceEl = elAt(board, G.partial[0]);
+  G.partial.push(i);
+  const full = cand.find((m) => m.path.length === G.partial.length);
+  if (pieceEl) pieceEl.style.transform = posStyle(i);
+  if (Math.abs((i >> 3) - (from >> 3)) === 2) {
+    const ce = elAt(board, (from + i) / 2);
+    if (ce) setTimeout(() => (ce.style.opacity = 0), 100);
+    fx('capture');
+  } else fx('move');
+  if (full) { G.sel = null; commitMove(full); }
+  else { G.sel = i; highlight(G.data.game.state); liftSel(); }
+}
+
+async function commitMove(m) {
+  const g = G.data.game, color = myColor(g), oc = color === 'r' ? 'k' : 'r';
+  const { board, crowned } = CK.apply(g.state.board, m);
+  const newState = { ...g.state, board, last: { path: m.path, caps: m.caps } };
+  const theirMoves = CK.moves(board, oc);
+  const result = theirMoves.length ? null : { winner: S.me };
+  G.busy = true; G.partial = null; G.sel = null;
+  if (crowned) setTimeout(() => fx('king', true), 200);
+  const snapshot = JSON.parse(JSON.stringify(G.data));
+  // optimistic
+  const before = g.state;
+  G.data.game = { ...g, state: newState, ply: g.ply + 1, turn: result ? null : opp(), status: result ? 'finished' : 'active', winner: result ? S.me : null, end_reason: result ? 'win' : null, last_move_at: new Date().toISOString() };
+  G.data.moves = G.data.moves.concat([{ ply: g.ply, player: S.me, move: m, state_before: before }]);
+  setTimeout(() => { G.busy = false; renderGame(false); if (result) fx('win', true); }, 260);
+  try {
+    const r = await api('move', { id: g.id, ply: g.ply, move: { path: m.path, caps: m.caps }, state: newState, result });
+    G.data.game = r.game;
+    const i = S.games.findIndex((x) => x.id === g.id); if (i >= 0) S.games[i] = r.game;
+    G.lastSig = '';
+    updateBadges();
+  } catch (e) {
+    G.data = snapshot; G.busy = false;
+    toast(errText(e), 3000); fx('err');
+    await loadGame(); renderGame();
+  }
+}
+
+/* ---------- Replay ---------- */
+function startReplay() {
+  const d = G.data; const frames = d.moves.map((m) => m.state_before).concat([d.game.state]);
+  G.replay = { frames, i: 0, timer: null };
+  renderGame();
+}
+function stopReplay() { if (G.replay && G.replay.timer) clearInterval(G.replay.timer); G.replay = null; }
+function replayGo(i) {
+  const R = G.replay; if (!R) return;
+  R.i = Math.max(0, Math.min(R.frames.length - 1, i));
+  if (R.i === R.frames.length - 1 && R.timer) { clearInterval(R.timer); R.timer = null; }
+  const fr = R.frames[R.i];
+  const posEl = $('.replay .pos'); if (posEl) posEl.textContent = R.i === 0 ? 'Start' : `Move ${R.i} of ${R.frames.length - 1}`;
+  const pb = $('[data-rp=play]'); if (pb) pb.innerHTML = R.timer ? I.pause : I.play;
+  // show highlight of the move that led here
+  const st = { ...fr, last: R.i > 0 ? G.data.moves[R.i - 1].move : null };
+  placePieces(fr.board); highlight(st); sfx('move');
+}
+
+/* ========================== Sheets: More menu + Chat ========================== */
+function openSheet(html, cls = '') {
+  const s = $('#sheet'); s.className = 'sheet ' + cls; s.innerHTML = html;
+  requestAnimationFrame(() => { s.classList.add('open'); $('#backdrop').classList.add('open'); });
+}
+function closeSheet() {
+  $('#sheet').classList.remove('open'); $('#backdrop').classList.remove('open');
+  G.chatOpen = false; const s = $('#sheet'); s.style.bottom = '';
+}
+function openMore() {
+  const g = G.data.game, req = G.data.requests[0];
+  openSheet(`<div class="grab"></div><h3>Game options</h3><div class="menu">
+    <button class="btn" data-act="req-draw" ${req ? 'disabled' : ''}>${I.hand} Offer a draw</button>
+    <button class="btn danger" data-act="resign">${I.flag} Resign</button>
+    <button class="btn" data-act="close-sheet">Cancel</button></div>`);
+}
+function confirmSheet(title, body, okLabel, okAct, danger) {
+  openSheet(`<div class="grab"></div><h3>${esc(title)}</h3><p class="sub" style="margin:-4px 4px 16px">${esc(body)}</p>
+    <div class="menu"><button class="btn ${danger ? 'danger' : 'primary'}" data-act="${okAct}">${esc(okLabel)}</button>
+    <button class="btn" data-act="close-sheet">Cancel</button></div>`);
+}
+
+function openChat() {
+  if (!G.id) return;
+  G.chatOpen = true;
+  openSheet(`<div class="grab"></div><h3>${esc(emojiOf(opp()))} Chat with ${esc(nameOf(opp()))}</h3>
+    <div class="msgs" id="msgs"></div>
+    <form class="composer" id="composer"><textarea id="msg" rows="1" placeholder="Message" maxlength="1000"></textarea>
+    <button class="send press" type="submit" aria-label="Send">${I.send}</button></form>`, 'chat');
+  renderChat(true);
+  const ta = $('#msg');
+  ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px'; });
+  ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) { e.preventDefault(); $('#composer').requestSubmit(); } });
+  $('#composer').onsubmit = async (e) => {
+    e.preventDefault(); const body = ta.value.trim(); if (!body) return;
+    ta.value = ''; ta.style.height = 'auto';
+    const temp = { id: 'tmp' + Date.now(), player: S.me, body, created_at: new Date().toISOString() };
+    G.data.messages.push(temp); renderChat(true); sfx('sent');
+    try {
+      const r = await api('chat', { id: G.id, body });
+      G.data.messages = G.data.messages.filter((m) => m !== temp);
+      if (!G.data.messages.some((m) => m.id === r.message.id)) G.data.messages.push(r.message);
+      renderChat();
+      G.lastMsgId = Math.max(G.lastMsgId, r.message.id);
+    } catch (err) { toast(errText(err)); G.data.messages = G.data.messages.filter((m) => m !== temp); ta.value = body; renderChat(); }
+  };
+  if (S.unread[G.id]) markRead();
+}
+function renderChat(forceScroll) {
+  const box = $('#msgs'); if (!box || !G.data) return;
+  const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+  const ms = G.data.messages;
+  let html = '', prevT = 0;
+  if (!ms.length) html = `<p class="sub" style="text-align:center;margin:30px 0">No messages yet. Say hi 👋</p>`;
+  ms.forEach((m) => {
+    const t = new Date(m.created_at).getTime();
+    if (t - prevT > 30 * 60e3) html += `<div class="stamp">${new Date(m.created_at).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</div>`;
+    prevT = t;
+    html += `<div class="bub ${m.player === S.me ? 'me' : 'them'}">${esc(m.body)}</div>`;
+  });
+  box.innerHTML = html;
+  if (forceScroll || nearBottom) box.scrollTop = box.scrollHeight;
+}
+async function markRead() {
+  const id = G.id; S.unread[id] = 0; updateChatBadge(); updateBadges();
+  try { await api('read', { id }); } catch {}
+}
+// keep the chat above the iPhone keyboard
+if (window.visualViewport) {
+  const vv = window.visualViewport;
+  const fit = () => {
+    const s = $('#sheet'); if (!s.classList.contains('open')) return;
+    const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    s.style.bottom = kb + 'px';
+    if (G.chatOpen) { const box = $('#msgs'); if (box) box.scrollTop = box.scrollHeight; }
+  };
+  vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit);
+}
+
+/* ========================== Actions (event delegation) ========================== */
+async function run(fn) { try { await fn(); } catch (e) { if (e.status === 409) { toast(errText(e)); await loadGame(); } else toast(errText(e), 3200); fx('err'); } }
+
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-act],[data-open],[data-pick],[data-timer],[data-theme-set],[data-answer],[data-rp]');
+  if (!t) return;
+  audio(); // unlock sound on first tap
+  if (t.dataset.open) { fx('tap'); return openGame(t.dataset.open); }
+  if (t.dataset.pick) {
+    const gd = GAME_LIST.find((x) => x.type === t.dataset.pick);
+    if (!gd.ready) { toast(`${gd.name} is coming in a later build`); fx('err'); return; }
+    S.newGame.type = gd.type; fx('tap'); return renderNew();
+  }
+  if (t.dataset.timer != null) { S.newGame.timer = Number(t.dataset.timer); fx('tap'); return renderNew(); }
+  if (t.dataset.themeSet) { P.theme = t.dataset.themeSet; savePrefs(); applyTheme(); fx('tap'); return renderSettings(); }
+  if (t.dataset.answer != null) {
+    const accept = t.dataset.answer === '1';
+    return run(async () => { const r = await api('answer', { request_id: Number(t.dataset.req), accept }); fx(accept ? 'move' : 'tap'); G.lastSig = ''; await loadGame(); });
+  }
+  if (t.dataset.rp) {
+    const R = G.replay; if (!R) return;
+    const a = t.dataset.rp;
+    if (a === 'play') {
+      if (R.timer) { clearInterval(R.timer); R.timer = null; replayGo(R.i); return; }
+      if (R.i >= R.frames.length - 1) R.i = 0;
+      R.timer = setInterval(() => replayGo(R.i + 1), 900); replayGo(R.i); return;
+    }
+    if (R.timer) { clearInterval(R.timer); R.timer = null; }
+    return replayGo(a === 'first' ? 0 : a === 'last' ? R.frames.length - 1 : a === 'prev' ? R.i - 1 : R.i + 1);
+  }
+  const act = t.dataset.act;
+  const A = {
+    'go-new': () => setTab('new'),
+    'show-finished': () => { S.showAllFinished = true; renderGames(); },
+    'toggle-hints': () => { S.newGame.hints = !S.newGame.hints; fx('tap'); renderNew(); },
+    'send-invite': () => run(async () => {
+      t.disabled = true;
+      const r = await api('create', { type: S.newGame.type, options: { timer: S.newGame.timer, hints: S.newGame.hints } });
+      S.games.unshift(r.game); fx('sent'); toast(`Invite sent to ${nameOf(opp())}`); setTab('games');
+    }).finally(() => { t.disabled = false; }),
+    'toggle-sound': () => { P.sound = !P.sound; savePrefs(); fx('tap'); renderSettings(); },
+    'toggle-haptic': () => { P.haptic = !P.haptic; savePrefs(); fx('tap'); renderSettings(); },
+    'edit-profile': () => editProfile(),
+    'lock': () => confirmSheet('Lock this device?', "You'll need the passcode again, and this phone stops getting notifications until you unlock it.", 'Lock', 'lock-yes', true),
+    'lock-yes': async () => {
+      try { const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (sub) { await pushApi('unsubscribe', { endpoint: sub.endpoint }).catch(() => {}); await sub.unsubscribe(); } } catch {}
+      closeSheet(); lockDevice(false);
+    },
+    'push-on': () => run(async () => { const ok = await subscribePush(true); if (ok) { toast('Notifications are on'); fx('sent'); } renderSettings(); }),
+    'push-test': () => run(async () => { await subscribePush(false); const r = await pushApi('test'); toast(r.sent ? 'Test sent. Check your lock screen.' : 'No phones subscribed yet'); }),
+    'close-game': () => { fx('tap'); closeGame(); },
+    'open-chat': () => { fx('tap'); openChat(); },
+    'close-sheet': () => closeSheet(),
+    'more': () => { fx('tap'); openMore(); },
+    'accept-hints': () => { G.acceptHints = !G.acceptHints; $('#acc-hints').classList.toggle('on', G.acceptHints); fx('tap'); },
+    'accept': () => run(async () => {
+      const g = G.data.game;
+      const colors = g.options.colors || (Math.random() < 0.5 ? { a: 'r', b: 'k' } : { a: 'k', b: 'r' });
+      const state = { board: CK.init(), colors, last: null };
+      const turn = colors.a === 'r' ? 'a' : 'b';
+      t.disabled = true;
+      const r = await api('respond', { id: g.id, accept: true, hints: G.acceptHints !== false, state, turn });
+      G.data.game = r.game; G.lastSig = ''; fx('win'); renderGame(); loadGame();
+    }),
+    'decline': () => run(async () => { await api('respond', { id: G.data.game.id, accept: false }); toast('Invite declined'); S.games = S.games.filter((x) => x.id !== G.id); closeGame(); }),
+    'cancel-invite': () => confirmSheet('Cancel this invite?', 'It disappears for both of you.', 'Cancel invite', 'cancel-invite-yes', true),
+    'cancel-invite-yes': () => run(async () => { closeSheet(); await api('cancel', { id: G.data.game.id }); S.games = S.games.filter((x) => x.id !== G.id); toast('Invite canceled'); closeGame(); }),
+    'nudge': () => run(async () => { t.disabled = true; const r = await api('nudge', { id: G.id }); G.data.game = r.game; fx('nudge', true); toast(`Nudged ${nameOf(opp())} 👋`); renderGame(); }),
+    'req-undo': () => run(async () => { t.disabled = true; await api('request', { id: G.id, kind: 'undo' }); toast('Asked to take it back'); G.lastSig = ''; await loadGame(); }),
+    'req-draw': () => run(async () => { closeSheet(); await api('request', { id: G.id, kind: 'draw' }); toast('Draw offered'); G.lastSig = ''; await loadGame(); }),
+    'cancel-req': () => run(async () => { await api('cancel_request', { request_id: Number(t.dataset.req) }); G.lastSig = ''; await loadGame(); }),
+    'resign': () => confirmSheet('Resign this game?', `${nameOf(opp())} gets the win.`, 'Resign', 'resign-yes', true),
+    'resign-yes': () => run(async () => { closeSheet(); const r = await api('resign', { id: G.id }); G.data.game = r.game; G.lastSig = ''; fx('lose', true); await loadGame(); }),
+    'rematch': () => run(async () => {
+      t.disabled = true;
+      const r = await api('rematch', { id: G.id });
+      if (!S.games.find((x) => x.id === r.game.id)) S.games.unshift(r.game);
+      if (!r.existing) { toast(`Rematch invite sent`); fx('sent'); }
+      openGame(r.game.id);
+    }),
+    'replay': () => { fx('tap'); startReplay(); },
+    'replay-done': () => { stopReplay(); renderGame(); },
+  };
+  if (A[act]) A[act]();
+});
+$('#backdrop').onclick = closeSheet;
+
+/* ========================== Polling + focus ========================== */
+let pollT = null, listT = null;
+function startPolling() {
+  stopPolling();
+  pollT = setInterval(() => { if (document.visibilityState === 'visible' && G.id) loadGame(); }, 5000);
+  listT = setInterval(() => { if (document.visibilityState === 'visible' && !G.id) refreshList(); }, 20000);
+}
+function stopPolling() { clearInterval(pollT); clearInterval(listT); }
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !S.me || !S.key) return;
+  if (G.id) loadGame(); refreshList();
+});
+setInterval(() => { if (S.me && S.tab === 'games' && !G.id && document.visibilityState === 'visible') renderGames(); }, 60000);
+
+function handleUrl(url) {
+  try {
+    const u = new URL(url, location.origin);
+    const id = u.searchParams.get('g');
+    if (id) { openGame(id, { chat: u.searchParams.get('chat') === '1' }); history.replaceState(null, '', '/'); }
+  } catch {}
+}
+
+/* ========================== Boot ========================== */
+function startApp() {
+  $('#tabs').hidden = false; setupTabs(); setTab(S.tab || 'games');
+  [['close-game', I.back], ['open-chat', I.chat]].forEach(([a, ic]) => { const b = $(`[data-act=${a}]`); if (b) b.innerHTML = ic; });
+  refreshList(); startPolling();
+  subscribePush(false).catch(() => {}); // refresh this phone's subscription if notifications are already allowed
+  handleUrl(location.href);
+}
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+  navigator.serviceWorker.addEventListener('message', (e) => {
+    const m = e.data || {};
+    if (m.type === 'open' && m.url) handleUrl(m.url);
+    if (m.type === 'push' && S.me) { if (G.id) loadGame(); refreshList(); }
+  });
+}
+(async function boot() {
+  if (!S.key) return gatePasscode();
+  if (!S.me) {
+    try { const r = await call('/api/db', 'hello'); S.players = r.players; S.vapid = r.vapid; } catch (e) { if (e.status === 401) return gatePasscode(); }
+    return gateWho();
+  }
+  startApp();
+})();
+</script>
+</body>
+</html>
