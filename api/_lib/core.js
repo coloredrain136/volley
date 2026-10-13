@@ -14,6 +14,8 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
   catch (e) { console.error('VAPID setup failed:', e.message); }
 }
 
+const APP_VERSION = 'volley-4'; // must match VERSION in index.html
+
 const configured = () => !!(SUPA_URL && SUPA_KEY && PASSCODE);
 
 class HttpError extends Error { constructor(status, msg) { super(msg); this.status = status; } }
@@ -152,5 +154,5 @@ function sendError(res, e) {
 module.exports = {
   sb, q, nowIso, other, getPlayers, nameOf, gameName, notify, notifySafe,
   deadlineFrom, sweep, maybeSweep, checkAuth, sendError, fail, HttpError,
-  VAPID_PUBLIC, pushReady: () => pushReady,
+  VAPID_PUBLIC, pushReady: () => pushReady, APP_VERSION,
 };

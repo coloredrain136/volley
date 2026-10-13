@@ -95,6 +95,7 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
   font-weight:650;font-size:16px;transition:transform .12s ease, opacity .2s;background:var(--glass-2);border:1px solid var(--stroke);box-shadow:var(--hl),0 2px 10px rgba(40,50,120,.06)}
 .btn:active,.press:active{transform:scale(.96)}
 .btn svg{width:20px;height:20px;flex:none}
+.chat-btn{position:relative}
 .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:var(--accent-ink);border-color:transparent;
   box-shadow:0 8px 22px rgba(91,108,255,.35), inset 0 1px 0 rgba(255,255,255,.35)}
 .btn.danger{color:var(--bad)}
@@ -323,7 +324,7 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
   <div class="topbar">
     <button class="icon-btn glass press" data-act="close-game" aria-label="Back"></button>
     <div class="t"><b id="g-title">Checkers</b><span id="g-sub"></span></div>
-    <button class="icon-btn glass press" data-act="open-chat" aria-label="Chat"></button>
+    <button class="icon-btn glass press" data-act="more" id="g-more" aria-label="Game options"></button>
   </div>
   <div class="gbody" id="g-body"></div>
 </section>
@@ -336,7 +337,7 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
 <script>
 'use strict';
 /* ========================== Basics ========================== */
-const VERSION = 'volley-3';
+const VERSION = 'volley-4';
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -453,21 +454,31 @@ const S = {
   vapid: store.get('vapid', ''), push: true,
   dev: store.get('dev', ''),
   tab: 'games', showAllFinished: false,
-  newGame: { type: 'checkers', timer: 0, hints: true },
+  newGame: { type: 'checkers', timer: 0, hints: true, holes: 9 },
 };
 const nameOf = (p) => (S.players[p] && S.players[p].name) || (p === 'a' ? 'Player 1' : 'Player 2');
 const emojiOf = (p) => (S.players[p] && S.players[p].emoji) || '🙂';
 const opp = () => other(S.me);
 
+// The server and this page ship together. If they don't match, this phone is running a cached
+// old copy, so reload instead of letting old code save games the wrong way.
+function appOutdated(sv) {
+  let tried = false;
+  try { tried = sessionStorage.getItem('volley.reload') === sv; sessionStorage.setItem('volley.reload', sv); } catch {}
+  if (tried) { toast('Volley updated. Close the app fully and reopen it.', 5000); return; }
+  location.reload();
+}
 async function call(path, action, data = {}) {
   let r;
   try {
     r = await fetch(path, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-volley-key': S.key, 'x-volley-player': S.me || '', ...(S.dev ? { 'x-volley-dev': S.dev } : {}) },
+      headers: { 'Content-Type': 'application/json', 'x-volley-key': S.key, 'x-volley-player': S.me || '', 'x-volley-version': VERSION, ...(S.dev ? { 'x-volley-dev': S.dev } : {}) },
       body: JSON.stringify({ action, ...data }),
     });
   } catch (e) { const err = new Error('offline'); err.status = 0; throw err; }
+  const sv = r.headers.get('x-volley-version');
+  if (sv && sv !== VERSION) appOutdated(sv);
   let j = {};
   try { j = await r.json(); } catch {}
   if (!r.ok) { const err = new Error(j.error || 'HTTP ' + r.status); err.status = r.status; throw err; }
@@ -488,6 +499,7 @@ function errText(e) {
     nudged_recently: 'You already nudged in the last hour.',
     request_pending: "There's already a request waiting.",
     nothing_to_undo: 'Nothing to take back.',
+    update_required: 'Volley just updated. Reloading…',
     not_configured: 'Server not set up yet. Add the env vars in Vercel and redeploy.',
     push_not_configured: 'Push keys are missing on the server.',
     dev_not_configured: 'Add VOLLEY_DEV_CODE in Vercel and redeploy first.',
@@ -737,7 +749,7 @@ function renderGames() {
 /* ---------- New Game ---------- */
 const GAME_LIST = [
   { type: 'checkers', name: 'Checkers', ready: true, hints: true },
-  { type: 'golf', name: 'Mini Golf', ready: true, info: ['Course', 'Classic · 9 holes · Par 24'] },
+  { type: 'golf', name: 'Mini Golf', ready: true, holes: true },
   { type: 'pool', name: '8-Ball', ready: true, info: ['Rules', 'Standard 8-ball · fouls give ball in hand'] },
   { type: 'chess', name: 'Chess', ready: false, soon: 'Coming next' },
 ];
@@ -755,6 +767,9 @@ function renderNew() {
         <div class="seg" id="seg-timer">${segs.map(([v, l]) => `<button data-timer="${v}" class="${N.timer === v ? 'on' : ''}">${l}</button>`).join('')}</div>
         <div class="hint">${N.timer ? `Run out of time and you forfeit. You'll get a warning a few hours before.` : 'Take as long as you want.'}</div>
       </div>
+      ${gdef.holes ? `<div class="optrow"><div class="lbl">Holes</div>
+        <div class="seg">${[3, 6, 9].map((n) => `<button data-holes="${n}" class="${N.holes === n ? 'on' : ''}">${n} holes</button>`).join('')}</div>
+        <div class="hint">Par ${golfParOf(N.holes)} · ${N.holes === 9 ? 'the full course' : 'a mix of easy and hard holes'}</div></div>` : ''}
       ${gdef.info ? `<div class="item"><span class="lbl">${gdef.info[0]}</span><span class="val" style="font-size:14px;text-align:right">${gdef.info[1]}</span></div>` : ''}
       ${gdef.hints ? `<button class="item" data-act="toggle-hints"><span class="lbl">Move hints<div class="hint sub" style="font-weight:400;font-size:13px">Show legal moves when you tap a piece</div></span><span class="switch ${N.hints ? 'on' : ''}"></span></button>` : ''}
     </div>
@@ -785,8 +800,9 @@ function renderStats() {
   const streak = st.cur.n ? `${esc(emojiOf(st.cur.p))} <b>${st.cur.p === me ? 'You' : esc(nameOf(st.cur.p))}</b> ${st.cur.n === 1 ? 'won the last game' : `${st.cur.p === me ? 'have' : 'has'} won ${st.cur.n} in a row${st.cur.n >= 3 ? ' 🔥' : ''}`}` : 'No streak going right now';
   const rows = GAME_LIST.map((g) => {
     const t = st.by[g.type] || { a: 0, b: 0, draw: 0 };
-    const best = (p) => { let b = null; for (const x of S.games) if (x.type === 'golf' && x.status === 'finished' && x.state && x.state.scores[p].every((v) => v != null)) { const t = golfTotal(x.state, p); b = b == null ? t : Math.min(b, t); } return b == null ? '—' : b; };
-    const extra = g.type === 'golf' ? `<span class="sub">${t[me]}–${t[o]}${t.draw ? ` · ${t.draw} tie${t.draw > 1 ? 's' : ''}` : ''} · Best: You ${best(me)}, ${esc(nameOf(o))} ${best(o)}</span>` : `<span class="sub">${t[me]}–${t[o]}${t.draw ? ` · ${t.draw} draw${t.draw > 1 ? 's' : ''}` : ''}</span>`;
+    // best round relative to par, so 3-, 6- and 9-hole games compare fairly
+    const best = (p) => { let b = null; for (const x of S.games) if (x.type === 'golf' && x.status === 'finished' && stateOk(x) && x.state.scores[p].every((v) => v != null)) { const t = golfToPar(x.state, p); b = b == null ? t : Math.min(b, t); } return b == null ? '—' : b === 0 ? 'E' : b > 0 ? '+' + b : String(b); };
+    const extra = g.type === 'golf' ? `<span class="sub">${t[me]}–${t[o]}${t.draw ? ` · ${t.draw} tie${t.draw > 1 ? 's' : ''}` : ''} · Best vs par: You ${best(me)}, ${esc(nameOf(o))} ${best(o)}</span>` : `<span class="sub">${t[me]}–${t[o]}${t.draw ? ` · ${t.draw} draw${t.draw > 1 ? 's' : ''}` : ''}</span>`;
     return `<div class="statrow"><div class="thumb" style="width:44px;height:44px;border-radius:11px">${thumb({ type: g.type })}</div><div class="grow"><b>${g.name}</b><div>${extra}</div></div></div>`;
   }).join('');
   paint(`<div class="page"><h1>Stats</h1>
@@ -1047,6 +1063,12 @@ const GOLF = {
   ],
 };
 GOLF.par = GOLF.holes.reduce((a, h) => a + h.par, 0);
+// 3- and 6-hole games use a spread of the course, not just the first holes
+GOLF.sets = { 3: [0, 4, 8], 6: [0, 2, 3, 5, 6, 8], 9: [0, 1, 2, 3, 4, 5, 6, 7, 8] };
+const golfHoles = (st) => (st && st.holes) || GOLF.sets[9];
+const golfCourse = (st, i) => GOLF.holes[golfHoles(st)[i]];
+const golfParOf = (n) => (GOLF.sets[n] || GOLF.sets[9]).reduce((a, h) => a + GOLF.holes[h].par, 0);
+const golfParTotal = (st) => golfHoles(st).reduce((a, h) => a + GOLF.holes[h].par, 0);
 
 function golfSim(h, x, y, vx, vy) {
   const H = GOLF.holes[h], R = GOLF.R, CR = GOLF.CR, poly = H.poly, cup = H.cup;
@@ -1099,10 +1121,10 @@ function golfSim(h, x, y, vx, vy) {
   sim.run = function () { while (!sim.done) sim.step(); return sim; };
   return sim;
 }
-const golfNew = (first) => ({ course: 'classic', first, scores: { a: Array(9).fill(null), b: Array(9).fill(null) }, cur: null });
+const golfNew = (first, n = 9) => { const holes = GOLF.sets[n] || GOLF.sets[9]; return { course: 'classic', holes, first, scores: { a: holes.map(() => null), b: holes.map(() => null) }, cur: null }; };
 const golfNextHole = (st, p) => st.scores[p].findIndex((v) => v == null);
 const golfTotal = (st, p) => st.scores[p].reduce((a, v) => a + (v || 0), 0);
-const golfToPar = (st, p) => st.scores[p].reduce((a, v, i) => a + (v == null ? 0 : v - GOLF.holes[i].par), 0);
+const golfToPar = (st, p) => st.scores[p].reduce((a, v, i) => a + (v == null ? 0 : v - golfCourse(st, i).par), 0);
 const golfPower = (p) => GOLF.VMAX * (0.15 * p + 0.85 * p * p);
 
 // Work out what one stroke does to the game. Pure: used by the shooter, tested in node.
@@ -1119,7 +1141,7 @@ function golfApply(st, me, h, from, res) {
   if (holeDone) {
     ns.scores[me][h] = score; ns.cur = null;
     if (ns.scores[o][h] == null) { keep = false; passed = true; }
-    else if (h === GOLF.holes.length - 1) {
+    else if (h === ns.scores[me].length - 1) {
       const a = golfTotal(ns, 'a'), b = golfTotal(ns, 'b');
       result = { winner: a === b ? 'draw' : a < b ? 'a' : 'b' }; keep = false;
     }
@@ -1361,11 +1383,11 @@ function physActions(g, extra = '') {
   const me = S.me, o = opp();
   if (g.status === 'active') {
     const canNudge = g.turn !== me && (!g.nudged_at || Date.now() - new Date(g.nudged_at) > 3600e3);
-    return `<div class="actions">${g.turn !== me ? `<button class="btn" data-act="nudge" ${canNudge ? '' : 'disabled'}>👋 Nudge</button>` : ''}${extra}<button class="btn" data-act="more">${I.more} More</button></div>`;
+    return `<div class="actions">${g.turn !== me ? `<button class="btn" data-act="nudge" ${canNudge ? '' : 'disabled'}>👋 Nudge</button>` : ''}${extra}${chatBtn()}</div>`;
   }
   if (g.status === 'finished') {
     const any = (G.data.moves || []).some((m) => m.player === o);
-    return `<div class="actions"><button class="btn primary" data-act="rematch">🔁 Rematch</button>${any ? `<button class="btn" data-act="watch-last">${I.play} Their last turn</button>` : ''}${extra}</div>`;
+    return `<div class="actions"><button class="btn primary" data-act="rematch">🔁 Rematch</button>${any ? `<button class="btn" data-act="watch-last">${I.play} Their turn</button>` : ''}${extra}${chatBtn()}</div>`;
   }
   return '';
 }
@@ -1391,15 +1413,16 @@ function golfScoreName(score, par) {
 function golfCard(st) {
   const me = S.me, o = opp();
   const cell = (v, par) => v == null ? '<td class="nil">·</td>' : `<td><span class="${v === 1 ? 'ace' : v < par ? 'under' : v > par ? 'over' : ''}">${v}</span></td>`;
-  const row = (p) => `<tr><td>${esc(emojiOf(p))}</td>${st.scores[p].map((v, i) => cell(v, GOLF.holes[i].par)).join('')}<td><b>${golfTotal(st, p)}</b></td></tr>`;
+  const hs = golfHoles(st).map((h) => GOLF.holes[h]);
+  const row = (p) => `<tr><td>${esc(emojiOf(p))}</td>${st.scores[p].map((v, i) => cell(v, hs[i].par)).join('')}<td><b>${golfTotal(st, p)}</b></td></tr>`;
   return `<div class="sc"><table>
-    <tr><th></th>${GOLF.holes.map((h, i) => `<th>${i + 1}</th>`).join('')}<th>Tot</th></tr>
-    <tr class="par"><td>Par</td>${GOLF.holes.map((h) => `<td>${h.par}</td>`).join('')}<td>${GOLF.par}</td></tr>
+    <tr><th></th>${hs.map((h, i) => `<th>${i + 1}</th>`).join('')}<th>Tot</th></tr>
+    <tr class="par"><td>Par</td>${hs.map((h) => `<td>${h.par}</td>`).join('')}<td>${golfParTotal(st)}</td></tr>
     ${row(me)}${row(o)}</table></div>`;
 }
 const Golf = {
   hud(g, hole, myTurn) {
-    const st = g.state, me = S.me, o = opp(), act = g.status === 'active', H = GOLF.holes[hole];
+    const st = g.state, me = S.me, o = opp(), act = g.status === 'active', H = golfCourse(st, hole), n = st.scores[me].length;
     const tp = (p) => { const n = st.scores[p].filter((x) => x != null).length, v = golfToPar(st, p); return n ? (v === 0 ? 'E' : v > 0 ? '+' + v : String(v)) : '–'; };
     const chip = (p, mine) => `<div class="sp ${mine ? 'r' : ''} ${act && g.turn === p ? 'turn' : ''}">
       ${mine ? '' : `<span class="av">${esc(emojiOf(p))}</span>`}
@@ -1407,13 +1430,13 @@ const Golf = {
       ${mine ? `<span class="av">${esc(emojiOf(p))}</span>` : ''}</div>`;
     const cur = st.cur && st.cur.player === me && st.cur.hole === hole ? st.cur : null;
     return `<div class="scorebar glass">${chip(o, false)}
-      <div class="mid"><b>Hole ${hole + 1}</b><small>Par ${H.par}${myTurn ? ` · Shot ${(cur ? cur.strokes : 0) + 1}` : ''}</small></div>
+      <div class="mid"><b>Hole ${hole + 1}${n < 9 ? `<span style="font-weight:500;color:var(--sub)"> of ${n}</span>` : ''}</b><small>Par ${H.par}${myTurn ? ` · Shot ${(cur ? cur.strokes : 0) + 1}` : ''}</small></div>
       ${chip(me, true)}</div>`;
   },
   ballFor(st, hole, who, me) {
     const cur = st.cur;
     if (cur && cur.player === who && cur.hole === hole) return { x: cur.pos[0], y: cur.pos[1], ghost: who !== me };
-    return who === me ? { x: GOLF.holes[hole].tee[0], y: GOLF.holes[hole].tee[1] } : null;
+    return who === me ? { x: golfCourse(st, hole).tee[0], y: golfCourse(st, hole).tee[1] } : null;
   },
   render(g) {
     const d = G.data, st = g.state, me = S.me, o = opp();
@@ -1423,12 +1446,12 @@ const Golf = {
     if (g.status === 'finished' && !list.length) return Golf.finished(g);
     let hole = golfNextHole(st, myTurn ? me : o);
     if (hole < 0) hole = golfNextHole(st, me);
-    if (hole < 0) hole = GOLF.holes.length - 1;
+    if (hole < 0) hole = st.scores[me].length - 1;
     $('#g-body').innerHTML = `${Golf.hud(g, hole, myTurn)}
       <div class="pgwrap glass"><canvas id="pgc"></canvas><div class="pg-ov" id="pg-ov" hidden></div></div>
       <div class="pg-hint" id="pg-hint"></div>
       ${physActions(g, g.status === 'active' ? '<button class="btn" data-act="scorecard">📋 Scorecard</button>' : '')}`;
-    const P = PG = { type: 'golf', hole, ball: null, aim: null, sim: null, acc: 0, lastT: 0, raf: 0, rate: 60 };
+    const P = PG = { type: 'golf', hole, course: golfHoles(st)[hole], ball: null, aim: null, sim: null, acc: 0, lastT: 0, raf: 0, rate: 60 };
     P.draw = () => golfDraw(P);
     pgSetup(P, GOLF.W, GOLF.H, 300);
     P.ball = Golf.ballFor(st, hole, myTurn ? me : o, me);
@@ -1437,12 +1460,12 @@ const Golf = {
     const start = () => {
       if (PG !== P) return;
       if (g.status === 'finished') return renderGame();
-      P.hole = hole; P.ball = Golf.ballFor(st, hole, myTurn ? me : o, me);
+      P.hole = hole; P.course = golfHoles(st)[hole]; P.ball = Golf.ballFor(st, hole, myTurn ? me : o, me);
       P.canPlay = myTurn && !d.partial;
       if (P.canPlay) {
         pgHint('Drag back anywhere to aim. Let go to putt.');
         if (!(st.cur && st.cur.player === me && st.cur.hole === hole)) {
-          pgOverlay(`<b>Hole ${hole + 1}</b> · ${esc(GOLF.holes[hole].name)} · Par ${GOLF.holes[hole].par}`);
+          pgOverlay(`<b>Hole ${hole + 1}</b> · ${esc(golfCourse(st, hole).name)} · Par ${golfCourse(st, hole).par}`);
           P.t2 = setTimeout(() => PG === P && pgOverlay(''), 1800);
         }
       } else if (g.status === 'active') pgHint(`Waiting on ${nameOf(o)}…`);
@@ -1479,10 +1502,10 @@ const Golf = {
     c.onpointercancel = () => { P.drag = null; P.aim = null; P.draw(); };
   },
   // Animate one stroke. Resolves when the ball has stopped / dropped / splashed.
-  play(P, h, from, vx, vy) {
+  play(P, course, from, vx, vy) {
     return new Promise((done) => {
-      P.hole = h; P.ball = { x: from[0], y: from[1], ghost: P.ball && P.ball.ghost };
-      P.sim = golfSim(h, from[0], from[1], vx, vy);
+      P.course = course; P.ball = { x: from[0], y: from[1], ghost: P.ball && P.ball.ghost };
+      P.sim = golfSim(course, from[0], from[1], vx, vy);
       P.onSimDone = async (s) => {
         if (s.res === 'cup') { P.ball = { ...P.ball, x: s.b.x, y: s.b.y }; await pgTween(P, 'sink', 320); P.ball = null; }
         else if (s.res === 'water') { P.ball = null; await pgTween(P, 'splash', 650, { x: s.b.x, y: s.b.y }); P.ball = { x: from[0], y: from[1], ghost: P.ballGhost }; }
@@ -1493,18 +1516,18 @@ const Golf = {
     });
   },
   async shoot(P, a) {
-    const g = G.data.game, st = g.state, me = S.me, h = P.hole;
+    const g = G.data.game, st = g.state, me = S.me, h = P.hole, course = golfHoles(st)[h], par = GOLF.holes[course].par;
     const v = golfPower(a.p), vx = r5(a.x * v), vy = r5(a.y * v), from = [r3(P.ball.x), r3(P.ball.y)];
-    const res = golfSim(h, from[0], from[1], vx, vy).run();
+    const res = golfSim(course, from[0], from[1], vx, vy).run();
     const out = golfApply(st, me, h, from, res);
-    const move = { hole: h, stroke: out.strokes, from, vx, vy, res: res.res, score: out.score };
+    const move = { hole: h, course, stroke: out.strokes, from, vx, vy, res: res.res, score: out.score };
     const summary = out.passed ? `${nameOf(me)} got a ${out.score} on hole ${h + 1}. Your turn!` : '';
     G.busy = true; P.canPlay = false; P.ballGhost = false; pgHint('');
     const req = api('move', { id: g.id, ply: g.ply, move, state: out.state, keep: out.keep, result: out.result, summary }).then((r) => ({ r }), (e) => ({ e }));
     sfx('putt');
-    await Golf.play(P, h, from, vx, vy);
+    await Golf.play(P, course, from, vx, vy);
     if (res.res === 'water') toast('Splash! +1 stroke');
-    if (out.holeDone) { toast(`${golfScoreName(out.score, GOLF.holes[h].par)} · ${out.score} on hole ${h + 1}`); await new Promise((ok) => setTimeout(ok, 700)); }
+    if (out.holeDone) { toast(`${golfScoreName(out.score, par)} · ${out.score} on hole ${h + 1}`); await new Promise((ok) => setTimeout(ok, 700)); }
     const { r, e } = await req;
     G.busy = false;
     if (PG !== P && !G.id) return;
@@ -1529,14 +1552,14 @@ const Golf = {
     const next = () => {
       if (stopped || PG !== P) return;
       if (i >= list.length) return finish();
-      const m = list[i++].move;
-      P.hole = m.hole; P.ball = { x: m.from[0], y: m.from[1], ghost: true };
+      const m = list[i - 0].move, course = m.course != null ? m.course : golfHoles(list[i].state_before)[m.hole]; i++;
+      P.hole = m.hole; P.course = course; P.ball = { x: m.from[0], y: m.from[1], ghost: true };
       pgOverlay(`${who} · Hole ${m.hole + 1} · Shot ${m.stroke - (m.res === 'water' ? 1 : 0)}`, true); P.draw();
       P.t1 = setTimeout(() => {
         if (stopped) return; sfx('putt');
-        Golf.play(P, m.hole, m.from, m.vx, m.vy).then(() => {
+        Golf.play(P, course, m.from, m.vx, m.vy).then(() => {
           if (stopped) return;
-          if (m.score != null) { pgOverlay(`${who}: <b>${m.score}</b> on hole ${m.hole + 1} · ${golfScoreName(m.score, GOLF.holes[m.hole].par)}`, true); P.t1 = setTimeout(next, 1500); }
+          if (m.score != null) { pgOverlay(`${who}: <b>${m.score}</b> on hole ${m.hole + 1} · ${golfScoreName(m.score, GOLF.holes[course].par)}`, true); P.t1 = setTimeout(next, 1500); }
           else P.t1 = setTimeout(next, 500);
         });
       }, 700);
@@ -1546,7 +1569,7 @@ const Golf = {
 };
 function golfDraw(P) {
   const c = P.ctx; if (!c || !P.k) return;
-  const k = P.k, H = GOLF.holes[P.hole], R = GOLF.R, cup = H.cup;
+  const k = P.k, H = GOLF.holes[P.course], R = GOLF.R, cup = H.cup;
   c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, P.canvas.width, P.canvas.height);
   c.setTransform(k, 0, 0, k, 0, 0);
   let gr = c.createLinearGradient(0, 0, 0, GOLF.H); gr.addColorStop(0, '#1f5a43'); gr.addColorStop(1, '#143a2c');
@@ -1975,12 +1998,11 @@ async function loadGame() {
     if (e.status === 404) { toast('That game is gone.'); closeGame(); }
   }
 }
+function chatInner(n) { return `${I.chat} Chat${n ? `<span class="badge">${n}</span>` : ''}`; }
+function chatBtn() { const n = (G.id && S.unread[G.id]) || 0; return `<button class="btn chat-btn" data-act="open-chat" data-n="${n}">${chatInner(n)}</button>`; }
 function updateChatBadge() {
-  const b = $('[data-act=open-chat]'); if (!b) return;
   const n = (G.id && S.unread[G.id]) || 0;
-  if (b.dataset.n === String(n)) return;
-  b.dataset.n = n;
-  b.innerHTML = I.chat + (n ? `<span class="badge">${n}</span>` : '');
+  $$('[data-act=open-chat]').forEach((b) => { if (b.dataset.n === String(n)) return; b.dataset.n = n; b.innerHTML = chatInner(n); });
 }
 
 function myColor(g) { return g.state && g.state.colors ? g.state.colors[S.me] : 'r'; }
@@ -1990,6 +2012,7 @@ function renderGame(animateTheirMove) {
   const g = d.game, me = S.me, o = opp();
   destroyPG();
   $('#g-title').textContent = GNAME[g.type] || g.type;
+  $('#g-more').style.visibility = g.status === 'active' ? 'visible' : 'hidden';
   const timer = g.options && g.options.timer ? (g.options.timer === 24 ? '1-day turns' : '3-day turns') : 'No timer';
   let sub = timer;
   if (g.status === 'active' && g.turn_deadline) sub += ' · ' + left(g.turn_deadline);
@@ -1997,6 +2020,7 @@ function renderGame(animateTheirMove) {
   updateChatBadge();
 
   if (g.status === 'invited') return renderInvite(g);
+  if (!stateOk(g)) return renderBroken(g);
   if (g.type === 'golf') return Golf.render(g);
   if (g.type === 'pool') return Pool.render(g);
 
@@ -2050,11 +2074,11 @@ function renderGame(animateTheirMove) {
     actions = `<div class="actions">
       ${g.turn !== me ? `<button class="btn" data-act="nudge" ${canNudge ? '' : 'disabled'}>👋 Nudge</button>` : ''}
       ${canUndo ? `<button class="btn" data-act="req-undo">${I.undo} Take back</button>` : ''}
-      <button class="btn" data-act="more">${I.more} More</button>
+      ${chatBtn()}
     </div>`;
   } else if (g.status === 'finished') {
     actions = `<div class="actions"><button class="btn primary" data-act="rematch">🔁 Rematch</button>
-      ${d.moves.length ? `<button class="btn" data-act="replay">${I.play} Replay</button>` : ''}</div>`;
+      ${d.moves.length ? `<button class="btn" data-act="replay">${I.play} Replay</button>` : ''}${chatBtn()}</div>`;
   }
 
   const hints = !!(g.options && g.options.hints);
@@ -2065,10 +2089,24 @@ function renderGame(animateTheirMove) {
   if (animateTheirMove && g.state.last) fx(g.state.last.caps && g.state.last.caps.length ? 'capture' : 'move');
 }
 
+function stateOk(g) {
+  const s = g.state; if (!s) return false;
+  if (g.type === 'golf') return !!(s.scores && Array.isArray(s.scores.a) && Array.isArray(s.scores.b));
+  if (g.type === 'pool') return Array.isArray(s.balls) && !!s.groups;
+  if (g.type === 'checkers') return Array.isArray(s.board);
+  return true;
+}
+function renderBroken(g) {
+  const fin = g.status === 'finished';
+  $('#g-body').innerHTML = `${fin ? resultBanner(g) : ''}<div class="glass card" style="text-align:center;padding:24px 18px">
+      <div style="font-size:40px">🧩</div><b style="font-size:18px">This game didn't start right</b>
+      <p class="sub" style="margin:6px 0 0">It was set up by an older version of Volley${fin ? '.' : ', so it can\'t be played. Resign it and start a fresh one.'}</p></div>
+    <div class="actions">${fin ? '' : `<button class="btn danger" data-act="resign">${I.flag} Resign</button>`}${chatBtn()}</div>`;
+}
 function renderInvite(g) {
   const me = S.me, o = opp(), incoming = g.created_by !== me;
   let t = g.options.timer ? (g.options.timer === 24 ? '1 day per turn' : '3 days per turn') : 'No turn timer';
-  if (g.type === 'golf') t = '9 holes · Par 24 · ' + t;
+  if (g.type === 'golf') { const n = g.options.holes || 9; t = `${n} holes · Par ${golfParOf(n)} · ` + t; }
   G.acceptHints = g.options.hints;
   $('#g-body').innerHTML = `<div class="glass card" style="text-align:center;padding:26px 18px;margin-top:12px">
       <div class="thumb" style="width:96px;height:96px;margin:0 auto 14px;border-radius:22px">${thumb(g)}</div>
@@ -2081,7 +2119,7 @@ function renderInvite(g) {
       : `<div class="item"><span class="lbl">Move hints</span><span class="val">On if ${esc(nameOf(o))} keeps them</span></div>`}</div>` : ''}
     <div class="actions" style="margin-top:6px">${incoming
       ? `<button class="btn" data-act="decline">Decline</button><button class="btn primary" data-act="accept" style="min-width:150px">Accept</button>`
-      : `<button class="btn" data-act="nudge" ${!g.nudged_at || Date.now() - new Date(g.nudged_at) > 3600e3 ? '' : 'disabled'}>👋 Nudge</button><button class="btn danger" data-act="cancel-invite">Cancel invite</button>`}</div>`;
+      : `<button class="btn" data-act="nudge" ${!g.nudged_at || Date.now() - new Date(g.nudged_at) > 3600e3 ? '' : 'disabled'}>👋 Nudge</button><button class="btn danger" data-act="cancel-invite">Cancel invite</button>`}${chatBtn()}</div>`;
 }
 
 /* ---------- Board drawing + input ---------- */
@@ -2347,7 +2385,7 @@ if (window.visualViewport) {
 async function run(fn) { try { await fn(); } catch (e) { if (e.status === 409) { toast(errText(e)); await loadGame(); } else toast(errText(e), 3200); fx('err'); } }
 
 document.addEventListener('click', (e) => {
-  const t = e.target.closest('[data-act],[data-open],[data-pick],[data-timer],[data-theme-set],[data-answer],[data-rp]');
+  const t = e.target.closest('[data-act],[data-open],[data-pick],[data-timer],[data-holes],[data-theme-set],[data-answer],[data-rp]');
   if (!t) return;
   audio(); // unlock sound on first tap
   if (t.dataset.open) { fx('tap'); return openGame(t.dataset.open); }
@@ -2356,6 +2394,7 @@ document.addEventListener('click', (e) => {
     if (!gd.ready) { toast(`${gd.name} is coming in a later build`); fx('err'); return; }
     S.newGame.type = gd.type; fx('tap'); return renderNew();
   }
+  if (t.dataset.holes != null) { S.newGame.holes = Number(t.dataset.holes); fx('tap'); return renderNew(); }
   if (t.dataset.timer != null) { S.newGame.timer = Number(t.dataset.timer); fx('tap'); return renderNew(); }
   if (t.dataset.themeSet) { P.theme = t.dataset.themeSet; savePrefs(); applyTheme(); fx('tap'); return renderSettings(); }
   if (t.dataset.answer != null) {
@@ -2381,7 +2420,7 @@ document.addEventListener('click', (e) => {
     'send-invite': () => run(async () => {
       t.disabled = true;
       const gd = GAME_LIST.find((x) => x.type === S.newGame.type);
-      const r = await api('create', { type: S.newGame.type, options: { timer: S.newGame.timer, hints: !!gd.hints && S.newGame.hints } });
+      const r = await api('create', { type: S.newGame.type, options: { timer: S.newGame.timer, hints: !!gd.hints && S.newGame.hints, ...(gd.holes ? { holes: S.newGame.holes } : {}) } });
       S.games.unshift(r.game); fx('sent'); toast(`Invite sent to ${nameOf(opp())}`); setTab('games');
     }).finally(() => { t.disabled = false; }),
     'toggle-sound': () => { P.sound = !P.sound; savePrefs(); fx('tap'); renderSettings(); },
@@ -2412,7 +2451,7 @@ document.addEventListener('click', (e) => {
       const g = G.data.game;
       let state, turn;
       const first = g.options.first || (Math.random() < 0.5 ? 'a' : 'b');
-      if (g.type === 'golf') { state = golfNew(first); turn = first; }
+      if (g.type === 'golf') { state = golfNew(first, g.options.holes || 9); turn = first; }
       else if (g.type === 'pool') { state = poolNew(first); turn = first; }
       else {
         const colors = g.options.colors || (Math.random() < 0.5 ? { a: 'r', b: 'k' } : { a: 'k', b: 'r' });
@@ -2473,7 +2512,7 @@ function handleUrl(url) {
 /* ========================== Boot ========================== */
 function startApp() {
   $('#tabs').hidden = false; setupTabs(); setTab(S.tab || 'games');
-  [['close-game', I.back], ['open-chat', I.chat]].forEach(([a, ic]) => { const b = $(`[data-act=${a}]`); if (b) b.innerHTML = ic; });
+  $('[data-act=close-game]').innerHTML = I.back; $('#g-more').innerHTML = I.more;
   refreshList(); startPolling();
   subscribePush(false).catch(() => {}); // refresh this phone's subscription if notifications are already allowed
   handleUrl(location.href);

@@ -2,7 +2,7 @@
 // Headers: x-volley-key (passcode), x-volley-player ('a' or 'b')
 const {
   sb, q, nowIso, other, getPlayers, nameOf, gameName, notifySafe,
-  deadlineFrom, maybeSweep, checkAuth, sendError, fail, VAPID_PUBLIC, pushReady,
+  deadlineFrom, maybeSweep, checkAuth, sendError, fail, VAPID_PUBLIC, pushReady, APP_VERSION,
 } = require('./_lib/core');
 
 const DEV_CODE = process.env.VOLLEY_DEV_CODE || '';
@@ -111,6 +111,7 @@ const handlers = {
     if (!TYPES.includes(b.type)) fail(400, 'bad_type');
     const o = b.options || {};
     const options = { timer: TIMERS.includes(Number(o.timer)) ? Number(o.timer) : 0, hints: !!o.hints };
+    if (b.type === 'golf') options.holes = [3, 6, 9].includes(Number(o.holes)) ? Number(o.holes) : 9;
     const rows = await sb(`volley_games?select=${GAME_COLS}`, {
       method: 'POST', prefer: 'return=representation',
       body: { type: b.type, status: 'invited', options, turn: other(me), created_by: me },
@@ -298,6 +299,7 @@ const handlers = {
     const existing = await sb(`volley_games?rematch_of=eq.${g.id}&status=in.(invited,active,finished)&select=${GAME_COLS}&limit=1`);
     if (existing && existing.length) return { game: existing[0], existing: true };
     const options = { timer: g.options.timer || 0, hints: !!g.options.hints };
+    if (g.options.holes) options.holes = g.options.holes;
     // Swap sides from last game so you take turns going first
     if (g.state && g.state.colors) {
       const c = g.state.colors; options.colors = { a: c.b, b: c.a };
@@ -317,8 +319,12 @@ const handlers = {
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('x-volley-version', APP_VERSION);
   if (req.method !== 'POST') return res.status(405).json({ error: 'post_only' });
   try {
+    // An out-of-date copy of the app can't save anything; it reloads itself instead
+    const cv = req.headers['x-volley-version'];
+    if (cv && cv !== APP_VERSION) fail(409, 'update_required');
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const action = body.action;
     const isDev = String(action || '').startsWith('dev_');
