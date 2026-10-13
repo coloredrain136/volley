@@ -5,6 +5,7 @@ const {
   deadlineFrom, maybeSweep, checkAuth, sendError, fail, VAPID_PUBLIC, pushReady,
 } = require('./_lib/core');
 
+const DEV_CODE = process.env.VOLLEY_DEV_CODE || '';
 const TYPES = ['checkers']; // chess and golf get added in later builds
 const TIMERS = [0, 24, 72];
 
@@ -35,7 +36,36 @@ function resultText(g, players, forPlayer) {
   return won ? `You won ${gameName(g.type)}!${why ? ' ' + why + '.' : ''}` : `${nameOf(players, g.winner)} won ${gameName(g.type)}.${why ? ' ' + why + '.' : ''}`;
 }
 
+// Developer tools: only work when VOLLEY_DEV_CODE is set in Vercel and the phone sends it
+function checkDev(req) {
+  if (!DEV_CODE) fail(403, 'dev_not_configured');
+  if ((req.headers['x-volley-dev'] || '') !== DEV_CODE) fail(403, 'bad_dev_code');
+}
+const ALL_STATUSES = 'status=in.(invited,active,finished,declined)';
+async function wipeGames() {
+  // moves, requests and messages are removed with their game (on delete cascade)
+  await sb(`volley_games?${ALL_STATUSES}`, { method: 'DELETE' });
+}
+
 const handlers = {
+  async dev_check() { return { ok: true }; },
+
+  // Deleting either player deletes every game too, since every game is between the two of you
+  async dev_delete_player(b) {
+    if (b.slot !== 'a' && b.slot !== 'b') fail(400, 'bad_slot');
+    await wipeGames();
+    await sb(`volley_push_subs?player=eq.${b.slot}`, { method: 'DELETE' });
+    await sb(`volley_settings?key=eq.player_${b.slot}`, { method: 'DELETE' });
+    return { players: await getPlayers() };
+  },
+
+  async dev_reset() {
+    await wipeGames();
+    await sb('volley_push_subs?player=in.(a,b)', { method: 'DELETE' });
+    await sb('volley_settings?key=in.(player_a,player_b)', { method: 'DELETE' });
+    return { players: await getPlayers() };
+  },
+
   // Used by the lock screen: checks the passcode, returns who's set up
   async hello() {
     return { players: await getPlayers(), vapid: VAPID_PUBLIC, push: pushReady() };
@@ -280,8 +310,10 @@ module.exports = async (req, res) => {
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     const action = body.action;
-    const open = action === 'hello' || action === 'set_player';
+    const isDev = String(action || '').startsWith('dev_');
+    const open = isDev || action === 'hello' || action === 'set_player';
     const me = checkAuth(req, { needPlayer: !open });
+    if (isDev) checkDev(req);
     const fn = handlers[action];
     if (!fn) fail(400, 'unknown_action');
     await maybeSweep();
