@@ -339,7 +339,7 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
 <script>
 'use strict';
 /* ========================== Basics ========================== */
-const VERSION = 'volley-6';
+const VERSION = 'volley-7';
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -2021,17 +2021,20 @@ function golfDraw(P) {
   const phase = P.sim ? P.sim.t0 + P.sim.steps : pgClock();
   // Camera: short holes fit the screen. Tall holes follow the ball, or zoom out to show the whole hole.
   const fb = P.sim ? P.sim.b : P.ball;
+  // center on the hole itself, not the 100-wide play area (narrow lanes sit off to one side)
+  if (!H._cx) { let a = 1e9, b = -1e9; for (const p of H.poly) { a = Math.min(a, p[0]); b = Math.max(b, p[0]); } H._cx = (a + b) / 2; }
+  const tx = H._cx;
   let ts = 1, ty = 75;
   if (hh > 150) {
     if (P.overview) { ts = 150 / hh; ty = hh / 2; }
     else ty = Math.max(75, Math.min(hh - 75, fb ? fb.y : H.tee[1]));
   }
-  if (!P.cam) P.cam = { y: ty, s: ts };
+  if (!P.cam) P.cam = { x: tx, y: ty, s: ts };
   const now = performance.now(), dt = Math.min(0.06, (now - (P.camT || now)) / 1000); P.camT = now;
   const f = 1 - Math.exp(-dt * (P.sim ? 4.5 : 6));
-  P.cam.y += (ty - P.cam.y) * f; P.cam.s += (ts - P.cam.s) * f;
-  P.camMoving = Math.abs(ty - P.cam.y) > 0.05 || Math.abs(ts - P.cam.s) > 0.002;
-  const T = k * P.cam.s, ox = CW / 2 - 50 * T, oy = CH / 2 - P.cam.y * T, z = 1 / P.cam.s;
+  P.cam.x += (tx - P.cam.x) * f; P.cam.y += (ty - P.cam.y) * f; P.cam.s += (ts - P.cam.s) * f;
+  P.camMoving = Math.abs(tx - P.cam.x) > 0.05 || Math.abs(ty - P.cam.y) > 0.05 || Math.abs(ts - P.cam.s) > 0.002;
+  const T = k * P.cam.s, ox = CW / 2 - P.cam.x * T, oy = CH / 2 - P.cam.y * T, z = 1 / P.cam.s;
   c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, CW, CH);
   let gr = c.createLinearGradient(0, 0, 0, CH); gr.addColorStop(0, '#1f5a43'); gr.addColorStop(1, '#143a2c');
   c.fillStyle = gr; c.fillRect(0, 0, CW, CH);
