@@ -143,7 +143,7 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
 .emoji-grid button:active{transform:scale(.88)}
 
 /* New game */
-.picker{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.picker{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .gtile{border-radius:22px;padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;font-weight:700;font-size:15px;position:relative;transition:transform .15s, box-shadow .2s}
 .gtile .art{width:62px;height:62px;border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.14)}
 .gtile .art svg{width:100%;height:100%;display:block}
@@ -264,6 +264,43 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
 .result .big{font-size:44px;line-height:1}
 .result b{display:block;font-size:22px;margin-top:6px}
 
+.scorebar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:7px 8px;border-radius:20px}
+.scorebar .sp{display:flex;align-items:center;gap:7px;min-width:0;border-radius:14px;padding:5px 7px;transition:box-shadow .3s}
+.scorebar .sp.r{justify-content:flex-end;text-align:right}
+.scorebar .sp.turn{box-shadow:0 0 0 2px var(--accent),0 0 18px rgba(91,108,255,.3)}
+.scorebar .av{font-size:24px;line-height:1;flex:none}
+.scorebar .pn{display:block;min-width:0}
+.scorebar b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scorebar small{display:block;font-size:12px;color:var(--sub);white-space:nowrap}
+.scorebar .mid{text-align:center;padding:0 2px}.scorebar .mid b{font-size:15px}
+.pgwrap{position:relative;padding:5px;border-radius:22px;display:flex;justify-content:center}
+.pgwrap canvas{display:block;border-radius:16px;touch-action:none;-webkit-user-select:none;user-select:none}
+.pg-ov{position:absolute;left:50%;top:14px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:18px;background:rgba(14,18,34,.66);color:#fff;font-size:13.5px;font-weight:600;text-align:center;width:max-content;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);animation:fade .2s;max-width:calc(100% - 24px);pointer-events:auto}
+.pg-ov span{line-height:1.3}
+.pg-skip{background:rgba(255,255,255,.22);color:#fff;border-radius:12px;padding:4px 10px;font-size:12.5px;font-weight:700;margin-right:-6px;flex:none}
+.pg-hint{text-align:center;font-size:13.5px;color:var(--sub);min-height:18px}
+.pool-row{display:flex;gap:8px;align-items:stretch}
+.pool-row .pgwrap{flex:1;min-width:0}
+.power{width:40px;flex:none;border-radius:23px;position:relative;overflow:hidden;touch-action:none;cursor:ns-resize}
+.power span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(180deg);writing-mode:vertical-rl;font-size:10.5px;font-weight:800;letter-spacing:.14em;color:var(--sub);pointer-events:none}
+.pw-fill{position:absolute;left:0;right:0;top:0;height:0;background:linear-gradient(180deg,#3ddc97,#ffd166 55%,#f2445f);opacity:.85}
+.pw-knob{position:absolute;left:5px;right:5px;top:7px;height:30px;border-radius:15px;background:var(--glass-2);box-shadow:0 2px 8px rgba(0,0,0,.2),var(--hl)}
+.fine{height:40px;border-radius:20px;position:relative;overflow:hidden;touch-action:none;display:flex;align-items:center;justify-content:center;cursor:ew-resize}
+.fine-ticks{position:absolute;inset:0;background-image:repeating-linear-gradient(90deg,var(--hair-2) 0 2px,transparent 2px 12px)}
+.fine span{position:relative;font-size:12.5px;font-weight:650;color:var(--sub);background:var(--glass-2);padding:3px 10px;border-radius:10px;pointer-events:none}
+.banner.slim{padding:10px 14px}.banner.slim .msg{font-weight:550;font-size:14.5px}
+.dots{display:flex;gap:2px;margin-top:3px;align-items:center}.sp.r .dots{justify-content:flex-end}
+.bd{width:8px;height:8px;border-radius:50%;background:var(--c);display:inline-block;flex:none;box-shadow:inset 0 -1px 1px rgba(0,0,0,.25)}
+.bd.st{background:linear-gradient(180deg,#f6f4ee 0 27%,var(--c) 27% 73%,#f6f4ee 73%)}
+.bd.off{opacity:.18}
+.sc table{width:100%;border-collapse:collapse;font-size:13.5px;text-align:center}
+.sc th{font-size:11px;color:var(--sub);font-weight:700;padding:2px 0 6px}
+.sc td{padding:7px 0;border-top:1px solid var(--hair);font-weight:650}
+.sc td:first-child{text-align:left;padding-left:2px;font-size:16px}
+.sc tr.par td{color:var(--sub);font-weight:500;font-size:12px}
+.sc td span{display:inline-block;min-width:20px;padding:1px 0;border-radius:7px}
+.sc .under{color:var(--good)}.sc .over{color:var(--bad)}.sc .ace{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent-2))}
+.sc .nil{color:var(--faint)}
 .spinner{width:22px;height:22px;border-radius:50%;border:3px solid var(--hair-2);border-top-color:var(--accent);animation:spin .8s linear infinite;margin:30px auto}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -299,7 +336,7 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
 <script>
 'use strict';
 /* ========================== Basics ========================== */
-const VERSION = 'volley-2';
+const VERSION = 'volley-3';
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -387,6 +424,7 @@ const SFX = {
   msg() { tone(1046, 0.07, 'sine', 0.08); tone(1568, 0.09, 'sine', 0.06, 0.06); },
   sent() { tone(660, 0.06, 'sine', 0.06, 0, 990); },
   err() { tone(180, 0.12, 'square', 0.05); },
+  putt() { tone(190, 0.07, 'triangle', 0.2); tone(1100, 0.02, 'square', 0.035); },
   nudge() { tone(700, 0.06, 'triangle', 0.1); tone(700, 0.06, 'triangle', 0.1, 0.1); },
 };
 function sfx(name) { if (P.sound) try { SFX[name](); } catch {} }
@@ -633,10 +671,14 @@ function thumb(g) {
     });
     return s + '</svg>';
   }
+  if (g.type === 'pool') {
+    const b = [[40, 26, '#f4c20d'], [35, 34, '#d62828'], [45, 34, '#1f4fd1'], [30, 42, '#138a4a'], [40, 42, '#111318'], [50, 42, '#f77f00'], [40, 62, '#f7f5ef']];
+    return `<svg viewBox="0 0 80 80"><rect width="80" height="80" fill="#2a2f48"/><rect x="6" y="6" width="68" height="68" rx="4" fill="#1f9a63"/>${[[7, 7], [73, 7], [7, 73], [73, 73]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4.5" fill="#05070b"/>`).join('')}${b.map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="4.6" fill="${c}"/><circle cx="${x - 1.4}" cy="${y - 1.6}" r="1.4" fill="rgba(255,255,255,.55)"/>`).join('')}</svg>`;
+  }
   if (g.type === 'chess') return '<svg viewBox="0 0 80 80"><rect width="80" height="80" fill="#e9e3d6"/><text x="40" y="56" font-size="44" text-anchor="middle">♞</text></svg>';
   return '<svg viewBox="0 0 80 80"><defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6fd18a"/><stop offset="1" stop-color="#2f9e5b"/></linearGradient></defs><rect width="80" height="80" fill="url(#gg)"/><circle cx="54" cy="26" r="7" fill="#123"/><path d="M54 26V8l12 5-12 5" fill="#f2445f" stroke="#fff" stroke-width="1"/><circle cx="24" cy="58" r="6" fill="#fff"/></svg>';
 }
-const GNAME = { checkers: 'Checkers', chess: 'Chess', golf: 'Mini Golf' };
+const GNAME = { checkers: 'Checkers', chess: 'Chess', golf: 'Mini Golf', pool: '8-Ball' };
 
 function gameLine(g) {
   const me = S.me, them = nameOf(opp());
@@ -695,8 +737,9 @@ function renderGames() {
 /* ---------- New Game ---------- */
 const GAME_LIST = [
   { type: 'checkers', name: 'Checkers', ready: true, hints: true },
+  { type: 'golf', name: 'Mini Golf', ready: true, info: ['Course', 'Classic · 9 holes · Par 24'] },
+  { type: 'pool', name: '8-Ball', ready: true, info: ['Rules', 'Standard 8-ball · fouls give ball in hand'] },
   { type: 'chess', name: 'Chess', ready: false, soon: 'Coming next' },
-  { type: 'golf', name: 'Mini Golf', ready: false, soon: 'Coming soon' },
 ];
 function renderNew() {
   const N = S.newGame;
@@ -712,6 +755,7 @@ function renderNew() {
         <div class="seg" id="seg-timer">${segs.map(([v, l]) => `<button data-timer="${v}" class="${N.timer === v ? 'on' : ''}">${l}</button>`).join('')}</div>
         <div class="hint">${N.timer ? `Run out of time and you forfeit. You'll get a warning a few hours before.` : 'Take as long as you want.'}</div>
       </div>
+      ${gdef.info ? `<div class="item"><span class="lbl">${gdef.info[0]}</span><span class="val" style="font-size:14px;text-align:right">${gdef.info[1]}</span></div>` : ''}
       ${gdef.hints ? `<button class="item" data-act="toggle-hints"><span class="lbl">Move hints<div class="hint sub" style="font-weight:400;font-size:13px">Show legal moves when you tap a piece</div></span><span class="switch ${N.hints ? 'on' : ''}"></span></button>` : ''}
     </div>
     <div style="margin-top:20px"><button class="btn primary block" data-act="send-invite" ${gdef.ready ? '' : 'disabled'}>Send invite to ${esc(nameOf(opp()))} ${esc(emojiOf(opp()))}</button></div>
@@ -741,7 +785,8 @@ function renderStats() {
   const streak = st.cur.n ? `${esc(emojiOf(st.cur.p))} <b>${st.cur.p === me ? 'You' : esc(nameOf(st.cur.p))}</b> ${st.cur.n === 1 ? 'won the last game' : `${st.cur.p === me ? 'have' : 'has'} won ${st.cur.n} in a row${st.cur.n >= 3 ? ' 🔥' : ''}`}` : 'No streak going right now';
   const rows = GAME_LIST.map((g) => {
     const t = st.by[g.type] || { a: 0, b: 0, draw: 0 };
-    const extra = g.type === 'golf' ? `<span class="sub">Best score: —</span>` : `<span class="sub">${t[me]}–${t[o]}${t.draw ? ` · ${t.draw} draw${t.draw > 1 ? 's' : ''}` : ''}</span>`;
+    const best = (p) => { let b = null; for (const x of S.games) if (x.type === 'golf' && x.status === 'finished' && x.state && x.state.scores[p].every((v) => v != null)) { const t = golfTotal(x.state, p); b = b == null ? t : Math.min(b, t); } return b == null ? '—' : b; };
+    const extra = g.type === 'golf' ? `<span class="sub">${t[me]}–${t[o]}${t.draw ? ` · ${t.draw} tie${t.draw > 1 ? 's' : ''}` : ''} · Best: You ${best(me)}, ${esc(nameOf(o))} ${best(o)}</span>` : `<span class="sub">${t[me]}–${t[o]}${t.draw ? ` · ${t.draw} draw${t.draw > 1 ? 's' : ''}` : ''}</span>`;
     return `<div class="statrow"><div class="thumb" style="width:44px;height:44px;border-radius:11px">${thumb({ type: g.type })}</div><div class="grow"><b>${g.name}</b><div>${extra}</div></div></div>`;
   }).join('');
   paint(`<div class="page"><h1>Stats</h1>
@@ -953,13 +998,930 @@ const CK = {
   count(b, color) { return b.filter((p) => p && p.c === color).length; },
 };
 
+/*PURE-START*/
+/* ========================== Physics core (shared by Mini Golf + 8-Ball) ==========================
+   Deterministic on purpose: only + - * / and Math.sqrt inside the sims, so a shot replays
+   exactly the same on both phones. Shots are stored as velocity numbers, never angles. */
+const SQ = Math.sqrt;
+const r3 = (v) => Math.round(v * 1000) / 1000;
+const r5 = (v) => Math.round(v * 100000) / 100000;
+
+// Circle (b) vs line segment. Pushes the ball out and bounces it. Returns the impact speed.
+function segHit(b, x1, y1, x2, y2, rad, e) {
+  const ex = x2 - x1, ey = y2 - y1, L2 = ex * ex + ey * ey;
+  let t = ((b.x - x1) * ex + (b.y - y1) * ey) / L2;
+  if (t < 0) t = 0; else if (t > 1) t = 1;
+  const qx = x1 + t * ex, qy = y1 + t * ey, dx = b.x - qx, dy = b.y - qy, d2 = dx * dx + dy * dy;
+  if (d2 >= rad * rad) return 0;
+  let nx, ny;
+  if (d2 < 1e-12) { const L = SQ(L2); nx = -ey / L; ny = ex / L; } else { const d = SQ(d2); nx = dx / d; ny = dy / d; }
+  b.x = qx + nx * rad; b.y = qy + ny * rad;
+  const vn = b.vx * nx + b.vy * ny;
+  if (vn < 0) { b.vx -= (1 + e) * vn * nx; b.vy -= (1 + e) * vn * ny; return -vn; }
+  return 0;
+}
+function inPoly(poly, x, y) {
+  let c = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const xi = poly[i][0], yi = poly[i][1], xj = poly[j][0], yj = poly[j][1];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
+const inRects = (zs, x, y) => { for (const z of zs || []) if (x >= z[0] && x <= z[2] && y >= z[1] && y <= z[3]) return true; return false; };
+
+/* ---------------- Mini Golf ---------------- */
+const box = (x1, y1, x2, y2) => [[x1, y1], [x2, y1], [x2, y2], [x1, y2]];
+const GOLF = {
+  W: 100, H: 150, R: 2, CR: 3.4, VMAX: 4.4, MAX: 6, PEN: 7, // miss the 6th stroke and you take a 7
+  holes: [
+    { name: 'Warm-up', par: 2, poly: box(25, 10, 75, 140), tee: [50, 125], cup: [50, 28] },
+    { name: 'Dogleg', par: 3, poly: [[10, 10], [90, 10], [90, 55], [45, 55], [45, 140], [10, 140]], tee: [27, 125], cup: [74, 30] },
+    { name: 'Bumper Alley', par: 2, poly: box(15, 10, 85, 140), bumpers: [[35, 80, 5.5], [65, 80, 5.5], [50, 58, 5.5]], tee: [50, 125], cup: [50, 25] },
+    { name: 'The Beach', par: 3, poly: box(15, 10, 85, 140), sand: [[15, 62, 68, 88]], tee: [35, 125], cup: [35, 26] },
+    { name: 'The Pond', par: 3, poly: box(10, 10, 90, 140), water: [[10, 64, 60, 90]], tee: [30, 125], cup: [30, 26] },
+    { name: 'Zigzag', par: 3, poly: box(10, 10, 90, 140), walls: [[10, 100, 64, 100], [36, 56, 90, 56]], tee: [25, 125], cup: [25, 28] },
+    { name: 'The Bridge', par: 3, poly: box(10, 10, 90, 140), water: [[10, 52, 42, 72], [58, 52, 90, 72]], bumpers: [[50, 96, 4.5]], tee: [50, 128], cup: [50, 28] },
+    { name: 'Diagonal', par: 2, poly: [[10, 140], [45, 140], [90, 62], [90, 10], [55, 10], [10, 88]], sand: [[62, 38, 90, 50]], tee: [27, 128], cup: [72, 26] },
+    { name: 'Finale', par: 3, poly: box(10, 10, 90, 140), walls: [[10, 106, 40, 106], [60, 106, 90, 106]], water: [[10, 40, 36, 68]], sand: [[64, 40, 90, 68]], bumpers: [[50, 78, 5]], tee: [50, 128], cup: [50, 22] },
+  ],
+};
+GOLF.par = GOLF.holes.reduce((a, h) => a + h.par, 0);
+
+function golfSim(h, x, y, vx, vy) {
+  const H = GOLF.holes[h], R = GOLF.R, CR = GOLF.CR, poly = H.poly, cup = H.cup;
+  const b = { x, y, vx, vy };
+  const sim = { b, done: false, res: null, ev: [], steps: 0 };
+  sim.step = function () {
+    if (sim.done) return;
+    let sp = SQ(b.vx * b.vx + b.vy * b.vy);
+    const n = Math.max(1, Math.ceil(sp / (R * 0.5)));
+    for (let k = 0; k < n; k++) {
+      b.x += b.vx / n; b.y += b.vy / n;
+      for (let i = 0; i < poly.length; i++) {
+        const p = poly[i], q = poly[(i + 1) % poly.length];
+        const hit = segHit(b, p[0], p[1], q[0], q[1], R, 0.72);
+        if (hit > 0.12) sim.ev.push(['wall', hit]);
+      }
+      for (const w of H.walls || []) {
+        const hit = segHit(b, w[0], w[1], w[2], w[3], R + 0.9, 0.72);
+        if (hit > 0.12) sim.ev.push(['wall', hit]);
+      }
+      for (const c of H.bumpers || []) {
+        const dx = b.x - c[0], dy = b.y - c[1], rr = R + c[2], d2 = dx * dx + dy * dy;
+        if (d2 < rr * rr) {
+          const d = SQ(d2) || 1e-6, nx = dx / d, ny = dy / d;
+          b.x = c[0] + nx * rr; b.y = c[1] + ny * rr;
+          const vn = b.vx * nx + b.vy * ny;
+          if (vn < 0) { b.vx -= 2 * vn * nx; b.vy -= 2 * vn * ny; b.vx += nx * 0.35; b.vy += ny * 0.35; sim.ev.push(['bump', -vn]); }
+        }
+      }
+      if (inRects(H.water, b.x, b.y)) { sim.done = true; sim.res = 'water'; b.vx = 0; b.vy = 0; sim.ev.push(['water']); return; }
+      const cx = b.x - cup[0], cy = b.y - cup[1], cd2 = cx * cx + cy * cy;
+      if (cd2 < CR * CR) {
+        const s2 = SQ(b.vx * b.vx + b.vy * b.vy);
+        if (s2 < 1.25 || (cd2 < CR * CR * 0.25 && s2 < 2.2)) {
+          sim.done = true; sim.res = 'cup'; b.x = cup[0]; b.y = cup[1]; b.vx = 0; b.vy = 0; sim.ev.push(['cup']); return;
+        }
+      }
+    }
+    // a little pull toward the cup when you're close, like a real lip
+    const px = cup[0] - b.x, py = cup[1] - b.y, pd2 = px * px + py * py, pr = CR * 1.35;
+    if (pd2 < pr * pr) { b.vx += px * 0.01; b.vy += py * 0.01; }
+    sp = SQ(b.vx * b.vx + b.vy * b.vy);
+    const sand = inRects(H.sand, b.x, b.y);
+    const ns = sand ? sp * 0.9 - 0.012 : sp * 0.985 - 0.0032;
+    if (ns <= 0.008) { b.vx = 0; b.vy = 0; sim.done = true; sim.res = 'stop'; }
+    else { const f = ns / sp; b.vx *= f; b.vy *= f; }
+    if (!inPoly(poly, b.x, b.y)) { sim.done = true; sim.res = 'water'; b.vx = 0; b.vy = 0; sim.ev.push(['water']); }
+    if (++sim.steps > 5000) { b.vx = 0; b.vy = 0; sim.done = true; sim.res = 'stop'; }
+  };
+  sim.run = function () { while (!sim.done) sim.step(); return sim; };
+  return sim;
+}
+const golfNew = (first) => ({ course: 'classic', first, scores: { a: Array(9).fill(null), b: Array(9).fill(null) }, cur: null });
+const golfNextHole = (st, p) => st.scores[p].findIndex((v) => v == null);
+const golfTotal = (st, p) => st.scores[p].reduce((a, v) => a + (v || 0), 0);
+const golfToPar = (st, p) => st.scores[p].reduce((a, v, i) => a + (v == null ? 0 : v - GOLF.holes[i].par), 0);
+const golfPower = (p) => GOLF.VMAX * (0.15 * p + 0.85 * p * p);
+
+// Work out what one stroke does to the game. Pure: used by the shooter, tested in node.
+function golfApply(st, me, h, from, res) {
+  const o = me === 'a' ? 'b' : 'a';
+  const ns = JSON.parse(JSON.stringify(st));
+  const cur = st.cur && st.cur.player === me && st.cur.hole === h ? st.cur : { strokes: 0 };
+  const strokes = cur.strokes + 1 + (res.res === 'water' ? 1 : 0);
+  const end = res.res === 'water' ? from : [r3(res.b.x), r3(res.b.y)];
+  let holeDone = false, score = null;
+  if (res.res === 'cup') { holeDone = true; score = Math.min(strokes, GOLF.PEN); }
+  else if (strokes >= GOLF.MAX) { holeDone = true; score = GOLF.PEN; }
+  let keep = true, result = null, passed = false;
+  if (holeDone) {
+    ns.scores[me][h] = score; ns.cur = null;
+    if (ns.scores[o][h] == null) { keep = false; passed = true; }
+    else if (h === GOLF.holes.length - 1) {
+      const a = golfTotal(ns, 'a'), b = golfTotal(ns, 'b');
+      result = { winner: a === b ? 'draw' : a < b ? 'a' : 'b' }; keep = false;
+    }
+  } else ns.cur = { player: me, hole: h, strokes, pos: end };
+  return { state: ns, keep, result, passed, holeDone, score, strokes, end };
+}
+
+/* ---------------- 8-Ball ---------------- */
+const POOL = (() => {
+  const W = 100, H = 176, R = 2.75, m = 6.2, s = 4.9, mid = H / 2;
+  const segs = [
+    [m, 0, W - m, 0, 0.86], [m, H, W - m, H, 0.86],
+    [0, m, 0, mid - s, 0.86], [0, mid + s, 0, H - m, 0.86], [W, m, W, mid - s, 0.86], [W, mid + s, W, H - m, 0.86],
+    // pocket jaws
+    [m, 0, m - 2.6, -3.4, 0.5], [W - m, 0, W - m + 2.6, -3.4, 0.5], [m, H, m - 2.6, H + 3.4, 0.5], [W - m, H, W - m + 2.6, H + 3.4, 0.5],
+    [0, m, -3.4, m - 2.6, 0.5], [W, m, W + 3.4, m - 2.6, 0.5], [0, H - m, -3.4, H - m + 2.6, 0.5], [W, H - m, W + 3.4, H - m + 2.6, 0.5],
+    [0, mid - s, -3, mid - s + 1, 0.5], [0, mid + s, -3, mid + s - 1, 0.5], [W, mid - s, W + 3, mid - s + 1, 0.5], [W, mid + s, W + 3, mid + s - 1, 0.5],
+  ];
+  const pockets = [[-1.3, -1.3, 5.0], [W + 1.3, -1.3, 5.0], [-1.3, H + 1.3, 5.0], [W + 1.3, H + 1.3, 5.0], [-2.8, mid, 4.5], [W + 2.8, mid, 4.5]];
+  return { W, H, R, VMAX: 9, RAIL: 7, FOOT: [50, 44], KITCHEN: 132, CUE: [50, 140], segs, pockets };
+})();
+const POOL_COLORS = ['#f6f4ee', '#f4c20d', '#1f4fd1', '#d62828', '#6a2c91', '#f77f00', '#138a4a', '#7d1d2b', '#111318'];
+const poolColor = (n) => POOL_COLORS[n > 8 ? n - 8 : n];
+const poolGroup = (n) => (n === 0 ? 'cue' : n === 8 ? 'eight' : n < 8 ? 'solids' : 'stripes');
+const GROUP_BALLS = { solids: [1, 2, 3, 4, 5, 6, 7], stripes: [9, 10, 11, 12, 13, 14, 15] };
+
+function poolRack(rand = Math.random) {
+  const R = POOL.R, gap = 0.03, [fx, fy] = POOL.FOOT, pos = [];
+  for (let row = 0; row < 5; row++) for (let i = 0; i <= row; i++) pos.push([r5(fx + (i - row / 2) * (2 * R + gap)), r5(fy - row * (2 * R + gap) * 0.8660254)]);
+  const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const solids = shuffle([2, 3, 4, 5, 6, 7]), stripes = shuffle([9, 10, 11, 12, 13, 14, 15]);
+  const cs = solids.pop(), ct = stripes.pop();
+  const rest = shuffle(solids.concat(stripes));
+  const order = Array(15).fill(0);
+  order[0] = 1; order[4] = 8;
+  if (rand() < 0.5) { order[10] = cs; order[14] = ct; } else { order[10] = ct; order[14] = cs; }
+  for (let i = 0; i < 15; i++) if (!order[i]) order[i] = rest.pop();
+  const balls = [{ n: 0, x: POOL.CUE[0], y: POOL.CUE[1], on: true }];
+  order.forEach((n, i) => balls.push({ n, x: pos[i][0], y: pos[i][1], on: true }));
+  return balls;
+}
+const poolNew = (first) => ({ balls: poolRack(), groups: { a: null, b: null }, inHand: true, isBreak: true, first, last: null });
+
+function poolSim(balls, vx, vy) {
+  const R = POOL.R, D = 2 * R, E = 0.97, segs = POOL.segs, pk = POOL.pockets;
+  const B = balls.map((b) => ({ n: b.n, x: b.x, y: b.y, on: b.on, vx: 0, vy: 0 }));
+  const cue = B.find((b) => b.n === 0); cue.vx = vx; cue.vy = vy;
+  const sim = { B, done: false, first: null, pocketed: [], rails: 0, ev: [], steps: 0 };
+  const sink = (b) => { b.on = false; b.vx = 0; b.vy = 0; sim.pocketed.push(b.n); sim.ev.push(['pocket', b.n]); };
+  sim.step = function () {
+    if (sim.done) return;
+    let mx = 0;
+    for (const b of B) if (b.on) { const s = b.vx * b.vx + b.vy * b.vy; if (s > mx) mx = s; }
+    const n = Math.max(1, Math.ceil(SQ(mx) / (R * 0.4)));
+    for (let k = 0; k < n; k++) {
+      for (const b of B) if (b.on && (b.vx !== 0 || b.vy !== 0)) { b.x += b.vx / n; b.y += b.vy / n; }
+      for (let i = 0; i < B.length; i++) {
+        const a = B[i]; if (!a.on) continue;
+        for (let j = i + 1; j < B.length; j++) {
+          const c = B[j]; if (!c.on) continue;
+          const dx = c.x - a.x, dy = c.y - a.y, d2 = dx * dx + dy * dy;
+          if (d2 >= D * D) continue;
+          let d = SQ(d2), nx, ny;
+          if (d < 1e-9) { nx = 1; ny = 0; d = 0; } else { nx = dx / d; ny = dy / d; }
+          const ov = (D - d) / 2;
+          a.x -= nx * ov; a.y -= ny * ov; c.x += nx * ov; c.y += ny * ov;
+          const rel = (a.vx - c.vx) * nx + (a.vy - c.vy) * ny;
+          if (rel > 0) {
+            const imp = rel * (1 + E) / 2;
+            a.vx -= imp * nx; a.vy -= imp * ny; c.vx += imp * nx; c.vy += imp * ny;
+            sim.ev.push(['clack', rel]);
+            if (sim.first === null && (a.n === 0 || c.n === 0)) sim.first = a.n === 0 ? c.n : a.n;
+          }
+        }
+      }
+      for (const b of B) {
+        if (!b.on) continue;
+        for (const s of segs) { const h = segHit(b, s[0], s[1], s[2], s[3], R, s[4]); if (h > 0.1) { sim.ev.push(['rail', h]); if (b.n === 0) sim.rails++; } }
+        let gone = false;
+        for (const p of pk) { const dx = b.x - p[0], dy = b.y - p[1]; if (dx * dx + dy * dy < p[2] * p[2]) { sink(b); gone = true; break; } }
+        if (!gone && (b.x < -5 || b.x > POOL.W + 5 || b.y < -5 || b.y > POOL.H + 5)) sink(b);
+      }
+    }
+    let moving = false;
+    for (const b of B) {
+      if (!b.on || (b.vx === 0 && b.vy === 0)) continue;
+      const sp = SQ(b.vx * b.vx + b.vy * b.vy), ns = sp * 0.997 - 0.0045;
+      if (ns <= 0.004) { b.vx = 0; b.vy = 0; } else { const f = ns / sp; b.vx *= f; b.vy *= f; moving = true; }
+    }
+    if (!moving || ++sim.steps > 6000) { for (const b of B) { b.vx = 0; b.vy = 0; } sim.done = true; }
+  };
+  sim.run = function () { while (!sim.done) sim.step(); return sim; };
+  return sim;
+}
+
+// Can the cue ball go here? (ball in hand)
+function poolFree(balls, x, y, kitchenOnly) {
+  const R = POOL.R;
+  if (x < R || x > POOL.W - R || y < R || y > POOL.H - R) return false;
+  if (kitchenOnly && y < POOL.KITCHEN) return false;
+  for (const b of balls) if (b.on && b.n !== 0) { const dx = b.x - x, dy = b.y - y; if (dx * dx + dy * dy < 4 * R * R + 0.01) return false; }
+  return true;
+}
+function poolLegalTargets(st, me) {
+  const g = st.groups[me];
+  if (st.isBreak || !g) return [1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15];
+  const left = GROUP_BALLS[g].filter((n) => st.balls.some((b) => b.n === n && b.on));
+  return left.length ? left : [8];
+}
+// The rules: who keeps shooting, fouls, groups, and the 8.
+function poolResolve(st, me, sim) {
+  const o = me === 'a' ? 'b' : 'a';
+  const myG = st.groups[me];
+  const onEight = !!myG && !GROUP_BALLS[myG].some((n) => st.balls.some((b) => b.n === n && b.on));
+  const pocketed = sim.pocketed, scratch = pocketed.includes(0), eight = pocketed.includes(8);
+  const fh = sim.first;
+  let foul = null;
+  if (scratch) foul = 'scratch';
+  else if (fh === null) foul = 'nohit';
+  else if (!st.isBreak) {
+    if (!myG) { if (fh === 8) foul = 'wrong'; }
+    else if (onEight) { if (fh !== 8) foul = 'wrong'; }
+    else if (poolGroup(fh) !== myG) foul = 'wrong';
+  }
+  const balls = sim.B.map((b) => ({ n: b.n, x: r3(b.x), y: r3(b.y), on: b.on }));
+  const objs = pocketed.filter((n) => n !== 0 && n !== 8);
+  const last = { by: me, foul, potted: pocketed.filter((n) => n !== 0) };
+  const base = { ...st, balls, isBreak: false, last };
+  if (eight) {
+    if (st.isBreak) {
+      // 8 on the break: put it back on the foot spot (or just behind it)
+      const e = balls.find((b) => b.n === 8); e.on = true; e.x = POOL.FOOT[0]; e.y = POOL.FOOT[1];
+      while (!poolFree(balls.filter((b) => b.n !== 8), e.x, e.y) && e.y > POOL.R + 1) e.y = r3(e.y - 0.5);
+    } else {
+      const win = onEight && !foul;
+      last.eight = win ? 'win' : 'lose';
+      return { state: { ...base, inHand: false }, keep: false, result: { winner: win ? me : o }, foul };
+    }
+  }
+  const groups = { ...st.groups };
+  if (!myG && !st.isBreak && !foul && objs.length) {
+    const g0 = poolGroup(objs[0]); groups[me] = g0; groups[o] = g0 === 'solids' ? 'stripes' : 'solids';
+    last.assigned = g0;
+  }
+  const mine = groups[me] ? objs.filter((n) => poolGroup(n) === groups[me]) : [];
+  const keep = !foul && (st.isBreak ? objs.length > 0 : mine.length > 0);
+  if (scratch) { const c = balls.find((b) => b.n === 0); c.on = true; c.x = POOL.CUE[0]; c.y = POOL.CUE[1]; }
+  return { state: { ...base, groups, inHand: !!foul }, keep, result: null, foul };
+}
+/*PURE-END*/
+
+/* ========================== Physics game screens (Mini Golf, 8-Ball) ========================== */
+let PG = null; // the live canvas game on screen, if any
+function destroyPG() {
+  if (!PG) return;
+  PG.dead = true; cancelAnimationFrame(PG.raf); clearTimeout(PG.t1); clearTimeout(PG.t2);
+  window.removeEventListener('resize', PG.onResize);
+  PG = null; G.anim = false;
+}
+function sigOf(g, reqs) { return [g.ply, g.status, g.turn, (reqs || []).map((x) => x.id).join(',')].join('|'); }
+function syncGame(game) {
+  G.data.game = game;
+  const i = S.games.findIndex((x) => x.id === game.id); if (i >= 0) S.games[i] = game;
+  G.lastSig = sigOf(game, G.data.requests); updateBadges();
+}
+// Her shots since your last turn that this phone hasn't watched yet
+function oppTurnMoves(g, moves, force) {
+  const o = opp(); let myLast = -1;
+  for (const m of moves) if (m.player === S.me && m.ply > myLast) myLast = m.ply;
+  const seen = force ? -1 : store.get('seen.' + g.id, -1);
+  return moves.filter((m) => m.player === o && m.ply > myLast && m.ply > seen && m.state_before);
+}
+const markSeen = (g, list) => { if (list.length) store.set('seen.' + g.id, list[list.length - 1].ply); };
+
+function pgSetup(P, uw, uh, reserve) {
+  P.canvas = $('#pgc'); P.ctx = P.canvas.getContext('2d');
+  P.onResize = () => {
+    if (P.dead) return;
+    const wrap = P.canvas.parentElement;
+    let w = wrap.clientWidth - 10, h = w * uh / uw;
+    const maxH = Math.max(280, window.innerHeight - reserve);
+    if (h > maxH) { h = maxH; w = h * uw / uh; }
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    P.canvas.style.width = w + 'px'; P.canvas.style.height = h + 'px';
+    P.canvas.width = Math.round(w * dpr); P.canvas.height = Math.round(h * dpr);
+    P.k = P.canvas.width / uw; P.css = w / uw; P.dpr = dpr;
+    P.draw();
+  };
+  window.addEventListener('resize', P.onResize);
+}
+function pgKick() { if (PG && !PG.raf && !PG.dead) PG.raf = requestAnimationFrame(pgFrame); }
+function pgFrame(t) {
+  const P = PG; if (!P || P.dead) return; P.raf = 0;
+  let again = false;
+  if (P.sim) {
+    if (!P.lastT) P.lastT = t;
+    P.acc += Math.min(80, t - P.lastT); P.lastT = t;
+    const stepMs = 1000 / ((P.rate || 60) * (window.__speed || 1)); // __speed is only set by automated tests
+    while (P.acc >= stepMs && !P.sim.done) { P.sim.step(); P.acc -= stepMs; }
+    pgSounds(P.sim.ev); P.sim.ev.length = 0;
+    if (P.sim.done) { const s = P.sim, cb = P.onSimDone; P.sim = null; P.onSimDone = null; P.lastT = 0; P.acc = 0; if (cb) cb(s); }
+    again = true;
+  }
+  if (P.tween) { const tw = P.tween; if (!tw.t0) tw.t0 = t; tw.p = Math.min(1, (t - tw.t0) / tw.ms); if (tw.p >= 1) { P.tween = null; tw.done && tw.done(); } again = true; }
+  if (!P.dead) P.draw();
+  if (again) pgKick();
+}
+const pgTween = (P, kind, ms, extra) => new Promise((done) => { P.tween = { kind, ms, p: 0, done, ...extra }; pgKick(); });
+let lastClack = 0;
+function pgSounds(ev) {
+  if (!ev.length) return;
+  const now = performance.now();
+  for (const e of ev) {
+    if (!P.sound) break;
+    if (e[0] === 'wall' || e[0] === 'rail') tone(250, 0.05, 'triangle', Math.min(0.12, 0.03 + e[1] * 0.04));
+    else if (e[0] === 'bump') tone(520, 0.08, 'sine', 0.11, 0, 820);
+    else if (e[0] === 'clack') { if (now - lastClack > 28) { lastClack = now; tone(2300, 0.025, 'square', Math.min(0.09, 0.015 + e[1] * 0.02)); } }
+    else if (e[0] === 'pocket') { tone(150, 0.16, 'sine', 0.22, 0, 70); haptic(); }
+    else if (e[0] === 'cup') { [880, 1175, 1568].forEach((f, i) => tone(f, 0.1, 'triangle', 0.1, 0.05 + i * 0.06)); haptic(true); }
+    else if (e[0] === 'water') noise(0.4, 0.14);
+  }
+}
+function noise(dur, vol) {
+  const ac = audio(); if (!ac || !P.sound) return;
+  const n = Math.floor(ac.sampleRate * dur), buf = ac.createBuffer(1, n, ac.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+  src.buffer = buf; f.type = 'lowpass'; f.frequency.value = 900; g.gain.value = vol;
+  src.connect(f).connect(g).connect(ac.destination); src.start();
+}
+function pgOverlay(html, skip) {
+  const ov = $('#pg-ov'); if (!ov) return;
+  if (!html) { ov.hidden = true; ov.innerHTML = ''; return; }
+  ov.hidden = false;
+  ov.innerHTML = `<span>${html}</span>${skip ? '<button class="pg-skip" data-act="pg-skip">Skip</button>' : ''}`;
+}
+function pgHint(text) { const h = $('#pg-hint'); if (h) h.textContent = text || ''; }
+function physActions(g, extra = '') {
+  const me = S.me, o = opp();
+  if (g.status === 'active') {
+    const canNudge = g.turn !== me && (!g.nudged_at || Date.now() - new Date(g.nudged_at) > 3600e3);
+    return `<div class="actions">${g.turn !== me ? `<button class="btn" data-act="nudge" ${canNudge ? '' : 'disabled'}>👋 Nudge</button>` : ''}${extra}<button class="btn" data-act="more">${I.more} More</button></div>`;
+  }
+  if (g.status === 'finished') {
+    const any = (G.data.moves || []).some((m) => m.player === o);
+    return `<div class="actions"><button class="btn primary" data-act="rematch">🔁 Rematch</button>${any ? `<button class="btn" data-act="watch-last">${I.play} Their last turn</button>` : ''}${extra}</div>`;
+  }
+  return '';
+}
+function resultBanner(g, line) {
+  const o = opp(), won = g.winner === S.me, draw = g.winner === 'draw';
+  const why = g.end_reason === 'resign' ? (won ? `${nameOf(o)} resigned` : 'You resigned')
+    : g.end_reason === 'timeout' ? (won ? `${nameOf(o)}'s timer ran out` : 'Your timer ran out') : (line || '');
+  return `<div class="banner glass result"><div class="big">${draw ? '🤝' : won ? '🏆' : esc(emojiOf(o))}</div>
+    <b>${draw ? "It's a tie" : won ? 'You won!' : `${esc(nameOf(o))} won`}</b><div class="sub">${esc(why)}</div></div>`;
+}
+// canvas helpers
+function rrect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function polyPath(c, poly) { c.beginPath(); poly.forEach((p, i) => (i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]))); c.closePath(); }
+const canvasPt = (P, e, off = 0) => { const r = P.canvas.getBoundingClientRect(); return { x: (e.clientX - r.left) / P.css - off, y: (e.clientY - r.top) / P.css - off }; };
+
+/* ---------------------------------- Mini Golf ---------------------------------- */
+function golfScoreName(score, par) {
+  if (score === 1) return 'Hole in one! 🎉';
+  if (score >= GOLF.PEN) return 'Max strokes';
+  const d = score - par;
+  return d <= -2 ? 'Eagle! 🦅' : d === -1 ? 'Birdie! 🐦' : d === 0 ? 'Par' : d === 1 ? 'Bogey' : d === 2 ? 'Double bogey' : `+${d}`;
+}
+function golfCard(st) {
+  const me = S.me, o = opp();
+  const cell = (v, par) => v == null ? '<td class="nil">·</td>' : `<td><span class="${v === 1 ? 'ace' : v < par ? 'under' : v > par ? 'over' : ''}">${v}</span></td>`;
+  const row = (p) => `<tr><td>${esc(emojiOf(p))}</td>${st.scores[p].map((v, i) => cell(v, GOLF.holes[i].par)).join('')}<td><b>${golfTotal(st, p)}</b></td></tr>`;
+  return `<div class="sc"><table>
+    <tr><th></th>${GOLF.holes.map((h, i) => `<th>${i + 1}</th>`).join('')}<th>Tot</th></tr>
+    <tr class="par"><td>Par</td>${GOLF.holes.map((h) => `<td>${h.par}</td>`).join('')}<td>${GOLF.par}</td></tr>
+    ${row(me)}${row(o)}</table></div>`;
+}
+const Golf = {
+  hud(g, hole, myTurn) {
+    const st = g.state, me = S.me, o = opp(), act = g.status === 'active', H = GOLF.holes[hole];
+    const tp = (p) => { const n = st.scores[p].filter((x) => x != null).length, v = golfToPar(st, p); return n ? (v === 0 ? 'E' : v > 0 ? '+' + v : String(v)) : '–'; };
+    const chip = (p, mine) => `<div class="sp ${mine ? 'r' : ''} ${act && g.turn === p ? 'turn' : ''}">
+      ${mine ? '' : `<span class="av">${esc(emojiOf(p))}</span>`}
+      <span class="pn"><b>${mine ? 'You' : esc(nameOf(p))}</b><small>${golfTotal(st, p)} · ${tp(p)}</small></span>
+      ${mine ? `<span class="av">${esc(emojiOf(p))}</span>` : ''}</div>`;
+    const cur = st.cur && st.cur.player === me && st.cur.hole === hole ? st.cur : null;
+    return `<div class="scorebar glass">${chip(o, false)}
+      <div class="mid"><b>Hole ${hole + 1}</b><small>Par ${H.par}${myTurn ? ` · Shot ${(cur ? cur.strokes : 0) + 1}` : ''}</small></div>
+      ${chip(me, true)}</div>`;
+  },
+  ballFor(st, hole, who, me) {
+    const cur = st.cur;
+    if (cur && cur.player === who && cur.hole === hole) return { x: cur.pos[0], y: cur.pos[1], ghost: who !== me };
+    return who === me ? { x: GOLF.holes[hole].tee[0], y: GOLF.holes[hole].tee[1] } : null;
+  },
+  render(g) {
+    const d = G.data, st = g.state, me = S.me, o = opp();
+    const myTurn = g.status === 'active' && g.turn === me;
+    const force = G.forceReplay; G.forceReplay = false;
+    const list = d.partial ? [] : (myTurn || g.status === 'finished' || force ? oppTurnMoves(g, d.moves, force) : []);
+    if (g.status === 'finished' && !list.length) return Golf.finished(g);
+    let hole = golfNextHole(st, myTurn ? me : o);
+    if (hole < 0) hole = golfNextHole(st, me);
+    if (hole < 0) hole = GOLF.holes.length - 1;
+    $('#g-body').innerHTML = `${Golf.hud(g, hole, myTurn)}
+      <div class="pgwrap glass"><canvas id="pgc"></canvas><div class="pg-ov" id="pg-ov" hidden></div></div>
+      <div class="pg-hint" id="pg-hint"></div>
+      ${physActions(g, g.status === 'active' ? '<button class="btn" data-act="scorecard">📋 Scorecard</button>' : '')}`;
+    const P = PG = { type: 'golf', hole, ball: null, aim: null, sim: null, acc: 0, lastT: 0, raf: 0, rate: 60 };
+    P.draw = () => golfDraw(P);
+    pgSetup(P, GOLF.W, GOLF.H, 300);
+    P.ball = Golf.ballFor(st, hole, myTurn ? me : o, me);
+    P.onResize();
+    Golf.wire(P);
+    const start = () => {
+      if (PG !== P) return;
+      if (g.status === 'finished') return renderGame();
+      P.hole = hole; P.ball = Golf.ballFor(st, hole, myTurn ? me : o, me);
+      P.canPlay = myTurn && !d.partial;
+      if (P.canPlay) {
+        pgHint('Drag back anywhere to aim. Let go to putt.');
+        if (!(st.cur && st.cur.player === me && st.cur.hole === hole)) {
+          pgOverlay(`<b>Hole ${hole + 1}</b> · ${esc(GOLF.holes[hole].name)} · Par ${GOLF.holes[hole].par}`);
+          P.t2 = setTimeout(() => PG === P && pgOverlay(''), 1800);
+        }
+      } else if (g.status === 'active') pgHint(`Waiting on ${nameOf(o)}…`);
+      P.draw();
+    };
+    if (list.length) Golf.replay(P, g, list, start); else start();
+  },
+  finished(g) {
+    destroyPG();
+    const st = g.state, me = S.me, o = opp();
+    $('#g-body').innerHTML = `${resultBanner(g, `You ${golfTotal(st, me)} · ${nameOf(o)} ${golfTotal(st, o)}`)}
+      <div class="glass card">${golfCard(st)}</div>${physActions(g)}`;
+  },
+  wire(P) {
+    const c = P.canvas;
+    c.onpointerdown = (e) => {
+      if (!P.canPlay || P.sim || G.busy || !P.ball) return;
+      audio(); try { c.setPointerCapture(e.pointerId); } catch {}
+      P.drag = canvasPt(P, e); P.aim = null; P.tick = 0; pgOverlay('');
+    };
+    c.onpointermove = (e) => {
+      if (!P.drag) return;
+      const p = canvasPt(P, e), dx = p.x - P.drag.x, dy = p.y - P.drag.y, len = Math.sqrt(dx * dx + dy * dy);
+      P.aim = len < 1.5 ? null : { x: -dx / len, y: -dy / len, p: Math.min(1, len / 42) };
+      const tk = P.aim ? Math.floor(P.aim.p * 4) : 0;
+      if (tk !== P.tick) { P.tick = tk; if (tk) haptic(); }
+      P.draw();
+    };
+    c.onpointerup = () => {
+      if (!P.drag) return;
+      P.drag = null; const a = P.aim; P.aim = null;
+      if (a && a.p > 0.03) Golf.shoot(P, a); else P.draw();
+    };
+    c.onpointercancel = () => { P.drag = null; P.aim = null; P.draw(); };
+  },
+  // Animate one stroke. Resolves when the ball has stopped / dropped / splashed.
+  play(P, h, from, vx, vy) {
+    return new Promise((done) => {
+      P.hole = h; P.ball = { x: from[0], y: from[1], ghost: P.ball && P.ball.ghost };
+      P.sim = golfSim(h, from[0], from[1], vx, vy);
+      P.onSimDone = async (s) => {
+        if (s.res === 'cup') { P.ball = { ...P.ball, x: s.b.x, y: s.b.y }; await pgTween(P, 'sink', 320); P.ball = null; }
+        else if (s.res === 'water') { P.ball = null; await pgTween(P, 'splash', 650, { x: s.b.x, y: s.b.y }); P.ball = { x: from[0], y: from[1], ghost: P.ballGhost }; }
+        else P.ball = { x: s.b.x, y: s.b.y, ghost: P.ballGhost };
+        done(s);
+      };
+      pgKick();
+    });
+  },
+  async shoot(P, a) {
+    const g = G.data.game, st = g.state, me = S.me, h = P.hole;
+    const v = golfPower(a.p), vx = r5(a.x * v), vy = r5(a.y * v), from = [r3(P.ball.x), r3(P.ball.y)];
+    const res = golfSim(h, from[0], from[1], vx, vy).run();
+    const out = golfApply(st, me, h, from, res);
+    const move = { hole: h, stroke: out.strokes, from, vx, vy, res: res.res, score: out.score };
+    const summary = out.passed ? `${nameOf(me)} got a ${out.score} on hole ${h + 1}. Your turn!` : '';
+    G.busy = true; P.canPlay = false; P.ballGhost = false; pgHint('');
+    const req = api('move', { id: g.id, ply: g.ply, move, state: out.state, keep: out.keep, result: out.result, summary }).then((r) => ({ r }), (e) => ({ e }));
+    sfx('putt');
+    await Golf.play(P, h, from, vx, vy);
+    if (res.res === 'water') toast('Splash! +1 stroke');
+    if (out.holeDone) { toast(`${golfScoreName(out.score, GOLF.holes[h].par)} · ${out.score} on hole ${h + 1}`); await new Promise((ok) => setTimeout(ok, 700)); }
+    const { r, e } = await req;
+    G.busy = false;
+    if (PG !== P && !G.id) return;
+    if (e) { toast(errText(e), 3200); fx('err'); G.lastSig = ''; return loadGame(); }
+    G.data.moves.push({ ply: g.ply, player: me, move, state_before: st });
+    syncGame(r.game);
+    if (r.game.status === 'finished') fx(r.game.winner === me ? 'win' : r.game.winner === 'draw' ? 'move' : 'lose', true);
+    else if (out.passed) toast(`${nameOf(opp())}'s turn`);
+    renderGame();
+  },
+  replay(P, g, list, done) {
+    const o = opp(); let i = 0, stopped = false;
+    G.anim = true; P.canPlay = false; P.ballGhost = true;
+    pgHint(`Watching ${nameOf(o)}'s turn…`);
+    const finish = () => {
+      if (stopped) return; stopped = true;
+      clearTimeout(P.t1); P.sim = null; P.onSimDone = null; P.tween = null; P.ballGhost = false;
+      G.anim = false; markSeen(g, list); pgOverlay(''); done();
+    };
+    P.skip = finish;
+    const who = `${esc(emojiOf(o))} ${esc(nameOf(o))}`;
+    const next = () => {
+      if (stopped || PG !== P) return;
+      if (i >= list.length) return finish();
+      const m = list[i++].move;
+      P.hole = m.hole; P.ball = { x: m.from[0], y: m.from[1], ghost: true };
+      pgOverlay(`${who} · Hole ${m.hole + 1} · Shot ${m.stroke - (m.res === 'water' ? 1 : 0)}`, true); P.draw();
+      P.t1 = setTimeout(() => {
+        if (stopped) return; sfx('putt');
+        Golf.play(P, m.hole, m.from, m.vx, m.vy).then(() => {
+          if (stopped) return;
+          if (m.score != null) { pgOverlay(`${who}: <b>${m.score}</b> on hole ${m.hole + 1} · ${golfScoreName(m.score, GOLF.holes[m.hole].par)}`, true); P.t1 = setTimeout(next, 1500); }
+          else P.t1 = setTimeout(next, 500);
+        });
+      }, 700);
+    };
+    next();
+  },
+};
+function golfDraw(P) {
+  const c = P.ctx; if (!c || !P.k) return;
+  const k = P.k, H = GOLF.holes[P.hole], R = GOLF.R, cup = H.cup;
+  c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, P.canvas.width, P.canvas.height);
+  c.setTransform(k, 0, 0, k, 0, 0);
+  let gr = c.createLinearGradient(0, 0, 0, GOLF.H); gr.addColorStop(0, '#1f5a43'); gr.addColorStop(1, '#143a2c');
+  c.fillStyle = gr; c.fillRect(0, 0, GOLF.W, GOLF.H);
+  c.fillStyle = 'rgba(255,255,255,.05)';
+  for (let y = 3; y < GOLF.H; y += 6) for (let x = (y / 6) % 2 < 1 ? 3 : 6; x < GOLF.W; x += 6) c.fillRect(x, y, 0.6, 0.6);
+  // turf
+  c.save(); polyPath(c, H.poly); c.shadowColor = 'rgba(0,0,0,.4)'; c.shadowBlur = 4 * k; c.shadowOffsetY = 1.2 * k;
+  c.fillStyle = '#5cc56f'; c.fill(); c.restore();
+  c.save(); polyPath(c, H.poly); c.clip();
+  c.fillStyle = 'rgba(255,255,255,.07)';
+  for (let y = 0; y < GOLF.H; y += 16) c.fillRect(0, y, GOLF.W, 8);
+  for (const z of H.sand || []) {
+    rrect(c, z[0], z[1], z[2] - z[0], z[3] - z[1], 4); c.fillStyle = '#efd79e'; c.fill();
+    c.fillStyle = 'rgba(160,120,50,.25)';
+    for (let y = z[1] + 2; y < z[3]; y += 3) for (let x = z[0] + ((y * 7) % 3) + 1; x < z[2]; x += 3.4) c.fillRect(x, y, 0.45, 0.45);
+  }
+  for (const z of H.water || []) {
+    rrect(c, z[0], z[1], z[2] - z[0], z[3] - z[1], 4);
+    gr = c.createLinearGradient(0, z[1], 0, z[3]); gr.addColorStop(0, '#66cdfc'); gr.addColorStop(1, '#2f8fdc');
+    c.fillStyle = gr; c.fill();
+    c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 0.5; c.lineCap = 'round';
+    for (let y = z[1] + 5; y < z[3] - 2; y += 7) { c.beginPath(); for (let x = z[0] + 4; x < z[2] - 4; x += 1) c.lineTo(x, y + Math.sin(x * 0.6) * 0.7); c.stroke(); }
+  }
+  c.restore();
+  // tee
+  c.fillStyle = 'rgba(255,255,255,.45)'; rrect(c, H.tee[0] - 3.5, H.tee[1] + 3.2, 7, 1.4, 0.7); c.fill();
+  // cup
+  c.beginPath(); c.arc(cup[0], cup[1], GOLF.CR, 0, Math.PI * 2);
+  gr = c.createRadialGradient(cup[0], cup[1] - 0.8, 0.5, cup[0], cup[1], GOLF.CR); gr.addColorStop(0, '#0c2219'); gr.addColorStop(1, '#1d3f30');
+  c.fillStyle = gr; c.fill(); c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 0.4; c.stroke();
+  // walls
+  c.save(); c.lineCap = 'round'; c.shadowColor = 'rgba(0,0,0,.3)'; c.shadowBlur = 2 * k; c.shadowOffsetY = 0.5 * k;
+  for (const w of H.walls || []) { c.beginPath(); c.moveTo(w[0], w[1]); c.lineTo(w[2], w[3]); c.lineWidth = 1.8; c.strokeStyle = '#f6f2ea'; c.stroke(); }
+  for (const b of H.bumpers || []) {
+    c.beginPath(); c.arc(b[0], b[1], b[2], 0, Math.PI * 2);
+    gr = c.createRadialGradient(b[0] - b[2] * 0.3, b[1] - b[2] * 0.35, 0.5, b[0], b[1], b[2]); gr.addColorStop(0, '#ff9aae'); gr.addColorStop(1, '#e8345a');
+    c.fillStyle = gr; c.fill();
+  }
+  c.restore();
+  for (const b of H.bumpers || []) { c.beginPath(); c.arc(b[0], b[1], b[2] - 1.2, 0, Math.PI * 2); c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 0.5; c.stroke(); }
+  // rails
+  polyPath(c, H.poly); c.lineJoin = 'round'; c.lineWidth = 3; c.strokeStyle = '#f6f2ea'; c.stroke();
+  c.lineWidth = 0.5; c.strokeStyle = 'rgba(0,0,0,.08)'; c.stroke();
+  // ball
+  const b = P.sim ? P.sim.b : P.ball;
+  const near = b && (b.x - cup[0]) ** 2 + (b.y - cup[1]) ** 2 < 100;
+  if (b) {
+    let s = 1, alpha = 1;
+    if (P.tween && P.tween.kind === 'sink') { s = 1 - P.tween.p * 0.75; alpha = 1 - P.tween.p; }
+    c.globalAlpha = alpha;
+    c.beginPath(); c.arc(b.x + 0.35, b.y + 0.55, R * s, 0, Math.PI * 2); c.fillStyle = 'rgba(0,0,0,.28)'; c.fill();
+    c.beginPath(); c.arc(b.x, b.y, R * s, 0, Math.PI * 2);
+    gr = c.createRadialGradient(b.x - 0.7, b.y - 0.8, 0.2, b.x, b.y, R * s);
+    const ghost = P.ball && P.ball.ghost;
+    gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, ghost ? '#ffc94d' : '#d9dde8');
+    c.fillStyle = gr; c.fill(); c.globalAlpha = 1;
+  }
+  // flag (fades when the ball is close so you can see the lip)
+  c.globalAlpha = near ? 0.35 : 1;
+  c.beginPath(); c.moveTo(cup[0], cup[1]); c.lineTo(cup[0], cup[1] - 14); c.strokeStyle = '#f2f2f2'; c.lineWidth = 0.5; c.stroke();
+  c.beginPath(); c.moveTo(cup[0], cup[1] - 14); c.lineTo(cup[0] + 7, cup[1] - 11.6); c.lineTo(cup[0], cup[1] - 9.2); c.closePath(); c.fillStyle = '#ff4d6d'; c.fill();
+  c.globalAlpha = 1;
+  // splash
+  if (P.tween && P.tween.kind === 'splash') {
+    const t = P.tween.p;
+    for (let i = 0; i < 3; i++) { const rr = 1 + (t * 9) - i * 2.2; if (rr <= 0) continue; c.beginPath(); c.arc(P.tween.x, P.tween.y, rr, 0, Math.PI * 2); c.strokeStyle = `rgba(255,255,255,${0.8 * (1 - t)})`; c.lineWidth = 0.6; c.stroke(); }
+  }
+  // aim
+  if (P.aim && b) {
+    const a = P.aim, n = Math.round(3 + a.p * 13), col = `hsl(${130 - a.p * 130},90%,${P.k ? 55 : 50}%)`;
+    c.fillStyle = col;
+    for (let i = 1; i <= n; i++) { c.beginPath(); c.arc(b.x + a.x * (R + 1 + i * 2.5), b.y + a.y * (R + 1 + i * 2.5), 0.6, 0, Math.PI * 2); c.fill(); }
+    const L = R + 1 + (n + 1) * 2.5, tx = b.x + a.x * L, ty = b.y + a.y * L;
+    c.beginPath(); c.moveTo(tx + a.x * 2.4, ty + a.y * 2.4); c.lineTo(tx - a.y * 1.6, ty + a.x * 1.6); c.lineTo(tx + a.y * 1.6, ty - a.x * 1.6); c.closePath(); c.fill();
+    c.beginPath(); c.arc(b.x, b.y, R + 1.4, -Math.PI / 2, -Math.PI / 2 + a.p * Math.PI * 2); c.strokeStyle = col; c.lineWidth = 0.7; c.stroke();
+  }
+}
+
+/* ---------------------------------- 8-Ball ---------------------------------- */
+function drawPoolBall(c, n, x, y, R) {
+  c.save(); c.beginPath(); c.arc(x, y, R, 0, Math.PI * 2); c.clip();
+  if (n === 0 || n > 8) { c.fillStyle = '#f7f5ef'; c.fillRect(x - R, y - R, 2 * R, 2 * R); }
+  if (n > 8) { c.fillStyle = poolColor(n); c.fillRect(x - R, y - R * 0.56, 2 * R, R * 1.12); }
+  else if (n > 0) { c.fillStyle = poolColor(n); c.fillRect(x - R, y - R, 2 * R, 2 * R); }
+  if (n > 0) {
+    c.beginPath(); c.arc(x, y, R * 0.5, 0, Math.PI * 2); c.fillStyle = '#fff'; c.fill();
+    c.fillStyle = '#15171c'; c.font = `800 ${R * 0.62}px -apple-system,system-ui,sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText(String(n), x, y + R * 0.04);
+  }
+  const g = c.createRadialGradient(x - R * 0.38, y - R * 0.45, R * 0.08, x, y, R * 1.05);
+  g.addColorStop(0, 'rgba(255,255,255,.6)'); g.addColorStop(0.3, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(0,0,0,.38)');
+  c.fillStyle = g; c.fillRect(x - R, y - R, 2 * R, 2 * R);
+  c.restore();
+}
+function poolGuide(P) {
+  const cue = P.cue, a = P.aim, R = POOL.R; let best = Infinity, hit = null;
+  for (const b of P.balls) {
+    if (!b.on || b.n === 0) continue;
+    const fx = b.x - cue.x, fy = b.y - cue.y, t = fx * a.x + fy * a.y; if (t <= 0) continue;
+    const d2 = fx * fx + fy * fy - t * t; if (d2 > 4 * R * R) continue;
+    const tt = t - Math.sqrt(4 * R * R - d2); if (tt < best) { best = tt; hit = b; }
+  }
+  let tw = Infinity;
+  if (a.x > 0) tw = Math.min(tw, (POOL.W - R - cue.x) / a.x); if (a.x < 0) tw = Math.min(tw, (R - cue.x) / a.x);
+  if (a.y > 0) tw = Math.min(tw, (POOL.H - R - cue.y) / a.y); if (a.y < 0) tw = Math.min(tw, (R - cue.y) / a.y);
+  if (hit && best <= tw) {
+    const gx = cue.x + a.x * best, gy = cue.y + a.y * best, dx = hit.x - gx, dy = hit.y - gy, L = Math.sqrt(dx * dx + dy * dy) || 1;
+    const nx = dx / L, ny = dy / L, dot = a.x * nx + a.y * ny; let tx = a.x - dot * nx, ty = a.y - dot * ny; const tl = Math.sqrt(tx * tx + ty * ty);
+    return { gx, gy, hit, nx, ny, tx: tl > 0.05 ? tx / tl : 0, ty: tl > 0.05 ? ty / tl : 0 };
+  }
+  return { gx: cue.x + a.x * tw, gy: cue.y + a.y * tw };
+}
+function poolDraw(P) {
+  const c = P.ctx; if (!c || !P.k) return;
+  const k = P.k, RL = POOL.RAIL, W = POOL.W, H = POOL.H, R = POOL.R, TW = W + 2 * RL, TH = H + 2 * RL;
+  c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, P.canvas.width, P.canvas.height);
+  c.setTransform(k, 0, 0, k, 0, 0);
+  let gr = c.createLinearGradient(0, 0, TW, TH); gr.addColorStop(0, '#3a4268'); gr.addColorStop(0.5, '#262b45'); gr.addColorStop(1, '#353c60');
+  rrect(c, 0, 0, TW, TH, 6); c.fillStyle = gr; c.fill();
+  c.strokeStyle = 'rgba(255,255,255,.14)'; c.lineWidth = 0.5; rrect(c, 0.6, 0.6, TW - 1.2, TH - 1.2, 5.6); c.stroke();
+  c.fillStyle = 'rgba(255,255,255,.55)';
+  for (let i = 1; i < 4; i++) { const x = RL + W * i / 4; [[x, RL / 2], [x, TH - RL / 2]].forEach(([dx, dy]) => { c.beginPath(); c.arc(dx, dy, 0.55, 0, Math.PI * 2); c.fill(); }); }
+  for (let i = 1; i < 8; i++) { if (i === 4) continue; const y = RL + H * i / 8; [[RL / 2, y], [TW - RL / 2, y]].forEach(([dx, dy]) => { c.beginPath(); c.arc(dx, dy, 0.55, 0, Math.PI * 2); c.fill(); }); }
+  rrect(c, RL - 2.6, RL - 2.6, W + 5.2, H + 5.2, 2.6); c.fillStyle = '#0f6a42'; c.fill();
+  c.save(); c.translate(RL, RL);
+  gr = c.createRadialGradient(W / 2, H / 2, 8, W / 2, H / 2, H * 0.72); gr.addColorStop(0, '#2bb57a'); gr.addColorStop(1, '#168553');
+  c.fillStyle = gr; c.fillRect(0, 0, W, H);
+  const st = P.state;
+  const placing = P.canPlay && P.inHand && st && st.isBreak;
+  c.strokeStyle = placing ? 'rgba(255,255,255,.4)' : 'rgba(255,255,255,.1)'; c.lineWidth = 0.35;
+  c.beginPath(); c.moveTo(0, POOL.KITCHEN); c.lineTo(W, POOL.KITCHEN); c.stroke();
+  if (placing) { c.fillStyle = 'rgba(255,255,255,.06)'; c.fillRect(0, POOL.KITCHEN, W, H - POOL.KITCHEN); }
+  c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.arc(POOL.FOOT[0], POOL.FOOT[1], 0.6, 0, Math.PI * 2); c.fill();
+  for (const p of POOL.pockets) {
+    c.beginPath(); c.arc(p[0], p[1], p[2] + 0.3, 0, Math.PI * 2); c.fillStyle = '#05070b'; c.fill();
+    c.strokeStyle = 'rgba(255,255,255,.08)'; c.lineWidth = 0.4; c.stroke();
+  }
+  const balls = P.sim ? P.sim.B : P.balls;
+  c.fillStyle = 'rgba(0,0,0,.3)';
+  for (const b of balls) if (b.on) { c.beginPath(); c.arc(b.x + 0.5, b.y + 0.75, R, 0, Math.PI * 2); c.fill(); }
+  for (const b of balls) if (b.on) drawPoolBall(c, b.n, b.x, b.y, R);
+  if (P.canPlay && !P.sim && P.cue) {
+    const cue = P.cue;
+    if (P.inHand) {
+      const t = (performance.now() % 1400) / 1400;
+      c.beginPath(); c.arc(cue.x, cue.y, R + 1.2 + t * 2.2, 0, Math.PI * 2); c.strokeStyle = `rgba(255,255,255,${0.7 * (1 - t)})`; c.lineWidth = 0.5; c.stroke();
+    }
+    if (P.aim) {
+      const gd = poolGuide(P), a = P.aim;
+      const legal = !gd.hit || poolLegalTargets(st, S.me).includes(gd.hit.n);
+      c.setLineDash([1.6, 1.2]); c.strokeStyle = 'rgba(255,255,255,.75)'; c.lineWidth = 0.35;
+      c.beginPath(); c.moveTo(cue.x + a.x * R, cue.y + a.y * R); c.lineTo(gd.gx, gd.gy); c.stroke(); c.setLineDash([]);
+      c.beginPath(); c.arc(gd.gx, gd.gy, R, 0, Math.PI * 2); c.strokeStyle = legal ? 'rgba(255,255,255,.85)' : 'rgba(255,90,110,.95)'; c.lineWidth = 0.4; c.stroke();
+      if (gd.hit) {
+        c.strokeStyle = legal ? 'rgba(255,255,255,.6)' : 'rgba(255,90,110,.7)'; c.lineWidth = 0.45;
+        c.beginPath(); c.moveTo(gd.hit.x, gd.hit.y); c.lineTo(gd.hit.x + gd.nx * 18, gd.hit.y + gd.ny * 18); c.stroke();
+        if (gd.tx || gd.ty) { c.strokeStyle = 'rgba(255,255,255,.28)'; c.beginPath(); c.moveTo(gd.gx, gd.gy); c.lineTo(gd.gx + gd.tx * 9, gd.gy + gd.ty * 9); c.stroke(); }
+      }
+      // cue stick
+      const pull = 1.4 + (P.power || 0) * 16, sx = cue.x - a.x * (R + pull), sy = cue.y - a.y * (R + pull), L = 92;
+      const ex = sx - a.x * L, ey = sy - a.y * L;
+      c.lineCap = 'round';
+      c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = 2 * k; c.shadowOffsetY = 0.8 * k;
+      gr = c.createLinearGradient(sx, sy, ex, ey); gr.addColorStop(0, '#f3e2c0'); gr.addColorStop(0.55, '#c9935a'); gr.addColorStop(0.56, '#2b2f45'); gr.addColorStop(1, '#151827');
+      c.strokeStyle = gr; c.lineWidth = 1.5; c.beginPath(); c.moveTo(sx, sy); c.lineTo(ex, ey); c.stroke();
+      c.shadowColor = 'transparent';
+      c.strokeStyle = '#5aa9ff'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(sx, sy); c.lineTo(sx - a.x * 0.8, sy - a.y * 0.8); c.stroke();
+    }
+  }
+  c.restore();
+  if (P.canPlay && P.inHand && !P.sim) pgKick(); // keeps the ball-in-hand ring pulsing
+}
+const Pool = {
+  hud(g) {
+    const st = g.state, me = S.me, o = opp(), act = g.status === 'active';
+    const chip = (p, mine) => `<div class="sp ${mine ? 'r' : ''} ${act && g.turn === p ? 'turn' : ''}">
+      ${mine ? '' : `<span class="av">${esc(emojiOf(p))}</span>`}
+      <span class="pn"><b>${mine ? 'You' : esc(nameOf(p))}</b>${Pool.dots(st, p)}</span>
+      ${mine ? `<span class="av">${esc(emojiOf(p))}</span>` : ''}</div>`;
+    const mid = st.isBreak ? 'Break' : !st.groups.a ? 'Open table' : '8-Ball';
+    const sub = !act ? 'Final' : g.turn === me ? (st.inHand ? 'Ball in hand' : 'Your shot') : 'Their shot';
+    return `<div class="scorebar glass">${chip(o, false)}<div class="mid"><b>${mid}</b><small>${sub}</small></div>${chip(me, true)}</div>`;
+  },
+  dots(st, p) {
+    const gname = st.groups[p];
+    if (!gname) return '';
+    const onT = (n) => st.balls.some((b) => b.n === n && b.on), nums = GROUP_BALLS[gname];
+    if (!nums.some(onT)) return `<span class="dots"><i class="bd" style="--c:#15171c"></i><small>&nbsp;On the 8</small></span>`;
+    return `<span class="dots">${nums.map((n) => `<i class="bd ${gname === 'stripes' ? 'st' : ''} ${onT(n) ? '' : 'off'}" style="--c:${poolColor(n)}"></i>`).join('')}</span>`;
+  },
+  lastLine(L, viewerIsShooter) {
+    if (!L) return '';
+    const n = viewerIsShooter ? 'You' : nameOf(L.by);
+    if (L.eight) return L.eight === 'win' ? `${n} sank the 8` : L.foul === 'scratch' ? `${n} scratched on the 8` : `${n} sank the 8 too early`;
+    if (L.foul) return `${n} ${{ scratch: 'scratched', nohit: "didn't hit a ball", wrong: 'hit the wrong ball first' }[L.foul]}`;
+    return '';
+  },
+  banner(g, myTurn) {
+    if (g.status === 'finished') return resultBanner(g, Pool.lastLine(g.state.last, g.state.last && g.state.last.by === S.me));
+    const L = g.state.last; if (!myTurn || !L || L.by === S.me) return '';
+    const msg = L.foul ? `${esc(Pool.lastLine(L, false))}. <b>Ball in hand</b>: drag the white ball anywhere.` : `${esc(nameOf(L.by))} missed. Your shot.`;
+    return `<div class="banner glass slim"><div class="msg">${esc(emojiOf(L.by))} ${msg}</div></div>`;
+  },
+  render(g) {
+    const d = G.data, st = g.state, me = S.me, o = opp();
+    const myTurn = g.status === 'active' && g.turn === me;
+    const force = G.forceReplay; G.forceReplay = false;
+    const list = d.partial ? [] : (myTurn || g.status === 'finished' || force ? oppTurnMoves(g, d.moves, force) : []);
+    const controls = myTurn && !d.partial;
+    const fin = g.status === 'finished' && !list.length;
+    $('#g-body').innerHTML = `${Pool.hud(g)}<div id="pool-banner">${list.length ? '' : Pool.banner(g, myTurn)}</div>
+      ${fin ? physActions(g) : ''}
+      <div class="pool-row"><div class="pgwrap glass"><canvas id="pgc"></canvas><div class="pg-ov" id="pg-ov" hidden></div></div>
+      ${controls ? '<div class="power glass" id="pw"><div class="pw-fill"></div><div class="pw-knob"></div><span>PULL</span></div>' : ''}</div>
+      ${controls ? '<div class="fine glass" id="fine"><div class="fine-ticks" id="fine-ticks"></div><span>Slide for fine aim</span></div>' : fin ? '' : '<div class="pg-hint" id="pg-hint"></div>'}
+      ${fin ? '' : physActions(g)}`;
+    const P = PG = { type: 'pool', state: st, balls: st.balls.map((b) => ({ ...b })), aim: null, power: 0, sim: null, acc: 0, lastT: 0, raf: 0, rate: 72 };
+    P.cue = P.balls.find((b) => b.n === 0);
+    P.draw = () => poolDraw(P);
+    pgSetup(P, POOL.W + 2 * POOL.RAIL, POOL.H + 2 * POOL.RAIL, controls ? 330 : fin ? 470 : 300);
+    P.onResize();
+    Pool.wire(P);
+    const start = () => {
+      if (PG !== P) return;
+      if (list.length) return renderGame(); // re-render with the fresh banner + controls
+      P.balls = st.balls.map((b) => ({ ...b })); P.cue = P.balls.find((b) => b.n === 0);
+      P.canPlay = controls;
+      P.inHand = P.canPlay && st.inHand;
+      if (P.inHand) Pool.freeSpot(P, st);
+      if (P.canPlay) {
+        P.aim = Pool.defaultAim(P, st);
+        const tip = P.inHand ? (st.isBreak ? 'Your break! Drag the white ball behind the line.' : 'Ball in hand: drag the white ball.') : 'Tap the table to aim. Pull the bar down to shoot.';
+        pgOverlay(tip); P.t2 = setTimeout(() => PG === P && pgOverlay(''), 2600);
+      } else if (g.status === 'active') pgHint(`Waiting on ${nameOf(o)}…`);
+      P.draw();
+    };
+    if (list.length) Pool.replay(P, g, list, start); else start();
+  },
+  defaultAim(P, st) {
+    const cue = P.cue, legal = poolLegalTargets(st, S.me); let best = null, bd = Infinity;
+    for (const b of P.balls) if (b.on && legal.includes(b.n)) { const d = (b.x - cue.x) ** 2 + (b.y - cue.y) ** 2; if (d < bd) { bd = d; best = b; } }
+    if (!best) return { x: 0, y: -1 };
+    const dx = best.x - cue.x, dy = best.y - cue.y, L = Math.sqrt(dx * dx + dy * dy) || 1;
+    return { x: dx / L, y: dy / L };
+  },
+  freeSpot(P, st) {
+    const cue = P.cue, kitchen = st.isBreak;
+    if (poolFree(P.balls, cue.x, cue.y, kitchen)) return;
+    for (let r = 0; r < 120; r += 2) for (let i = 0; i < 16; i++) {
+      const x = POOL.CUE[0] + Math.cos(i * Math.PI / 8) * r, y = POOL.CUE[1] + Math.sin(i * Math.PI / 8) * r;
+      if (poolFree(P.balls, x, y, kitchen)) { cue.x = x; cue.y = y; return; }
+    }
+  },
+  aimAt(P, p) { const dx = p.x - P.cue.x, dy = p.y - P.cue.y, L = Math.sqrt(dx * dx + dy * dy); if (L > 0.8) P.aim = { x: dx / L, y: dy / L }; },
+  wire(P) {
+    const c = P.canvas, R = POOL.R;
+    c.onpointerdown = (e) => {
+      if (!P.canPlay || P.sim || G.busy) return;
+      audio(); try { c.setPointerCapture(e.pointerId); } catch {}
+      const p = canvasPt(P, e, POOL.RAIL), cue = P.cue;
+      pgOverlay('');
+      if (P.inHand && (p.x - cue.x) ** 2 + (p.y - cue.y) ** 2 < (R * 3.6) ** 2) P.mode = 'place';
+      else { P.mode = 'aim'; Pool.aimAt(P, p); }
+      P.draw();
+    };
+    c.onpointermove = (e) => {
+      if (!P.mode) return;
+      const p = canvasPt(P, e, POOL.RAIL);
+      if (P.mode === 'place') { if (poolFree(P.balls, p.x, p.y, P.state.isBreak)) { P.cue.x = p.x; P.cue.y = p.y; } }
+      else Pool.aimAt(P, p);
+      P.draw();
+    };
+    c.onpointerup = c.onpointercancel = () => { P.mode = null; };
+    const f = $('#fine'), ticks = $('#fine-ticks');
+    if (f) {
+      f.onpointerdown = (e) => { if (!P.canPlay || !P.aim) return; try { f.setPointerCapture(e.pointerId); } catch {} P.fx0 = e.clientX; };
+      f.onpointermove = (e) => {
+        if (P.fx0 == null || !P.aim) return;
+        const dx = e.clientX - P.fx0; P.fx0 = e.clientX;
+        const a = dx * 0.0016, cs = Math.cos(a), sn = Math.sin(a);
+        const ax = P.aim.x * cs - P.aim.y * sn, ay = P.aim.x * sn + P.aim.y * cs, L = Math.sqrt(ax * ax + ay * ay);
+        P.aim = { x: ax / L, y: ay / L };
+        P.tick = (P.tick || 0) + dx; ticks.style.backgroundPosition = `${P.tick}px 0`;
+        P.draw();
+      };
+      f.onpointerup = f.onpointercancel = () => { P.fx0 = null; };
+    }
+    const pw = $('#pw');
+    if (pw) {
+      const ui = () => { const h = pw.clientHeight; pw.querySelector('.pw-fill').style.height = (P.power * 100) + '%'; pw.querySelector('.pw-knob').style.transform = `translateY(${P.power * (h - 44)}px)`; };
+      pw.onpointerdown = (e) => { if (!P.canPlay || P.sim || G.busy || !P.aim) return; audio(); try { pw.setPointerCapture(e.pointerId); } catch {} P.pw0 = e.clientY; P.power = 0; P.mode = null; pgOverlay(''); ui(); };
+      pw.onpointermove = (e) => {
+        if (P.pw0 == null) return;
+        const p = Math.max(0, Math.min(1, (e.clientY - P.pw0) / (pw.clientHeight - 44)));
+        if (Math.floor(p * 5) !== Math.floor(P.power * 5)) haptic();
+        P.power = p; ui(); P.draw();
+      };
+      pw.onpointerup = () => {
+        if (P.pw0 == null) return;
+        P.pw0 = null; const p = P.power; P.power = 0; ui();
+        if (p > 0.03) Pool.shoot(P, p); else P.draw();
+      };
+      pw.onpointercancel = () => { P.pw0 = null; P.power = 0; ui(); P.draw(); };
+    }
+  },
+  play(P, balls, vx, vy) {
+    return new Promise((done) => {
+      P.balls = balls.map((b) => ({ ...b })); P.cue = P.balls.find((b) => b.n === 0);
+      P.sim = poolSim(balls, vx, vy);
+      P.onSimDone = (s) => { P.balls = s.B.map((b) => ({ n: b.n, x: b.x, y: b.y, on: b.on })); P.cue = P.balls.find((b) => b.n === 0); done(s); };
+      pgKick();
+    });
+  },
+  async shoot(P, p) {
+    const g = G.data.game, st = g.state, me = S.me, o = opp();
+    const v = POOL.VMAX * (0.1 * p + 0.9 * p * p);
+    const cuePos = [r3(P.cue.x), r3(P.cue.y)];
+    const startBalls = st.balls.map((b) => (b.n === 0 ? { ...b, x: cuePos[0], y: cuePos[1], on: true } : { ...b }));
+    const vx = r5(P.aim.x * v), vy = r5(P.aim.y * v);
+    const res = poolSim(startBalls, vx, vy).run();
+    const out = poolResolve({ ...st, balls: startBalls }, me, res);
+    const move = { vx, vy, cue: cuePos };
+    let summary = '';
+    if (!out.keep && !out.result) summary = out.foul ? `${Pool.lastLine(out.state.last, false)}. You have ball in hand!` : `${nameOf(me)} missed. Your shot!`;
+    G.busy = true; P.canPlay = false; P.inHand = false; pgOverlay('');
+    const req = api('move', { id: g.id, ply: g.ply, move, state: out.state, keep: out.keep, result: out.result, summary }).then((r) => ({ r }), (e) => ({ e }));
+    tone(1500, 0.035, 'square', 0.09); haptic();
+    await Pool.play(P, startBalls, vx, vy);
+    const { r, e } = await req;
+    G.busy = false;
+    if (!G.id) return;
+    if (e) { toast(errText(e), 3200); fx('err'); G.lastSig = ''; return loadGame(); }
+    G.data.moves.push({ ply: g.ply, player: me, move, state_before: st });
+    syncGame(r.game);
+    if (r.game.status === 'finished') fx(r.game.winner === me ? 'win' : 'lose', true);
+    else if (out.foul) toast(`Foul: ${Pool.lastLine(out.state.last, true).replace(/^You /, 'you ')}. ${nameOf(o)} gets ball in hand.`, 3200);
+    else if (out.keep) { const a = out.state.last.assigned; toast(a ? `You're ${a}! Keep shooting` : 'Nice! Keep shooting'); }
+    else toast(`${nameOf(o)}'s shot`);
+    renderGame();
+  },
+  replay(P, g, list, done) {
+    const o = opp(); let i = 0, stopped = false;
+    G.anim = true; P.canPlay = false;
+    pgHint(`Watching ${nameOf(o)}'s turn…`);
+    const finish = () => {
+      if (stopped) return; stopped = true;
+      clearTimeout(P.t1); P.sim = null; P.onSimDone = null;
+      G.anim = false; markSeen(g, list); pgOverlay(''); done();
+    };
+    P.skip = finish;
+    const who = `${esc(emojiOf(o))} ${esc(nameOf(o))}`;
+    const next = () => {
+      if (stopped || PG !== P) return;
+      if (i >= list.length) return finish();
+      const m = list[i++], sb = m.state_before;
+      const balls = sb.balls.map((b) => (b.n === 0 ? { ...b, x: m.move.cue[0], y: m.move.cue[1], on: true } : { ...b }));
+      P.balls = balls.map((b) => ({ ...b })); P.cue = P.balls.find((b) => b.n === 0);
+      pgOverlay(`${who} · Shot ${i} of ${list.length}`, true); P.draw();
+      P.t1 = setTimeout(() => {
+        if (stopped) return; tone(1500, 0.035, 'square', 0.09);
+        Pool.play(P, balls, m.move.vx, m.move.vy).then(() => { if (!stopped) P.t1 = setTimeout(next, 600); });
+      }, 650);
+    };
+    next();
+  },
+};
+
 /* ========================== Game screen ========================== */
 const G = { id: null, data: null, sel: null, partial: null, replay: null, busy: false, lastSig: '', chatOpen: false, lastMsgId: 0 };
 
 function openGame(id, opts = {}) {
   G.id = id; G.data = null; G.sel = null; G.partial = null; G.replay = null; G.lastSig = ''; G.lastMsgId = 0; G.pieceEls = {};
   const cached = S.games.find((g) => g.id === id);
-  if (cached) { G.data = { game: cached, moves: [], messages: [], requests: S.requests.filter((r) => r.game_id === id) }; }
+  if (cached) { G.data = { game: cached, moves: [], messages: [], requests: S.requests.filter((r) => r.game_id === id), partial: true }; }
   $('#g-body').innerHTML = cached ? '' : '<div class="spinner"></div>';
   const cb = $('[data-act=open-chat]'); if (cb) delete cb.dataset.n;
   if (cached) renderGame();
@@ -969,6 +1931,7 @@ function openGame(id, opts = {}) {
 }
 function closeGame(silent) {
   $('#game').classList.remove('open');
+  destroyPG(); G.busy = false;
   G.id = null; stopReplay(); closeSheet();
   if (!silent) { refreshList(); }
 }
@@ -987,8 +1950,8 @@ async function loadGame() {
     const i = S.games.findIndex((g) => g.id === id);
     if (i >= 0) S.games[i] = r.game; else S.games.unshift(r.game);
     S.requests = S.requests.filter((x) => x.game_id !== id).concat(r.requests.map((x) => ({ ...x, game_id: id })));
-    const sig = [r.game.ply, r.game.status, r.game.turn, r.requests.map((x) => x.id).join(','), r.game.updated_at].join('|');
-    const changed = sig !== G.lastSig && !G.busy;
+    const sig = sigOf(r.game, r.requests);
+    const changed = sig !== G.lastSig && !G.busy && !G.anim;
     if (changed) {
       const theirMove = prev && r.game.ply > prev.ply && prev.turn !== S.me;
       const finishedNow = prev && prev.status !== 'finished' && r.game.status === 'finished';
@@ -1025,6 +1988,7 @@ function myColor(g) { return g.state && g.state.colors ? g.state.colors[S.me] : 
 function renderGame(animateTheirMove) {
   const d = G.data; if (!d) return;
   const g = d.game, me = S.me, o = opp();
+  destroyPG();
   $('#g-title').textContent = GNAME[g.type] || g.type;
   const timer = g.options && g.options.timer ? (g.options.timer === 24 ? '1-day turns' : '3-day turns') : 'No timer';
   let sub = timer;
@@ -1033,6 +1997,8 @@ function renderGame(animateTheirMove) {
   updateChatBadge();
 
   if (g.status === 'invited') return renderInvite(g);
+  if (g.type === 'golf') return Golf.render(g);
+  if (g.type === 'pool') return Pool.render(g);
 
   const myC = myColor(g), oC = myC === 'r' ? 'k' : 'r';
   const st = G.replay ? G.replay.frames[G.replay.i] : g.state;
@@ -1101,7 +2067,8 @@ function renderGame(animateTheirMove) {
 
 function renderInvite(g) {
   const me = S.me, o = opp(), incoming = g.created_by !== me;
-  const t = g.options.timer ? (g.options.timer === 24 ? '1 day per turn' : '3 days per turn') : 'No turn timer';
+  let t = g.options.timer ? (g.options.timer === 24 ? '1 day per turn' : '3 days per turn') : 'No turn timer';
+  if (g.type === 'golf') t = '9 holes · Par 24 · ' + t;
   G.acceptHints = g.options.hints;
   $('#g-body').innerHTML = `<div class="glass card" style="text-align:center;padding:26px 18px;margin-top:12px">
       <div class="thumb" style="width:96px;height:96px;margin:0 auto 14px;border-radius:22px">${thumb(g)}</div>
@@ -1309,7 +2276,7 @@ function closeSheet() {
 function openMore() {
   const g = G.data.game, req = G.data.requests[0];
   openSheet(`<div class="grab"></div><h3>Game options</h3><div class="menu">
-    <button class="btn" data-act="req-draw" ${req ? 'disabled' : ''}>${I.hand} Offer a draw</button>
+    ${['checkers', 'chess'].includes(g.type) ? `<button class="btn" data-act="req-draw" ${req ? 'disabled' : ''}>${I.hand} Offer a draw</button>` : ''}
     <button class="btn danger" data-act="resign">${I.flag} Resign</button>
     <button class="btn" data-act="close-sheet">Cancel</button></div>`);
 }
@@ -1413,7 +2380,8 @@ document.addEventListener('click', (e) => {
     'toggle-hints': () => { S.newGame.hints = !S.newGame.hints; fx('tap'); renderNew(); },
     'send-invite': () => run(async () => {
       t.disabled = true;
-      const r = await api('create', { type: S.newGame.type, options: { timer: S.newGame.timer, hints: S.newGame.hints } });
+      const gd = GAME_LIST.find((x) => x.type === S.newGame.type);
+      const r = await api('create', { type: S.newGame.type, options: { timer: S.newGame.timer, hints: !!gd.hints && S.newGame.hints } });
       S.games.unshift(r.game); fx('sent'); toast(`Invite sent to ${nameOf(opp())}`); setTab('games');
     }).finally(() => { t.disabled = false; }),
     'toggle-sound': () => { P.sound = !P.sound; savePrefs(); fx('tap'); renderSettings(); },
@@ -1442,9 +2410,14 @@ document.addEventListener('click', (e) => {
     'accept-hints': () => { G.acceptHints = !G.acceptHints; $('#acc-hints').classList.toggle('on', G.acceptHints); fx('tap'); },
     'accept': () => run(async () => {
       const g = G.data.game;
-      const colors = g.options.colors || (Math.random() < 0.5 ? { a: 'r', b: 'k' } : { a: 'k', b: 'r' });
-      const state = { board: CK.init(), colors, last: null };
-      const turn = colors.a === 'r' ? 'a' : 'b';
+      let state, turn;
+      const first = g.options.first || (Math.random() < 0.5 ? 'a' : 'b');
+      if (g.type === 'golf') { state = golfNew(first); turn = first; }
+      else if (g.type === 'pool') { state = poolNew(first); turn = first; }
+      else {
+        const colors = g.options.colors || (Math.random() < 0.5 ? { a: 'r', b: 'k' } : { a: 'k', b: 'r' });
+        state = { board: CK.init(), colors, last: null }; turn = colors.a === 'r' ? 'a' : 'b';
+      }
       t.disabled = true;
       const r = await api('respond', { id: g.id, accept: true, hints: G.acceptHints !== false, state, turn });
       G.data.game = r.game; G.lastSig = ''; fx('win'); renderGame(); loadGame();
@@ -1466,6 +2439,9 @@ document.addEventListener('click', (e) => {
       openGame(r.game.id);
     }),
     'replay': () => { fx('tap'); startReplay(); },
+    'pg-skip': () => { if (PG && PG.skip) { fx('tap'); PG.skip(); } },
+    'watch-last': () => { fx('tap'); G.forceReplay = true; renderGame(); },
+    'scorecard': () => { fx('tap'); openSheet(`<div class="grab"></div><h3>Scorecard</h3>${golfCard(G.data.game.state)}<div class="menu" style="margin-top:14px"><button class="btn" data-act="close-sheet">Done</button></div>`); },
     'replay-done': () => { stopReplay(); renderGame(); },
   };
   if (A[act]) A[act]();

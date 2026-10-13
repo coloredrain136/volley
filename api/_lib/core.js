@@ -53,7 +53,7 @@ async function getPlayers() {
 }
 const nameOf = (players, p) => (players[p] && players[p].name) || (p === 'a' ? 'Player 1' : 'Player 2');
 
-const GAME_NAMES = { checkers: 'Checkers', chess: 'Chess', golf: 'Mini Golf' };
+const GAME_NAMES = { checkers: 'Checkers', chess: 'Chess', golf: 'Mini Golf', pool: '8-Ball' };
 const gameName = (t) => GAME_NAMES[t] || 'a game';
 
 // ---- Push ----

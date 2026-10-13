@@ -6,7 +6,8 @@ const {
 } = require('./_lib/core');
 
 const DEV_CODE = process.env.VOLLEY_DEV_CODE || '';
-const TYPES = ['checkers']; // chess and golf get added in later builds
+const TYPES = ['checkers', 'golf', 'pool']; // chess comes in a later build
+const BOARD_GAMES = ['checkers', 'chess']; // undo + draw only make sense here
 const TIMERS = [0, 24, 72];
 
 const GAME_COLS = 'id,type,status,options,turn,state,ply,winner,end_reason,turn_deadline,nudged_at,rematch_of,created_by,created_at,updated_at,last_move_at,finished_at';
@@ -161,10 +162,15 @@ const handlers = {
 
     const now = nowIso();
     const r = b.result;
-    const patch = { state: b.state, ply: g.ply + 1, last_move_at: now, warned_at: null };
+    const patch = { state: b.state, ply: g.ply + 1, last_move_at: now };
+    // keep = the same player keeps going (next golf hole, another pool shot). No push, timer keeps running.
+    const keep = !!b.keep && !(r && r.winner);
     if (r && (r.winner === 'a' || r.winner === 'b' || r.winner === 'draw')) {
-      Object.assign(patch, { status: 'finished', winner: r.winner, end_reason: r.winner === 'draw' ? 'draw' : 'win', turn: null, turn_deadline: null, finished_at: now });
+      Object.assign(patch, { status: 'finished', winner: r.winner, end_reason: r.winner === 'draw' ? 'draw' : 'win', turn: null, turn_deadline: null, finished_at: now, warned_at: null });
+    } else if (keep) {
+      patch.turn = me;
     } else {
+      patch.warned_at = null;
       Object.assign(patch, { turn: other(me), turn_deadline: deadlineFrom(g.options) });
     }
     let ng;
@@ -174,11 +180,13 @@ const handlers = {
       throw e;
     }
     await cancelPending(g.id);
+    if (keep) return { game: ng };
     const players = await getPlayers();
+    const summary = typeof b.summary === 'string' ? b.summary.replace(/\s+/g, ' ').trim().slice(0, 120) : '';
     if (ng.status === 'finished') {
       ctx.later.push(notifySafe(other(me), { title: 'Game over', body: resultText(ng, players, other(me)), tag: 'g-' + g.id, url: urlFor(g) }));
     } else {
-      ctx.later.push(notifySafe(other(me), { title: 'Your turn', body: `${nameOf(players, me)} moved in ${gameName(g.type)}.`, tag: 'g-' + g.id, url: urlFor(g) }));
+      ctx.later.push(notifySafe(other(me), { title: 'Your turn', body: summary || `${nameOf(players, me)} moved in ${gameName(g.type)}.`, tag: 'g-' + g.id, url: urlFor(g) }));
     }
     return { game: ng };
   },
@@ -187,6 +195,7 @@ const handlers = {
     const g = await getGame(b.id);
     if (g.status !== 'active') fail(409, 'game_not_active');
     if (b.kind !== 'undo' && b.kind !== 'draw') fail(400, 'bad_kind');
+    if (!BOARD_GAMES.includes(g.type)) fail(400, 'not_for_this_game');
     const pending = await sb(`volley_requests?game_id=eq.${g.id}&status=eq.pending&select=id,kind,from_player`);
     if ((pending || []).length) fail(409, 'request_pending');
     if (b.kind === 'undo') {
@@ -293,6 +302,8 @@ const handlers = {
     if (g.state && g.state.colors) {
       const c = g.state.colors; options.colors = { a: c.b, b: c.a };
     }
+    // Golf and 8-Ball: whoever went second last time goes first
+    if (g.state && (g.state.first === 'a' || g.state.first === 'b')) options.first = other(g.state.first);
     const rows = await sb(`volley_games?select=${GAME_COLS}`, {
       method: 'POST', prefer: 'return=representation',
       body: { type: g.type, status: 'invited', options, turn: other(me), created_by: me, rematch_of: g.id },
