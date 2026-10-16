@@ -6,6 +6,8 @@ module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'post_only' });
   try {
     const me = checkAuth(req);
+    // Test mode players share slots a/b with the real players, so they never touch notifications
+    if ((req.headers['x-volley-space'] || 'main') !== 'main') fail(400, 'test_mode');
     const b = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
     if (b.action === 'subscribe') {
       const s = b.subscription || {};

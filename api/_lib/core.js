@@ -14,7 +14,7 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
   catch (e) { console.error('VAPID setup failed:', e.message); }
 }
 
-const APP_VERSION = 'volley-9'; // must match VERSION in index.html
+const APP_VERSION = 'volley-10'; // must match VERSION in index.html
 
 const configured = () => !!(SUPA_URL && SUPA_KEY && PASSCODE);
 
@@ -46,9 +46,15 @@ const q = (v) => encodeURIComponent(v);
 const nowIso = () => new Date().toISOString();
 const other = (p) => (p === 'a' ? 'b' : 'a');
 
+// ---- Spaces ----
+// 'main' is you and Irina. 'test' is developer test mode: its own two test players and games,
+// stored in the same tables but kept apart (games.space column, settings keys start with test_).
+const SPACES = ['main', 'test'];
+const skey = (space, k) => (space === 'test' ? 'test_' + k : k);
+
 // ---- Players ----
-async function getPlayers() {
-  const rows = await sb('volley_settings?key=in.(player_a,player_b)&select=key,value');
+async function getPlayers(space = 'main') {
+  const rows = await sb(`volley_settings?key=in.(${skey(space, 'player_a')},${skey(space, 'player_b')})&select=key,value`);
   const out = { a: null, b: null };
   for (const r of rows || []) out[r.key.slice(-1)] = r.value;
   return out;
@@ -61,11 +67,12 @@ const gameName = (t) => GAME_NAMES[t] || 'a game';
 // ---- Push ----
 async function badgeFor(player) {
   try {
-    const rows = await sb(`volley_games?status=in.(invited,active)&turn=eq.${player}&select=id`);
+    const rows = await sb(`volley_games?space=eq.main&status=in.(invited,active)&turn=eq.${player}&select=id`);
     return (rows || []).length;
   } catch { return undefined; }
 }
-async function notify(player, payload) {
+async function notify(player, payload, space = 'main') {
+  if (space !== 'main') return { sent: 0, reason: 'test_mode' }; // test players never send real notifications
   if (!pushReady) return { sent: 0, reason: 'push_not_configured' };
   let subs = [];
   try { subs = await sb(`volley_push_subs?player=eq.${player}&select=endpoint,keys`); } catch (e) { return { sent: 0, reason: e.message }; }
@@ -86,7 +93,7 @@ async function notify(player, payload) {
   return { sent };
 }
 // Never let a push problem break a move or a message
-const notifySafe = (player, payload) => notify(player, payload).catch((e) => console.error('notify', e.message));
+const notifySafe = (player, payload, space) => notify(player, payload, space).catch((e) => console.error('notify', e.message));
 
 // ---- Turn timers ----
 const WARN_HOURS = 3;
@@ -100,7 +107,7 @@ async function sweep() {
   const players = await getPlayers();
   let forfeits = 0, warnings = 0;
 
-  const expired = await sb(`volley_games?status=eq.active&turn_deadline=lt.${q(now)}&select=id,type,turn`);
+  const expired = await sb(`volley_games?status=eq.active&turn_deadline=lt.${q(now)}&select=id,type,turn,space`);
   for (const g of expired || []) {
     if (!g.turn) continue;
     const winner = other(g.turn);
@@ -111,20 +118,20 @@ async function sweep() {
     if (upd && upd.length) {
       forfeits++;
       const url = `/?g=${g.id}`;
-      await notifySafe(g.turn, { title: 'Time ran out', body: `Your ${gameName(g.type)} timer ran out, so ${nameOf(players, winner)} wins.`, tag: 'g-' + g.id, url });
-      await notifySafe(winner, { title: 'You win!', body: `${nameOf(players, g.turn)}'s timer ran out in ${gameName(g.type)}.`, tag: 'g-' + g.id, url });
+      await notifySafe(g.turn, { title: 'Time ran out', body: `Your ${gameName(g.type)} timer ran out, so ${nameOf(players, winner)} wins.`, tag: 'g-' + g.id, url }, g.space);
+      await notifySafe(winner, { title: 'You win!', body: `${nameOf(players, g.turn)}'s timer ran out in ${gameName(g.type)}.`, tag: 'g-' + g.id, url }, g.space);
     }
   }
 
   const soon = new Date(Date.now() + WARN_HOURS * 3600e3).toISOString();
-  const warn = await sb(`volley_games?status=eq.active&warned_at=is.null&turn_deadline=lt.${q(soon)}&select=id,type,turn,turn_deadline`);
+  const warn = await sb(`volley_games?status=eq.active&warned_at=is.null&turn_deadline=lt.${q(soon)}&select=id,type,turn,turn_deadline,space`);
   for (const g of warn || []) {
     if (!g.turn) continue;
     const upd = await sb(`volley_games?id=eq.${g.id}&warned_at=is.null`, { method: 'PATCH', prefer: 'return=representation', body: { warned_at: now } });
     if (upd && upd.length) {
       warnings++;
       const hrs = Math.max(1, Math.round((new Date(g.turn_deadline) - Date.now()) / 3600e3));
-      await notifySafe(g.turn, { title: 'Timer running out', body: `About ${hrs} hour${hrs === 1 ? '' : 's'} left on your ${gameName(g.type)} turn.`, tag: 'g-' + g.id, url: `/?g=${g.id}` });
+      await notifySafe(g.turn, { title: 'Timer running out', body: `About ${hrs} hour${hrs === 1 ? '' : 's'} left on your ${gameName(g.type)} turn.`, tag: 'g-' + g.id, url: `/?g=${g.id}` }, g.space);
     }
   }
   return { forfeits, warnings };
@@ -145,6 +152,17 @@ function checkAuth(req, { needPlayer = true } = {}) {
   if (needPlayer && me !== 'a' && me !== 'b') fail(400, 'no_player');
   return me;
 }
+// Which space this request is for. Test mode needs the developer code.
+function spaceOf(req) {
+  const sp = req.headers['x-volley-space'] || 'main';
+  if (!SPACES.includes(sp)) fail(400, 'bad_space');
+  if (sp === 'test') {
+    const dev = process.env.VOLLEY_DEV_CODE || '';
+    if (!dev) fail(403, 'dev_not_configured');
+    if ((req.headers['x-volley-dev'] || '') !== dev) fail(403, 'bad_dev_code');
+  }
+  return sp;
+}
 function sendError(res, e) {
   const status = e.status || 500;
   if (status >= 500) console.error(e);
@@ -152,7 +170,7 @@ function sendError(res, e) {
 }
 
 module.exports = {
-  sb, q, nowIso, other, getPlayers, nameOf, gameName, notify, notifySafe,
+  sb, q, nowIso, other, getPlayers, nameOf, gameName, notify, notifySafe, skey, spaceOf,
   deadlineFrom, sweep, maybeSweep, checkAuth, sendError, fail, HttpError,
   VAPID_PUBLIC, pushReady: () => pushReady, APP_VERSION,
 };

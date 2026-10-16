@@ -1,7 +1,8 @@
 // Volley data endpoint. Every call: POST /api/db  { action, ...fields }
-// Headers: x-volley-key (passcode), x-volley-player ('a' or 'b')
+// Headers: x-volley-key (passcode), x-volley-player ('a' or 'b'),
+// x-volley-space ('main', or 'test' for developer test mode, which also needs x-volley-dev)
 const {
-  sb, q, nowIso, other, getPlayers, nameOf, gameName, notifySafe,
+  sb, q, nowIso, other, getPlayers, nameOf, gameName, notifySafe, skey, spaceOf,
   deadlineFrom, maybeSweep, checkAuth, sendError, fail, VAPID_PUBLIC, pushReady, APP_VERSION,
 } = require('./_lib/core');
 
@@ -11,10 +12,13 @@ const BOARD_GAMES = ['checkers', 'chess']; // undo + draw only make sense here
 const TIMERS = [0, 24, 72];
 
 const GAME_COLS = 'id,type,status,options,turn,state,ply,winner,end_reason,turn_deadline,nudged_at,rematch_of,created_by,created_at,updated_at,last_move_at,finished_at';
+const KINDS = ['undo', 'draw', 'delete'];
+const SP = (ctx) => `space=eq.${ctx.space}`;
 
-async function getGame(id) {
+// A game from another space (test vs real) is treated as not found
+async function getGame(id, ctx) {
   if (!id || !/^[0-9a-f-]{36}$/i.test(id)) fail(400, 'bad_id');
-  const rows = await sb(`volley_games?id=eq.${id}&select=${GAME_COLS}`);
+  const rows = await sb(`volley_games?id=eq.${id}&${SP(ctx)}&select=${GAME_COLS}`);
   if (!rows || !rows.length) fail(404, 'game_not_found');
   return rows[0];
 }
@@ -26,8 +30,9 @@ async function patchGame(id, body, filter = '') {
   return rows[0];
 }
 const urlFor = (g) => `/?g=${g.id}`;
+// A move or resign clears undo/draw requests. A delete request stays until it's answered.
 async function cancelPending(gameId) {
-  await sb(`volley_requests?game_id=eq.${gameId}&status=eq.pending`, { method: 'PATCH', body: { status: 'cancelled', resolved_at: nowIso() } });
+  await sb(`volley_requests?game_id=eq.${gameId}&status=eq.pending&kind=in.(undo,draw)`, { method: 'PATCH', body: { status: 'cancelled', resolved_at: nowIso() } });
 }
 function resultText(g, players, forPlayer) {
   if (g.winner === 'draw') return `${gameName(g.type)} ended in a draw.`;
@@ -43,33 +48,45 @@ function checkDev(req) {
   if ((req.headers['x-volley-dev'] || '') !== DEV_CODE) fail(403, 'bad_dev_code');
 }
 const ALL_STATUSES = 'status=in.(invited,active,finished,declined)';
-async function wipeGames() {
+async function wipeGames(ctx) {
   // moves, requests and messages are removed with their game (on delete cascade)
-  await sb(`volley_games?${ALL_STATUSES}`, { method: 'DELETE' });
+  await sb(`volley_games?${ALL_STATUSES}&${SP(ctx)}`, { method: 'DELETE' });
 }
+const TEST_PLAYERS = { a: { name: 'Test A', emoji: '🐶' }, b: { name: 'Test B', emoji: '🤖' } };
 
 const handlers = {
   async dev_check() { return { ok: true }; },
 
-  // Deleting either player deletes every game too, since every game is between the two of you
-  async dev_delete_player(b) {
+  // Deleting either player deletes every game too, since every game is between the two players
+  async dev_delete_player(b, me, ctx) {
     if (b.slot !== 'a' && b.slot !== 'b') fail(400, 'bad_slot');
-    await wipeGames();
-    await sb(`volley_push_subs?player=eq.${b.slot}`, { method: 'DELETE' });
-    await sb(`volley_settings?key=eq.player_${b.slot}`, { method: 'DELETE' });
-    return { players: await getPlayers() };
+    await wipeGames(ctx);
+    if (ctx.space === 'main') await sb(`volley_push_subs?player=eq.${b.slot}`, { method: 'DELETE' });
+    await sb(`volley_settings?key=eq.${skey(ctx.space, 'player_' + b.slot)}`, { method: 'DELETE' });
+    return { players: await getPlayers(ctx.space) };
   },
 
-  async dev_reset() {
-    await wipeGames();
-    await sb('volley_push_subs?player=in.(a,b)', { method: 'DELETE' });
-    await sb('volley_settings?key=in.(player_a,player_b)', { method: 'DELETE' });
-    return { players: await getPlayers() };
+  async dev_reset(b, me, ctx) {
+    await wipeGames(ctx);
+    if (ctx.space === 'main') await sb('volley_push_subs?player=in.(a,b)', { method: 'DELETE' });
+    await sb(`volley_settings?key=in.(${skey(ctx.space, 'player_a')},${skey(ctx.space, 'player_b')})`, { method: 'DELETE' });
+    return { players: await getPlayers(ctx.space) };
+  },
+
+  // Test mode: make sure both test players exist (Test A and Test B)
+  async dev_test_setup(b, me, ctx) {
+    if (ctx.space !== 'test') fail(400, 'test_only');
+    const players = await getPlayers('test');
+    for (const p of ['a', 'b']) {
+      if (players[p]) continue;
+      await sb('volley_settings', { method: 'POST', prefer: 'resolution=merge-duplicates', body: { key: skey('test', 'player_' + p), value: TEST_PLAYERS[p], updated_at: nowIso() } });
+    }
+    return { players: await getPlayers('test') };
   },
 
   // Used by the lock screen: checks the passcode, returns who's set up
-  async hello() {
-    return { players: await getPlayers(), vapid: VAPID_PUBLIC, push: pushReady() };
+  async hello(b, me, ctx) {
+    return { players: await getPlayers(ctx.space), vapid: VAPID_PUBLIC, push: pushReady() };
   },
 
   async set_player(b, me, ctx) {
@@ -80,27 +97,29 @@ const handlers = {
     if (!name) fail(400, 'name_required');
     await sb('volley_settings', {
       method: 'POST', prefer: 'resolution=merge-duplicates',
-      body: { key: 'player_' + slot, value: { name, emoji: emoji || '🙂' }, updated_at: nowIso() },
+      body: { key: skey(ctx.space, 'player_' + slot), value: { name, emoji: emoji || '🙂' }, updated_at: nowIso() },
     });
-    return { players: await getPlayers() };
+    return { players: await getPlayers(ctx.space) };
   },
 
   async list(b, me, ctx) {
     const [players, games, unreadRows, reqs, defRows] = await Promise.all([
-      getPlayers(),
-      sb(`volley_games?status=in.(invited,active,finished)&order=updated_at.desc&limit=500&select=${GAME_COLS}`),
+      getPlayers(ctx.space),
+      sb(`volley_games?${SP(ctx)}&status=in.(invited,active,finished)&order=updated_at.desc&limit=500&select=${GAME_COLS}`),
       sb(`volley_messages?read_at=is.null&player=eq.${other(me)}&select=game_id`),
       sb(`volley_requests?status=eq.pending&select=id,game_id,kind,from_player,created_at`),
-      sb('volley_settings?key=eq.defaults&select=value'),
+      sb(`volley_settings?key=eq.${skey(ctx.space, 'defaults')}&select=value`),
     ]);
+    // messages and requests belong to games, so keep only the ones for this space's games
+    const ids = new Set((games || []).map((g) => g.id));
     const unread = {};
-    for (const r of unreadRows || []) unread[r.game_id] = (unread[r.game_id] || 0) + 1;
+    for (const r of unreadRows || []) if (ids.has(r.game_id)) unread[r.game_id] = (unread[r.game_id] || 0) + 1;
     const defaults = defRows && defRows[0] ? defRows[0].value : null;
-    return { players, games: games || [], unread, requests: reqs || [], defaults, vapid: VAPID_PUBLIC, push: pushReady(), now: nowIso() };
+    return { players, games: games || [], unread, requests: (reqs || []).filter((r) => ids.has(r.game_id)), defaults, vapid: VAPID_PUBLIC, push: pushReady(), space: ctx.space, now: nowIso() };
   },
 
   // Game defaults shared by both players (Settings → Game defaults)
-  async set_defaults(b) {
+  async set_defaults(b, me, ctx) {
     const d = b.defaults || {};
     const value = {
       holes: [3, 6, 9].includes(Number(d.holes)) ? Number(d.holes) : 9,
@@ -108,12 +127,12 @@ const handlers = {
       timer: [0, 24, 72].includes(Number(d.timer)) ? Number(d.timer) : 0,
       hints: d.hints !== false,
     };
-    await sb('volley_settings', { method: 'POST', prefer: 'resolution=merge-duplicates', body: { key: 'defaults', value, updated_at: nowIso() } });
+    await sb('volley_settings', { method: 'POST', prefer: 'resolution=merge-duplicates', body: { key: skey(ctx.space, 'defaults'), value, updated_at: nowIso() } });
     return { defaults: value };
   },
 
-  async game(b) {
-    const g = await getGame(b.id);
+  async game(b, me, ctx) {
+    const g = await getGame(b.id, ctx);
     const [moves, messages, requests] = await Promise.all([
       sb(`volley_moves?game_id=eq.${g.id}&order=ply.asc&select=ply,player,move,state_before,created_at`),
       sb(`volley_messages?game_id=eq.${g.id}&order=id.desc&limit=300&select=id,player,body,created_at,read_at`),
@@ -132,19 +151,19 @@ const handlers = {
     }
     const rows = await sb(`volley_games?select=${GAME_COLS}`, {
       method: 'POST', prefer: 'return=representation',
-      body: { type: b.type, status: 'invited', options, turn: other(me), created_by: me },
+      body: { type: b.type, status: 'invited', options, turn: other(me), created_by: me, space: ctx.space },
     });
     const g = rows[0];
-    const players = await getPlayers();
-    ctx.later.push(notifySafe(other(me), { title: 'New game invite', body: `${nameOf(players, me)} wants to play ${gameName(g.type)}.`, tag: 'g-' + g.id, url: urlFor(g) }));
+    const players = await getPlayers(ctx.space);
+    ctx.later.push(notifySafe(other(me), { title: 'New game invite', body: `${nameOf(players, me)} wants to play ${gameName(g.type)}.`, tag: 'g-' + g.id, url: urlFor(g) }, ctx.space));
     return { game: g };
   },
 
   async respond(b, me, ctx) {
-    const g = await getGame(b.id);
+    const g = await getGame(b.id, ctx);
     if (g.status !== 'invited') fail(409, 'not_an_invite');
     if (g.created_by === me) fail(403, 'not_your_invite');
-    const players = await getPlayers();
+    const players = await getPlayers(ctx.space);
     if (!b.accept) {
       await patchGame(g.id, { status: 'declined', turn: null }, '&status=eq.invited');
       return { ok: true };
@@ -157,19 +176,19 @@ const handlers = {
       last_move_at: now, turn_deadline: deadlineFrom(options), warned_at: null,
     }, '&status=eq.invited');
     const starter = b.turn === g.created_by ? ' Your move first.' : '';
-    ctx.later.push(notifySafe(g.created_by, { title: 'Invite accepted', body: `${nameOf(players, me)} accepted ${gameName(g.type)}.${starter}`, tag: 'g-' + g.id, url: urlFor(g) }));
+    ctx.later.push(notifySafe(g.created_by, { title: 'Invite accepted', body: `${nameOf(players, me)} accepted ${gameName(g.type)}.${starter}`, tag: 'g-' + g.id, url: urlFor(g) }, ctx.space));
     return { game: ng };
   },
 
   async cancel(b, me, ctx) {
-    const g = await getGame(b.id);
+    const g = await getGame(b.id, ctx);
     if (g.status !== 'invited' || g.created_by !== me) fail(409, 'cannot_cancel');
     await patchGame(g.id, { status: 'declined', turn: null }, '&status=eq.invited');
     return { ok: true };
   },
 
   async move(b, me, ctx) {
-    const g = await getGame(b.id);
+    const g = await getGame(b.id, ctx);
     if (g.status !== 'active') fail(409, 'game_not_active');
     if (g.turn !== me) fail(409, 'not_your_turn');
     if (Number(b.ply) !== g.ply) fail(409, 'game_changed');
@@ -200,21 +219,26 @@ const handlers = {
     }
     await cancelPending(g.id);
     if (keep) return { game: ng };
-    const players = await getPlayers();
+    const players = await getPlayers(ctx.space);
     const summary = typeof b.summary === 'string' ? b.summary.replace(/\s+/g, ' ').trim().slice(0, 120) : '';
     if (ng.status === 'finished') {
-      ctx.later.push(notifySafe(other(me), { title: 'Game over', body: resultText(ng, players, other(me)), tag: 'g-' + g.id, url: urlFor(g) }));
+      ctx.later.push(notifySafe(other(me), { title: 'Game over', body: resultText(ng, players, other(me)), tag: 'g-' + g.id, url: urlFor(g) }, ctx.space));
     } else {
-      ctx.later.push(notifySafe(other(me), { title: 'Your turn', body: summary || `${nameOf(players, me)} moved in ${gameName(g.type)}.`, tag: 'g-' + g.id, url: urlFor(g) }));
+      ctx.later.push(notifySafe(other(me), { title: 'Your turn', body: summary || `${nameOf(players, me)} moved in ${gameName(g.type)}.`, tag: 'g-' + g.id, url: urlFor(g) }, ctx.space));
     }
     return { game: ng };
   },
 
   async request(b, me, ctx) {
-    const g = await getGame(b.id);
-    if (g.status !== 'active') fail(409, 'game_not_active');
-    if (b.kind !== 'undo' && b.kind !== 'draw') fail(400, 'bad_kind');
-    if (!BOARD_GAMES.includes(g.type)) fail(400, 'not_for_this_game');
+    const g = await getGame(b.id, ctx);
+    if (!KINDS.includes(b.kind)) fail(400, 'bad_kind');
+    if (b.kind === 'delete') {
+      // Delete works on games that started (active or finished). Invites use Cancel / Decline instead.
+      if (g.status !== 'active' && g.status !== 'finished') fail(409, 'cannot_delete');
+    } else {
+      if (g.status !== 'active') fail(409, 'game_not_active');
+      if (!BOARD_GAMES.includes(g.type)) fail(400, 'not_for_this_game');
+    }
     const pending = await sb(`volley_requests?game_id=eq.${g.id}&status=eq.pending&select=id,kind,from_player`);
     if ((pending || []).length) fail(409, 'request_pending');
     if (b.kind === 'undo') {
@@ -225,9 +249,12 @@ const handlers = {
     const rows = await sb('volley_requests?select=id,kind,from_player,created_at', {
       method: 'POST', prefer: 'return=representation', body: { game_id: g.id, kind: b.kind, from_player: me },
     });
-    const players = await getPlayers();
-    const body = b.kind === 'undo' ? `${nameOf(players, me)} wants to take back their last move.` : `${nameOf(players, me)} offered a draw in ${gameName(g.type)}.`;
-    ctx.later.push(notifySafe(other(me), { title: b.kind === 'undo' ? 'Undo request' : 'Draw offer', body, tag: 'g-' + g.id, url: urlFor(g) }));
+    const players = await getPlayers(ctx.space);
+    const body = b.kind === 'undo' ? `${nameOf(players, me)} wants to take back their last move.`
+      : b.kind === 'delete' ? `${nameOf(players, me)} wants to delete your ${gameName(g.type)} game.`
+      : `${nameOf(players, me)} offered a draw in ${gameName(g.type)}.`;
+    const title = { undo: 'Undo request', draw: 'Draw offer', delete: 'Delete game?' }[b.kind];
+    ctx.later.push(notifySafe(other(me), { title, body, tag: 'g-' + g.id, url: urlFor(g) }, ctx.space));
     return { request: rows[0] };
   },
 
@@ -237,12 +264,23 @@ const handlers = {
     const r = rows && rows[0];
     if (!r || r.status !== 'pending') fail(409, 'request_gone');
     if (r.from_player === me) fail(403, 'not_yours_to_answer');
-    const g = await getGame(r.game_id);
-    const players = await getPlayers();
+    const g = await getGame(r.game_id, ctx);
+    const players = await getPlayers(ctx.space);
     const close = (status) => sb(`volley_requests?id=eq.${id}&status=eq.pending`, { method: 'PATCH', body: { status, resolved_at: nowIso() } });
+    if (r.kind === 'delete') {
+      if (!b.accept) {
+        await close('denied');
+        ctx.later.push(notifySafe(r.from_player, { title: 'Keeping the game', body: `${nameOf(players, me)} wants to keep your ${gameName(g.type)} game.`, tag: 'g-' + g.id, url: urlFor(g) }, ctx.space));
+        return { game: g };
+      }
+      // the moves, chat and requests go with it (on delete cascade)
+      await sb(`volley_games?id=eq.${g.id}&${SP(ctx)}`, { method: 'DELETE' });
+      ctx.later.push(notifySafe(r.from_player, { title: 'Game deleted', body: `${nameOf(players, me)} said yes. Your ${gameName(g.type)} game is gone.`, tag: 'g-' + g.id, url: '/' }, ctx.space));
+      return { deleted: true };
+    }
     if (!b.accept || g.status !== 'active') {
       await close('denied');
-      ctx.later.push(notifySafe(r.from_player, { title: r.kind === 'undo' ? 'Undo denied' : 'Draw declined', body: `${nameOf(players, me)} said no.`, tag: 'g-' + g.id, url: urlFor(g) }));
+      ctx.later.push(notifySafe(r.from_player, { title: r.kind === 'undo' ? 'Undo denied' : 'Draw declined', body: `${nameOf(players, me)} said no.`, tag: 'g-' + g.id, url: urlFor(g) }, ctx.space));
       return { game: g };
     }
     let ng;
@@ -256,12 +294,12 @@ const handlers = {
       }, `&ply=eq.${g.ply}`);
       await sb(`volley_moves?game_id=eq.${g.id}&ply=eq.${m.ply}`, { method: 'DELETE' });
       await close('accepted');
-      ctx.later.push(notifySafe(r.from_player, { title: 'Undo allowed', body: `${nameOf(players, me)} let you take it back. Your move.`, tag: 'g-' + g.id, url: urlFor(g) }));
+      ctx.later.push(notifySafe(r.from_player, { title: 'Undo allowed', body: `${nameOf(players, me)} let you take it back. Your move.`, tag: 'g-' + g.id, url: urlFor(g) }, ctx.space));
     } else {
       const now = nowIso();
       ng = await patchGame(g.id, { status: 'finished', winner: 'draw', end_reason: 'draw', turn: null, turn_deadline: null, finished_at: now }, '&status=eq.active');
       await close('accepted');
-      ctx.later.push(notifySafe(r.from_player, { title: 'Draw accepted', body: `${gameName(g.type)} with ${nameOf(players, me)} ended in a draw.`, tag: 'g-' + g.id, url: urlFor(g) }));
+      ctx.later.push(notifySafe(r.from_player, { title: 'Draw accepted', body: `${gameName(g.type)} with ${nameOf(players, me)} ended in a draw.`, tag: 'g-' + g.id, url: urlFor(g) }, ctx.space));
     }
     return { game: ng };
   },
@@ -272,49 +310,50 @@ const handlers = {
   },
 
   async resign(b, me, ctx) {
-    const g = await getGame(b.id);
+    const g = await getGame(b.id, ctx);
     if (g.status !== 'active') fail(409, 'game_not_active');
     const ng = await patchGame(g.id, { status: 'finished', winner: other(me), end_reason: 'resign', turn: null, turn_deadline: null, finished_at: nowIso() }, '&status=eq.active');
     await cancelPending(g.id);
-    const players = await getPlayers();
-    ctx.later.push(notifySafe(other(me), { title: 'You win!', body: `${nameOf(players, me)} resigned ${gameName(g.type)}.`, tag: 'g-' + g.id, url: urlFor(g) }));
+    const players = await getPlayers(ctx.space);
+    ctx.later.push(notifySafe(other(me), { title: 'You win!', body: `${nameOf(players, me)} resigned ${gameName(g.type)}.`, tag: 'g-' + g.id, url: urlFor(g) }, ctx.space));
     return { game: ng };
   },
 
   async nudge(b, me, ctx) {
-    const g = await getGame(b.id);
+    const g = await getGame(b.id, ctx);
     const waitingOn = g.status === 'active' ? g.turn : g.status === 'invited' ? other(g.created_by) : null;
     if (!waitingOn || waitingOn === me) fail(409, 'nothing_to_nudge');
     if (g.nudged_at && Date.now() - new Date(g.nudged_at) < 3600e3) fail(429, 'nudged_recently');
     const ng = await patchGame(g.id, { nudged_at: nowIso() });
-    const players = await getPlayers();
+    const players = await getPlayers(ctx.space);
     const what = g.status === 'invited' ? `your ${gameName(g.type)} invite` : `your ${gameName(g.type)} move`;
-    ctx.later.push(notifySafe(other(me), { title: `👋 ${nameOf(players, me)} nudged you`, body: `They're waiting on ${what}.`, tag: 'n-' + g.id, url: urlFor(g) }));
+    ctx.later.push(notifySafe(other(me), { title: `👋 ${nameOf(players, me)} nudged you`, body: `They're waiting on ${what}.`, tag: 'n-' + g.id, url: urlFor(g) }, ctx.space));
     return { game: ng };
   },
 
   async chat(b, me, ctx) {
-    const g = await getGame(b.id);
+    const g = await getGame(b.id, ctx);
     const body = String(b.body || '').trim().slice(0, 1000);
     if (!body) fail(400, 'empty');
     const rows = await sb('volley_messages?select=id,player,body,created_at,read_at', {
       method: 'POST', prefer: 'return=representation', body: { game_id: g.id, player: me, body },
     });
-    const players = await getPlayers();
+    const players = await getPlayers(ctx.space);
     const p = players[me] || {};
-    ctx.later.push(notifySafe(other(me), { title: `${p.emoji ? p.emoji + ' ' : ''}${nameOf(players, me)} · ${gameName(g.type)}`, body: body.length > 140 ? body.slice(0, 137) + '…' : body, tag: 'c-' + g.id, url: urlFor(g) + '&chat=1' }));
+    ctx.later.push(notifySafe(other(me), { title: `${p.emoji ? p.emoji + ' ' : ''}${nameOf(players, me)} · ${gameName(g.type)}`, body: body.length > 140 ? body.slice(0, 137) + '…' : body, tag: 'c-' + g.id, url: urlFor(g) + '&chat=1' }, ctx.space));
     return { message: rows[0] };
   },
 
   async read(b, me, ctx) {
+    await getGame(b.id, ctx);
     await sb(`volley_messages?game_id=eq.${q(b.id)}&player=eq.${other(me)}&read_at=is.null`, { method: 'PATCH', body: { read_at: nowIso() } });
     return { ok: true };
   },
 
   async rematch(b, me, ctx) {
-    const g = await getGame(b.id);
+    const g = await getGame(b.id, ctx);
     if (g.status !== 'finished') fail(409, 'not_finished');
-    const existing = await sb(`volley_games?rematch_of=eq.${g.id}&status=in.(invited,active,finished)&select=${GAME_COLS}&limit=1`);
+    const existing = await sb(`volley_games?rematch_of=eq.${g.id}&${SP(ctx)}&status=in.(invited,active,finished)&select=${GAME_COLS}&limit=1`);
     if (existing && existing.length) return { game: existing[0], existing: true };
     const options = { timer: g.options.timer || 0, hints: !!g.options.hints };
     if (g.options.holes) options.holes = g.options.holes;
@@ -327,11 +366,11 @@ const handlers = {
     if (g.state && (g.state.first === 'a' || g.state.first === 'b')) options.first = other(g.state.first);
     const rows = await sb(`volley_games?select=${GAME_COLS}`, {
       method: 'POST', prefer: 'return=representation',
-      body: { type: g.type, status: 'invited', options, turn: other(me), created_by: me, rematch_of: g.id },
+      body: { type: g.type, status: 'invited', options, turn: other(me), created_by: me, rematch_of: g.id, space: ctx.space },
     });
     const ng = rows[0];
-    const players = await getPlayers();
-    ctx.later.push(notifySafe(other(me), { title: 'Rematch?', body: `${nameOf(players, me)} wants a ${gameName(g.type)} rematch.`, tag: 'g-' + ng.id, url: urlFor(ng) }));
+    const players = await getPlayers(ctx.space);
+    ctx.later.push(notifySafe(other(me), { title: 'Rematch?', body: `${nameOf(players, me)} wants a ${gameName(g.type)} rematch.`, tag: 'g-' + ng.id, url: urlFor(ng) }, ctx.space));
     return { game: ng };
   },
 };
@@ -350,10 +389,11 @@ module.exports = async (req, res) => {
     const open = isDev || action === 'hello' || action === 'set_player';
     const me = checkAuth(req, { needPlayer: !open });
     if (isDev) checkDev(req);
+    const space = spaceOf(req);
     const fn = handlers[action];
     if (!fn) fail(400, 'unknown_action');
     await maybeSweep();
-    const ctx = { later: [] };
+    const ctx = { later: [], space };
     const out = await fn(body, me, ctx);
     await Promise.all(ctx.later); // finish sending pushes before the function freezes
     res.status(200).json(out);

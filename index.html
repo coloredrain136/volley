@@ -8,6 +8,20 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Volley">
 <meta name="theme-color" content="#eef1f8">
+<script>
+// Set light/dark and the iPhone top bar before anything draws. iOS reads the top-bar style when the
+// app opens, so it has to be right from the first moment (changing it later doesn't take).
+(function () {
+  try {
+    var p = JSON.parse(localStorage.getItem('volley.prefs') || '{}'), t = p.theme || 'light';
+    if (t === 'auto') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    var d = t === 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+    document.querySelector('meta[name=theme-color]').setAttribute('content', d ? '#0c0e18' : '#eef1f8');
+    document.querySelector('meta[name=apple-mobile-web-app-status-bar-style]').setAttribute('content', d ? 'black-translucent' : 'default');
+  } catch (e) {}
+})();
+</script>
 <title>Volley</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -256,6 +270,13 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
 .who .add{width:52px;height:52px;border-radius:26px;border:2px dashed var(--hair-2);display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--faint)}
 .shake{animation:shake .3s}
 
+/* Test mode */
+.testpill{position:fixed;z-index:6;top:calc(var(--safe-t) + 12px);right:14px;display:flex;align-items:center;gap:7px;height:36px;padding:0 12px;border-radius:18px;font-size:13px;color:var(--text);
+  box-shadow:0 0 0 1.5px #f29a1f,var(--shadow)}
+.testpill i{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.08em;color:#fff;background:#f29a1f;border-radius:7px;padding:2px 5px}
+.testpill b{font-weight:750}.testpill span{color:var(--sub);font-weight:700}
+.gswitch{flex-direction:column;gap:0;line-height:1;box-shadow:0 0 0 1.5px #f29a1f,var(--shadow)}
+.gswitch span{font-size:17px}.gswitch small{font-size:9px;font-weight:800;color:var(--sub);margin-top:1px}
 /* Toast */
 #toast{position:fixed;z-index:50;left:50%;top:calc(var(--safe-t) + 10px);transform:translate(-50%,-140%);transition:transform .35s cubic-bezier(.3,1.3,.5,1);
   padding:12px 18px;border-radius:22px;font-weight:600;font-size:15px;max-width:calc(100% - 32px);text-align:center;background:var(--glass-2)}
@@ -311,10 +332,21 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
 .fine-ticks{position:absolute;inset:0;background-image:repeating-linear-gradient(90deg,var(--hair-2) 0 2px,transparent 2px 12px)}
 .fine span{position:relative;font-size:12.5px;font-weight:650;color:var(--sub);background:var(--glass-2);padding:3px 10px;border-radius:10px;pointer-events:none}
 .banner.slim{padding:10px 14px}.banner.slim .msg{font-weight:550;font-size:14.5px}
-.dots{display:flex;gap:2px;margin-top:3px;align-items:center}.sp.r .dots{justify-content:flex-end}
-.bd{width:8px;height:8px;border-radius:50%;background:var(--c);display:inline-block;flex:none;box-shadow:inset 0 -1px 1px rgba(0,0,0,.25)}
-.bd.st{background:linear-gradient(180deg,#f6f4ee 0 27%,var(--c) 27% 73%,#f6f4ee 73%)}
-.bd.off{opacity:.18}
+.gtag{display:inline-flex;align-items:center;gap:5px;margin-top:2px;font-size:11.5px;font-weight:750;color:var(--sub);white-space:nowrap}
+.sp.r .gtag{flex-direction:row-reverse}
+.gtag i{width:12px;height:12px;border-radius:50%;flex:none;box-shadow:inset 0 -1px 2px rgba(0,0,0,.3)}
+.gtag.solids i{background:radial-gradient(circle at 35% 30%,#ffd76a,#e0a800 60%,#a67c00)}
+.gtag.stripes i{background:linear-gradient(180deg,#f7f5ef 0 28%,#2f6bff 28% 72%,#f7f5ef 72%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.gtag.solids{color:#b98600}.gtag.stripes{color:#2f6bff}
+:root[data-theme="dark"] .gtag.solids{color:#ffc93d}:root[data-theme="dark"] .gtag.stripes{color:#7ea6ff}
+.tray{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 10px;border-radius:18px;min-height:34px}
+.tray-side{display:flex;align-items:center;gap:2px}
+.tray-vs{width:1px;align-self:stretch;background:var(--hair-2)}
+.mb{width:17px;height:17px;flex:none;display:block;transition:opacity .3s,transform .3s}
+.mb.gone{opacity:.16;transform:scale(.8)}
+.tray .eight{margin:0 3px;opacity:.28;display:block}
+.tray .eight.live{opacity:1;filter:drop-shadow(0 0 4px rgba(255,214,90,.9))}
+.tray-open{flex:1;text-align:center;font-size:12.5px;font-weight:600;color:var(--sub)}
 .sc table{width:100%;border-collapse:collapse;font-size:13.5px;text-align:center}
 .sc th{font-size:11px;color:var(--sub);font-weight:700;padding:2px 0 6px}
 .sc td{padding:7px 0;border-top:1px solid var(--hair);font-weight:650}
@@ -347,6 +379,7 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
   <div class="topbar">
     <button class="icon-btn glass press" data-act="close-game" aria-label="Back"></button>
     <div class="t"><b id="g-title">Checkers</b><span id="g-sub"></span></div>
+    <button class="icon-btn glass press gswitch" data-act="test-switch" id="g-switch" aria-label="Switch test player" hidden></button>
     <button class="icon-btn glass press" data-act="more" id="g-more" aria-label="Game options"></button>
   </div>
   <div class="gbody" id="g-body"></div>
@@ -360,15 +393,21 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
 <script>
 'use strict';
 /* ========================== Basics ========================== */
-const VERSION = 'volley-9';
+const VERSION = 'volley-10';
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// Test mode (developer) keeps its own player, game list and defaults on this phone, under test.*
+let SPACE = 'main';
+try { SPACE = JSON.parse(localStorage.getItem('volley.space') || '"main"') === 'test' && localStorage.getItem('volley.dev') ? 'test' : 'main'; } catch {}
+const TEST_KEYS = new Set(['me', 'games', 'players', 'defaults']);
+const tk = (k) => (SPACE === 'test' && TEST_KEYS.has(k) ? 'test.' + k : k);
 const store = {
-  get(k, d) { try { const v = localStorage.getItem('volley.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
-  set(k, v) { try { localStorage.setItem('volley.' + k, JSON.stringify(v)); } catch {} },
-  del(k) { try { localStorage.removeItem('volley.' + k); } catch {} },
+  get(k, d) { try { const v = localStorage.getItem('volley.' + tk(k)); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('volley.' + tk(k), JSON.stringify(v)); } catch {} },
+  del(k) { try { localStorage.removeItem('volley.' + tk(k)); } catch {} },
 };
+const testMode = () => SPACE === 'test';
 const other = (p) => (p === 'a' ? 'b' : 'a');
 const isStandalone = () => window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
 
@@ -413,18 +452,29 @@ const I = {
   play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>',
   zoomOut: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
   zoomIn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>',
   pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>',
 };
 
 /* ========================== Prefs: theme, sound, haptics ========================== */
 const P = Object.assign({ theme: 'light', sound: true, haptic: true }, store.get('prefs', {}));
 function savePrefs() { store.set('prefs', P); }
+const DARKQ = matchMedia('(prefers-color-scheme: dark)');
+const effTheme = () => (P.theme === 'auto' ? (DARKQ.matches ? 'dark' : 'light') : P.theme);
 function applyTheme() {
-  document.documentElement.dataset.theme = P.theme;
-  const m = $('meta[name=theme-color]'); if (m) m.content = P.theme === 'dark' ? '#0c0e18' : '#eef1f8';
-  const sb = $('meta[name=apple-mobile-web-app-status-bar-style]'); if (sb) sb.content = P.theme === 'dark' ? 'black-translucent' : 'default';
+  const t = effTheme(), was = document.documentElement.dataset.theme;
+  document.documentElement.dataset.theme = t;
+  const m = $('meta[name=theme-color]'); if (m) m.content = t === 'dark' ? '#0c0e18' : '#eef1f8';
+  const sb = $('meta[name=apple-mobile-web-app-status-bar-style]'); if (sb) sb.content = t === 'dark' ? 'black-translucent' : 'default';
+  return was !== t;
 }
 applyTheme();
+// The home-screen app only picks up the top bar style when it loads, so reload once after a switch
+function themeChanged() {
+  if (!applyTheme()) return;
+  if (isStandalone()) { try { sessionStorage.setItem('volley.tab', S.tab); } catch {} setTimeout(() => location.reload(), 250); }
+}
+DARKQ.addEventListener && DARKQ.addEventListener('change', () => { if (P.theme === 'auto') themeChanged(); });
 
 let AC = null;
 function audio() {
@@ -499,7 +549,7 @@ async function call(path, action, data = {}) {
   try {
     r = await fetch(path, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-volley-key': S.key, 'x-volley-player': S.me || '', 'x-volley-version': VERSION, ...(S.dev ? { 'x-volley-dev': S.dev } : {}) },
+      headers: { 'Content-Type': 'application/json', 'x-volley-key': S.key, 'x-volley-player': S.me || '', 'x-volley-version': VERSION, ...(S.dev ? { 'x-volley-dev': S.dev } : {}), ...(testMode() ? { 'x-volley-space': 'test' } : {}) },
       body: JSON.stringify({ action, ...data }),
     });
   } catch (e) { const err = new Error('offline'); err.status = 0; throw err; }
@@ -525,6 +575,9 @@ function errText(e) {
     nudged_recently: 'You already nudged in the last hour.',
     request_pending: "There's already a request waiting.",
     nothing_to_undo: 'Nothing to take back.',
+    cannot_delete: "This game can't be deleted. Cancel or decline the invite instead.",
+    test_mode: "Notifications are off in test mode.",
+    game_not_found: 'That game was deleted.',
     update_required: 'Volley just updated. Reloading…',
     not_configured: 'Server not set up yet. Add the env vars in Vercel and redeploy.',
     push_not_configured: 'Push keys are missing on the server.',
@@ -627,6 +680,7 @@ function chooseMe(p) {
 
 function lockDevice(badKey) {
   stopPolling();
+  if (testMode()) { SPACE = 'main'; try { localStorage.removeItem('volley.space'); } catch {} }
   store.del('key'); store.del('me'); store.del('games'); store.del('dev'); S.dev = '';
   S.key = ''; S.me = ''; S.games = [];
   closeGame(true); closeSheet();
@@ -640,7 +694,11 @@ async function refreshList() {
     S.players = r.players; S.games = r.games; S.unread = r.unread; S.requests = r.requests; S.vapid = r.vapid; S.push = r.push;
     if (r.defaults) { S.defaults = Object.assign({ holes: 9, max: 8, timer: 0, hints: true }, r.defaults); store.set('defaults', S.defaults); }
     store.set('players', S.players); store.set('games', S.games); store.set('vapid', S.vapid);
-    if (!S.players[S.me]) { stopPolling(); closeGame(true); store.del('me'); S.me = ''; gateWho(); return; }
+    if (!S.players[S.me]) {
+      if (testMode()) { const t = await api('dev_test_setup'); S.players = t.players; store.set('players', S.players); }
+      else { stopPolling(); closeGame(true); store.del('me'); S.me = ''; gateWho(); return; }
+    }
+    paintTestPill();
     if (S.tab === 'games' || S.tab === 'stats') renderTab();
     updateBadges();
   } catch (e) { if (e.status !== 401 && S.tab === 'games') renderTab(); }
@@ -695,28 +753,32 @@ function paint(html) {
 }
 
 /* ---------- Thumbnails ---------- */
+// App-style icons for each game. A Checkers game in the list shows its live board instead.
+const GAME_ICON = {
+ "golf": "<svg viewBox=\"0 0 80 80\"><defs><linearGradient id=\"gg\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#6fd18a\"/><stop offset=\"1\" stop-color=\"#2f9e5b\"/></linearGradient></defs><rect width=\"80\" height=\"80\" fill=\"url(#gg)\"/><circle cx=\"54\" cy=\"26\" r=\"7\" fill=\"#123\"/><path d=\"M54 26V8l12 5-12 5\" fill=\"#f2445f\" stroke=\"#fff\" stroke-width=\"1\"/><circle cx=\"24\" cy=\"58\" r=\"6\" fill=\"#fff\"/></svg>",
+ "pool": "<svg viewBox=\"0 0 80 80\"><defs><linearGradient id=\"pbg\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#4f8bff\"/><stop offset=\"1\" stop-color=\"#2236a8\"/></linearGradient><radialGradient id=\"p8\" cx=\"36%\" cy=\"30%\" r=\"75%\"><stop offset=\"0\" stop-color=\"#5b6175\"/><stop offset=\".45\" stop-color=\"#16181f\"/><stop offset=\"1\" stop-color=\"#050608\"/></radialGradient><radialGradient id=\"psh\" cx=\"50%\" cy=\"50%\" r=\"50%\"><stop offset=\"0\" stop-color=\"#000\" stop-opacity=\".35\"/><stop offset=\"1\" stop-color=\"#000\" stop-opacity=\"0\"/></radialGradient></defs><rect width=\"80\" height=\"80\" fill=\"url(#pbg)\"/><ellipse cx=\"43\" cy=\"66\" rx=\"22\" ry=\"6\" fill=\"url(#psh)\"/><circle cx=\"40\" cy=\"40\" r=\"23\" fill=\"url(#p8)\"/><circle cx=\"40\" cy=\"38\" r=\"10.5\" fill=\"#fff\"/><text x=\"40\" y=\"39\" text-anchor=\"middle\" dominant-baseline=\"central\" font-family=\"-apple-system,system-ui,sans-serif\" font-weight=\"800\" font-size=\"15\" fill=\"#111318\">8</text><ellipse cx=\"31\" cy=\"27\" rx=\"6\" ry=\"3.2\" transform=\"rotate(-30 31 27)\" fill=\"#fff\" opacity=\".35\"/></svg>",
+ "checkers": "<svg viewBox=\"0 0 80 80\"><defs><linearGradient id=\"cbg\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ff8a6b\"/><stop offset=\"1\" stop-color=\"#e2364f\"/></linearGradient></defs><rect width=\"80\" height=\"80\" fill=\"url(#cbg)\"/><g opacity=\".16\" fill=\"#fff\"><rect x=\"0\" y=\"0\" width=\"20\" height=\"20\"/><rect x=\"40\" y=\"0\" width=\"20\" height=\"20\"/><rect x=\"20\" y=\"20\" width=\"20\" height=\"20\"/><rect x=\"60\" y=\"20\" width=\"20\" height=\"20\"/><rect x=\"0\" y=\"40\" width=\"20\" height=\"20\"/><rect x=\"40\" y=\"40\" width=\"20\" height=\"20\"/><rect x=\"20\" y=\"60\" width=\"20\" height=\"20\"/><rect x=\"60\" y=\"60\" width=\"20\" height=\"20\"/></g><ellipse cx=\"40\" cy=\"58\" rx=\"21\" ry=\"8\" fill=\"rgba(0,0,0,.25)\"/><path d=\"M19 49v6c0 4.4 9.4 8 21 8s21-3.6 21-8v-6z\" fill=\"#101117\"/><ellipse cx=\"40\" cy=\"49\" rx=\"21\" ry=\"8\" fill=\"#2a2d38\"/><ellipse cx=\"40\" cy=\"49\" rx=\"14\" ry=\"5.2\" fill=\"none\" stroke=\"rgba(255,255,255,.18)\" stroke-width=\"1.4\"/><path d=\"M19 35v6c0 4.4 9.4 8 21 8s21-3.6 21-8v-6z\" fill=\"#a8122d\"/><ellipse cx=\"40\" cy=\"35\" rx=\"21\" ry=\"8\" fill=\"#ef3f5c\"/><ellipse cx=\"40\" cy=\"35\" rx=\"14\" ry=\"5.2\" fill=\"none\" stroke=\"rgba(255,255,255,.35)\" stroke-width=\"1.4\"/><path d=\"M32 37.5l-2-7 5 3.2 5-5.2 5 5.2 5-3.2-2 7z\" fill=\"#ffd45a\"/></svg>",
+ "chess": "<svg viewBox=\"0 0 80 80\"><defs><linearGradient id=\"kbg\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#8f7bff\"/><stop offset=\"1\" stop-color=\"#4b36c9\"/></linearGradient><linearGradient id=\"kn\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffffff\"/><stop offset=\"1\" stop-color=\"#dcd6ff\"/></linearGradient></defs><rect width=\"80\" height=\"80\" fill=\"url(#kbg)\"/><ellipse cx=\"41\" cy=\"66\" rx=\"19\" ry=\"4\" fill=\"rgba(0,0,0,.25)\"/><path d=\"M24 66c0-3 1.5-5 4-6h24c2.5 1 4 3 4 6z\" fill=\"url(#kn)\"/><path d=\"M29 60c0-9 3-14 9-19l-2-3c-4 1-8 4-11 7l-4-3c1-8 7-15 14-19l2-6 4 5c11 2 18 11 18 24 0 6-2 10-4 14z\" fill=\"url(#kn)\"/><circle cx=\"40\" cy=\"27\" r=\"2\" fill=\"#4b36c9\"/></svg>"
+};
+// fixed gradient ids on purpose: the same icon twice on a page is identical, and the Games list only
+// repaints when its HTML changes
+const icon = (type) => GAME_ICON[type] || GAME_ICON.golf;
 function thumb(g) {
-  if (g.type === 'checkers') {
-    const board = g.state && g.state.board;
-    const flip = g.state && g.state.colors && g.state.colors[S.me] === 'k';
+  if (g.type === 'checkers' && g.state && Array.isArray(g.state.board) && g.status !== 'invited') {
+    const board = g.state.board;
+    const flip = g.state.colors && g.state.colors[S.me] === 'k';
     let s = '<svg viewBox="0 0 80 80">';
     for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
       const dark = (r + c) % 2 === 1;
       s += `<rect x="${c * 10}" y="${r * 10}" width="10" height="10" fill="${dark ? '#8a95b8' : '#f4eee4'}"/>`;
     }
-    const b = board || CK.init();
-    b.forEach((p, i) => {
+    board.forEach((p, i) => {
       if (!p) return; let r = i >> 3, c = i & 7; if (flip) { r = 7 - r; c = 7 - c; }
       s += `<circle cx="${c * 10 + 5}" cy="${r * 10 + 5}" r="3.8" fill="${p.c === 'r' ? '#e02b48' : '#22252f'}" ${p.k ? 'stroke="#ffd45a" stroke-width="1.4"' : ''}/>`;
     });
     return s + '</svg>';
   }
-  if (g.type === 'pool') {
-    const b = [[40, 26, '#f4c20d'], [35, 34, '#d62828'], [45, 34, '#1f4fd1'], [30, 42, '#138a4a'], [40, 42, '#111318'], [50, 42, '#f77f00'], [40, 62, '#f7f5ef']];
-    return `<svg viewBox="0 0 80 80"><rect width="80" height="80" fill="#2a2f48"/><rect x="6" y="6" width="68" height="68" rx="4" fill="#1f9a63"/>${[[7, 7], [73, 7], [7, 73], [73, 73]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4.5" fill="#05070b"/>`).join('')}${b.map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="4.6" fill="${c}"/><circle cx="${x - 1.4}" cy="${y - 1.6}" r="1.4" fill="rgba(255,255,255,.55)"/>`).join('')}</svg>`;
-  }
-  if (g.type === 'chess') return '<svg viewBox="0 0 80 80"><rect width="80" height="80" fill="#e9e3d6"/><text x="40" y="56" font-size="44" text-anchor="middle">♞</text></svg>';
-  return '<svg viewBox="0 0 80 80"><defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6fd18a"/><stop offset="1" stop-color="#2f9e5b"/></linearGradient></defs><rect width="80" height="80" fill="url(#gg)"/><circle cx="54" cy="26" r="7" fill="#123"/><path d="M54 26V8l12 5-12 5" fill="#f2445f" stroke="#fff" stroke-width="1"/><circle cx="24" cy="58" r="6" fill="#fff"/></svg>';
+  return icon(g.type);
 }
 const GNAME = { checkers: 'Checkers', chess: 'Chess', golf: 'Mini Golf', pool: '8-Ball' };
 
@@ -736,9 +798,9 @@ function gameCard(g) {
     const h = hoursLeft(g.turn_deadline);
     chip = `<span class="pill ${h < 3 ? 'bad' : h < 12 ? 'warn' : 'grey'}">⏱ ${left(g.turn_deadline)}</span>`;
   }
-  if (req) chip = `<span class="pill warn">${req.kind === 'undo' ? 'Undo request' : 'Draw offer'}</span>`;
+  if (req) chip = `<span class="pill warn">${({ undo: 'Undo request', draw: 'Draw offer', delete: '🗑️ Wants to delete' })[req.kind] || 'Request'}</span>`;
   if (g.status === 'invited' && g.created_by !== S.me) chip = '<span class="pill">New</span>';
-  if (g.status === 'finished') chip = g.winner === S.me ? '<span class="pill good">Win</span>' : g.winner === 'draw' ? '<span class="pill grey">Draw</span>' : '<span class="pill bad">Loss</span>';
+  if (g.status === 'finished' && !req) chip = g.winner === S.me ? '<span class="pill good">Win</span>' : g.winner === 'draw' ? '<span class="pill grey">Draw</span>' : '<span class="pill bad">Loss</span>';
   return `<button class="gcard glass" data-open="${g.id}">
     <div class="thumb">${thumb(g)}</div>
     <div class="grow">
@@ -759,7 +821,7 @@ function renderGames() {
     html += `<div class="empty glass">
       <div class="big">🏓</div>
       <h3>Nothing going right now</h3>
-      <p class="sub" style="margin:0 0 18px">Start a game with ${esc(nameOf(opp()))}. They'll get a notification.</p>
+      <p class="sub" style="margin:0 0 18px">${testMode() ? `Start a game with ${esc(nameOf(opp()))}, then flip to them with the TEST button up top.` : `Start a game with ${esc(nameOf(opp()))}. They'll get a notification.`}</p>
       <button class="btn primary block" data-act="go-new">Start a game</button>
     </div>`;
   }
@@ -862,7 +924,7 @@ function pushStatus() {
 function renderSettings() {
   const me = S.players[S.me] || {};
   const ps = pushStatus();
-  const pushRow = ps === 'granted'
+  const pushRow = testMode() ? `<div class="item"><span class="lbl">Notifications</span><span class="val">Off in test mode</span></div>` : ps === 'granted'
     ? `<button class="item" data-act="push-test"><span class="lbl">Notifications</span><span class="val">On · Send a test</span></button>`
     : ps === 'denied' ? `<div class="item"><span class="lbl">Notifications</span><span class="val">Blocked in iPhone Settings</span></div>`
     : ps === 'needs-home' ? `<div class="item"><span class="lbl">Notifications<div class="sub" style="font-weight:400;font-size:13px">Add Volley to your Home Screen, then open it from the icon</div></span></div>`
@@ -886,7 +948,8 @@ function renderSettings() {
     <div class="group glass"><div class="optrow"><div class="seg">
       <button data-theme-set="light" class="${P.theme === 'light' ? 'on' : ''}">☀️ Light</button>
       <button data-theme-set="dark" class="${P.theme === 'dark' ? 'on' : ''}">🌙 Dark</button>
-    </div></div></div>
+      <button data-theme-set="auto" class="${P.theme === 'auto' ? 'on' : ''}">📱 Auto</button>
+    </div><div class="hint">Auto matches your iPhone's light/dark setting.</div></div></div>
     <h2>Feel</h2>
     <div class="group glass">
       <button class="item" data-act="toggle-sound"><span class="lbl">Sounds</span><span class="switch ${P.sound ? 'on' : ''}"></span></button>
@@ -899,25 +962,58 @@ function renderSettings() {
     <div class="group glass">
       <button class="item" data-act="lock"><span class="lbl" style="color:var(--bad)">Lock this device</span></button>
     </div>
-    <p class="faint" style="text-align:center;font-size:12px;margin-top:22px;padding:8px" data-act="version-tap">${VERSION}${S.dev ? ' · dev' : ''}</p>
+    <p class="faint" style="text-align:center;font-size:12px;margin-top:22px;padding:8px" data-act="version-tap">${VERSION}${S.dev ? ' · dev' : ''}${testMode() ? ' · test mode' : ''}</p>
   </div>`);
 }
 /* ---------- Developer mode (hidden: tap the version number 5 times) ---------- */
 function devSection() {
-  const o = opp(), op = S.players[o], mine = S.players[S.me] || {};
+  const mine = S.players[S.me] || {};
   const slot = (p) => (p === 'a' ? 'Player 1' : 'Player 2');
+  if (testMode()) return `<h2>🧪 Test mode</h2>
+    <div class="group glass">
+      <div class="item"><span class="lbl">Playing as</span><span class="val">${esc(mine.emoji || '')} ${esc(mine.name || '')}</span></div>
+      <button class="item" data-act="test-switch"><span class="lbl">Switch to ${esc(emojiOf(opp()))} ${esc(nameOf(opp()))}</span><span class="chev">${I.chev}</span></button>
+      <button class="item" data-act="test-reset"><span class="lbl" style="color:var(--bad)">Wipe test games</span><span class="val">Test only</span></button>
+      <button class="item" data-act="test-off"><span class="lbl" style="color:var(--accent)">Leave test mode</span><span class="chev">${I.chev}</span></button>
+    </div>
+    <p class="sub" style="font-size:12.5px;margin:8px 10px 0">Test A and Test B have their own games. Nothing here touches your real games, and no notifications go out. Use the switch button at the top to flip players.</p>`;
   const delRow = (p) => S.players[p]
     ? `<button class="item" data-act="dev-del" data-slot="${p}"><span class="lbl" style="color:var(--bad)">Delete ${esc(S.players[p].emoji)} ${esc(S.players[p].name)}</span><span class="val">${slot(p)}</span></button>` : '';
   return `<h2>Developer</h2>
     <div class="group glass">
+      <button class="item" data-act="test-on"><span class="lbl">🧪 Open test mode<div class="sub" style="font-weight:400;font-size:13px">Two test players and their own games. Your real data isn't touched.</div></span><span class="chev">${I.chev}</span></button>
       <div class="item"><span class="lbl">Playing as</span><span class="val">${esc(mine.emoji || '')} ${esc(mine.name || '')} · ${slot(S.me)}</span></div>
-      ${op ? `<button class="item" data-act="dev-switch"><span class="lbl">Switch to ${esc(op.emoji)} ${esc(op.name)}</span><span class="chev">${I.chev}</span></button>`
-           : `<button class="item" data-act="dev-make"><span class="lbl">Create a test ${slot(o)}</span><span class="chev">${I.chev}</span></button>`}
       ${delRow('a')}${delRow('b')}
       <button class="item" data-act="dev-reset"><span class="lbl" style="color:var(--bad)">Reset everything</span><span class="val">Both players + all games</span></button>
       <button class="item" data-act="dev-off"><span class="lbl">Turn off developer mode</span></button>
     </div>
-    <p class="sub" style="font-size:12.5px;margin:8px 10px 0">Deleting either player also deletes every game and chat, since every game is between the two players.</p>`;
+    <p class="sub" style="font-size:12.5px;margin:8px 10px 0">Deleting either real player also deletes every real game and chat.</p>`;
+}
+// Test mode: switching spaces reloads the app so nothing from one side leaks into the other
+function setSpace(sp) {
+  closeGame(true); closeSheet();
+  try { localStorage.setItem('volley.space', JSON.stringify(sp)); if (sp === 'test' && !localStorage.getItem('volley.test.me')) localStorage.setItem('volley.test.me', '"a"'); } catch {}
+  try { sessionStorage.setItem('volley.tab', 'games'); } catch {}
+  location.reload();
+}
+// Flip between Test A and Test B. If a game is open, it stays open from the other side.
+async function testSwitch() {
+  if (!testMode()) return;
+  const gid = G.id, p = opp();
+  S.me = p; store.set('me', p);
+  S.unread = {}; S.requests = []; S.showAllFinished = false;
+  lastPaint = { tab: null, html: '' };
+  fx('sent'); toast(`Now playing as ${emojiOf(p)} ${nameOf(p)}`);
+  if (gid) { closeGame(true); openGame(gid); refreshList(); } else { await refreshList(); renderTab(); }
+  paintTestPill();
+}
+function paintTestPill() {
+  let el = $('#testpill'), gs = $('#g-switch');
+  if (!testMode()) { if (el) el.remove(); if (gs) gs.hidden = true; return; }
+  if (!el) { el = document.createElement('button'); el.id = 'testpill'; el.className = 'testpill glass press'; el.dataset.act = 'test-switch'; document.body.appendChild(el); }
+  const html = `<i>TEST</i><b>${esc(emojiOf(S.me))} ${esc(nameOf(S.me))}</b><span>⇄ ${esc(emojiOf(opp()))}</span>`;
+  if (el.innerHTML !== html) el.innerHTML = html;
+  if (gs) { gs.hidden = false; gs.innerHTML = `<span>${esc(emojiOf(S.me))}</span><small>⇄</small>`; }
 }
 let verTaps = 0, verT;
 function versionTap() {
@@ -936,23 +1032,6 @@ function versionTap() {
     try { await api('dev_check'); store.set('dev', code); closeSheet(); fx('win'); toast('Developer mode on'); renderSettings(); }
     catch (err) { S.dev = prev; fx('err'); toast(errText(err)); $('#dev-code').value = ''; }
   };
-}
-async function switchTo(p) {
-  closeGame(true); closeSheet();
-  S.me = p; store.set('me', p);
-  S.games = []; S.unread = {}; S.requests = []; store.del('games'); S.showAllFinished = false;
-  lastPaint = { tab: null, html: '' };
-  subscribePush(false).catch(() => {}); // this phone's notifications now go to the new player
-  await refreshList(); renderTab();
-  fx('sent'); toast(`Now playing as ${emojiOf(p)} ${nameOf(p)}`);
-}
-function devMake() {
-  const o = opp();
-  openSheet(`<div class="grab"></div><h3>Create a test ${o === 'a' ? 'Player 1' : 'Player 2'}</h3><form id="dev-prof">${profileForm(o, { name: 'Test', emoji: '🤖' })}
-    <button class="btn primary block" style="margin-top:16px" type="submit">Create and switch to it</button></form>`);
-  const read = wireProfile($('#sheet'));
-  $('#dev-prof').onsubmit = (e) => { e.preventDefault(); const v = read(); if (!v.name) return;
-    run(async () => { const r = await api('set_player', { slot: o, ...v }); S.players = r.players; store.set('players', S.players); await switchTo(o); }); };
 }
 async function devAfterDelete(players) {
   S.players = players; store.set('players', players);
@@ -980,6 +1059,7 @@ function b64ToU8(b) {
   return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
 async function subscribePush(ask) {
+  if (testMode()) return false; // test players never get this phone's notifications
   if (pushStatus() !== 'granted' && !ask) return false;
   if (!S.vapid) { if (ask) toast('Push keys are missing on the server.'); return false; }
   if (ask) {
@@ -1110,6 +1190,10 @@ GOLF.PHYS = {
   // v3: no magnet. The ball's center has to be well over the hole and it has to be slow (~a foot of roll left).
   // Faster balls catch the lip, curl, and keep going.
   3: { a: 0.99, c: 0.012, sa: 0.95, sc: 0.035, stop: 0.01, cupR: 2.65, cupV: 0.72, lip: 0.03 },
+  // v4 (volley-10): friendlier putting. The cup takes a ball that's fairly centered at a normal putting
+  // speed, or any ball on the cup that's nearly stopped. Softer lip, so near-misses don't swerve.
+  // Drag power maps to roll distance (golfPower), so short putts get much finer control.
+  4: { a: 0.99, c: 0.012, sa: 0.95, sc: 0.035, stop: 0.01, cupR: 2.9, cupV: 0.9, soft: 0.45, lip: 0.015, curve: 1.6, dmax: 250 },
 };
 const inPolys = (ps, x, y) => { for (const z of ps) if (inPoly(z.p || z, x, y)) return true; return false; };
 // 3- and 6-hole games use a spread of the course, not just the first holes
@@ -1280,7 +1364,7 @@ function golfSim(hole, x, y, vx, vy, t0 = 0, pv = 1) {
       const cx = b.x - cup[0], cy = b.y - cup[1], cd2 = cx * cx + cy * cy;
       if (cd2 < CR * CR && F.cupR) {
         const s2 = SQ(b.vx * b.vx + b.vy * b.vy);
-        if (cd2 < F.cupR * F.cupR && s2 < F.cupV) {
+        if ((cd2 < F.cupR * F.cupR && s2 < F.cupV) || (F.soft && s2 < F.soft)) {
           sim.done = true; sim.res = 'cup'; b.x = cup[0]; b.y = cup[1]; b.vx = 0; b.vy = 0; sim.ev.push(['cup']); return;
         }
         b.vx -= cx * F.lip / n; b.vy -= cy * F.lip / n; // the lip curls the ball
@@ -2161,12 +2245,28 @@ const golfSeed = (st, i) => (st.rseed ^ Math.imul(i + 1, 0x9E3779B1)) >>> 0;
 const golfNew = (first, n = 9, seed = (Math.random() * 4294967296) >>> 0, max = 8) => {
   n = [3, 6, 9].includes(n) ? n : 9;
   max = [0, 6, 8, 10].includes(max) ? max : 8;
-  return { course: 'random', rseed: seed, gen: 4, phys: 3, first, scores: { a: Array(n).fill(null), b: Array(n).fill(null) }, cur: null, max, pen: max ? max + 1 : 0 };
+  return { course: 'random', rseed: seed, gen: 4, phys: 4, first, scores: { a: Array(n).fill(null), b: Array(n).fill(null) }, cur: null, max, pen: max ? max + 1 : 0 };
 };
 const golfNextHole = (st, p) => st.scores[p].findIndex((v) => v == null);
 const golfTotal = (st, p) => st.scores[p].reduce((a, v) => a + (v || 0), 0);
 const golfToPar = (st, p) => st.scores[p].reduce((a, v, i) => a + (v == null ? 0 : v - golfCourse(st, i).par), 0);
-const golfPower = (p, pv = 1) => (pv >= 2 ? 4.6 * p : GOLF.VMAX * (0.15 * p + 0.85 * p * p));
+// How far a ball rolls on flat green from speed v (same friction as golfSim)
+function golfRollFlat(v, pv = 1) {
+  const F = GOLF.PHYS[pv] || GOLF.PHYS[1]; let d = 0;
+  for (let i = 0; i < 5000 && v > 0; i++) { d += v; const ns = v * F.a - F.c; if (ns <= F.stop) break; v = ns; }
+  return d;
+}
+// Drag (0..1) to ball speed. v4: the drag sets how far it rolls (curved, so short putts are fine-grained).
+function golfPower(p, pv = 1) {
+  const F = GOLF.PHYS[pv];
+  if (F && F.curve) {
+    const want = F.dmax * Math.pow(p, F.curve);
+    let lo = 0, hi = 6;
+    for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (golfRollFlat(m, pv) < want) lo = m; else hi = m; }
+    return (lo + hi) / 2;
+  }
+  return pv >= 2 ? 4.6 * p : GOLF.VMAX * (0.15 * p + 0.85 * p * p);
+}
 
 // Work out what one stroke does to the game. Pure: used by the shooter, tested in node.
 function golfApply(st, me, h, from, res) {
@@ -2204,7 +2304,9 @@ const POOL = (() => {
     [0, mid - s, -3, mid - s + 1, 0.5], [0, mid + s, -3, mid + s - 1, 0.5], [W, mid - s, W + 3, mid - s + 1, 0.5], [W, mid + s, W + 3, mid + s - 1, 0.5],
   ];
   const pockets = [[-1.3, -1.3, 5.0], [W + 1.3, -1.3, 5.0], [-1.3, H + 1.3, 5.0], [W + 1.3, H + 1.3, 5.0], [-2.8, mid, 4.5], [W + 2.8, mid, 4.5]];
-  return { W, H, R, VMAX: 9, RAIL: 7, FOOT: [50, 44], KITCHEN: 132, CUE: [50, 140], segs, pockets };
+  // v2 (volley-10): a little more forgiving pockets
+  const pockets2 = [[-1.3, -1.3, 5.7], [W + 1.3, -1.3, 5.7], [-1.3, H + 1.3, 5.7], [W + 1.3, H + 1.3, 5.7], [-2.8, mid, 5.1], [W + 2.8, mid, 5.1]];
+  return { W, H, R, VMAX: 9, RAIL: 7, FOOT: [50, 44], KITCHEN: 132, CUE: [50, 140], segs, pockets, pockets2 };
 })();
 const POOL_COLORS = ['#f6f4ee', '#f4c20d', '#1f4fd1', '#d62828', '#6a2c91', '#f77f00', '#138a4a', '#7d1d2b', '#111318'];
 const poolColor = (n) => POOL_COLORS[n > 8 ? n - 8 : n];
@@ -2226,10 +2328,12 @@ function poolRack(rand = Math.random) {
   order.forEach((n, i) => balls.push({ n, x: pos[i][0], y: pos[i][1], on: true }));
   return balls;
 }
-const poolNew = (first) => ({ balls: poolRack(), groups: { a: null, b: null }, inHand: true, isBreak: true, first, last: null });
+// pv = physics version, kept in the game so updates never change a game in progress
+const poolNew = (first) => ({ balls: poolRack(), groups: { a: null, b: null }, inHand: true, isBreak: true, first, last: null, pv: 2 });
+const poolPockets = (pv) => (pv >= 2 ? POOL.pockets2 : POOL.pockets);
 
-function poolSim(balls, vx, vy) {
-  const R = POOL.R, D = 2 * R, E = 0.97, segs = POOL.segs, pk = POOL.pockets;
+function poolSim(balls, vx, vy, pv = 1) {
+  const R = POOL.R, D = 2 * R, E = 0.97, segs = POOL.segs, pk = poolPockets(pv);
   const B = balls.map((b) => ({ n: b.n, x: b.x, y: b.y, on: b.on, vx: 0, vy: 0 }));
   const cue = B.find((b) => b.n === 0); cue.vx = vx; cue.vy = vy;
   const sim = { B, done: false, first: null, pocketed: [], rails: 0, ev: [], steps: 0 };
@@ -2547,7 +2651,7 @@ const Golf = {
       Golf.zoomBtn(P);
       if (P.canPlay) {
         const shotN = (st.cur && st.cur.player === me && st.cur.hole === hole ? st.cur.strokes : 0) + 1;
-        P.hintIdle = `Shot ${shotN}${st.max ? ` of ${st.max}` : ''} · Drag back anywhere to aim, let go to putt`;
+        P.hintIdle = `Shot ${shotN}${st.max ? ` of ${st.max}` : ''} · ${P.pv >= 4 ? 'Drag back to aim. The dots show how far it rolls' : 'Drag back anywhere to aim, let go to putt'}`;
         pgHint(P.hintIdle);
         if (!(st.cur && st.cur.player === me && st.cur.hole === hole)) {
           pgOverlay(`<b>Hole ${hole + 1}</b> · ${esc(golfCourse(st, hole).name)} · Par ${golfCourse(st, hole).par}`);
@@ -2587,7 +2691,8 @@ const Golf = {
     c.onpointermove = (e) => {
       const d = P.drag; if (!d) return;
       const dx = e.clientX - d.x, dy = e.clientY - d.y, len = Math.sqrt(dx * dx + dy * dy);
-      const full = (P.pv >= 2 ? 0.45 : 0.42) * c.getBoundingClientRect().width, zone = GOLF_CANCEL;
+      // v4 putting: a longer pull for full power, so small putts aren't a 3-pixel job
+      const full = (P.pv >= 4 ? 0.62 : P.pv >= 2 ? 0.45 : 0.42) * c.getBoundingClientRect().width, zone = GOLF_CANCEL;
       if (len > zone && !d.armed) { d.armed = true; pgHint('Slide back to ✕ and let go to cancel'); }
       const inZone = d.armed && len <= zone;
       if (inZone !== d.cancel) { d.cancel = inZone; if (inZone) haptic(); }
@@ -2923,7 +3028,9 @@ function golfDraw(P) {
   }
   // aim: white dotted line ahead (longer = harder), a short sling behind toward your finger, power ring
   if (P.aim && b) {
-    const a = P.aim, L = (9 + a.p * 48) * z, col = `hsl(${120 - a.p * 120},90%,52%)`;
+    // v4: the dotted line is how far the ball rolls on flat green (walls, slopes and sand still change it)
+    const a = P.aim, col = `hsl(${120 - a.p * 120},90%,52%)`;
+    const L = P.pv >= 4 ? Math.max(R + 4 * z, golfRollFlat(golfPower(a.p, P.pv), P.pv)) : (9 + a.p * 48) * z;
     const back = R + (2 + a.p * 14) * z;
     c.lineCap = 'round'; c.strokeStyle = 'rgba(255,255,255,.45)'; c.lineWidth = 0.55 * z;
     c.beginPath(); c.moveTo(b.x - a.x * R, b.y - a.y * R); c.lineTo(b.x - a.x * back, b.y - a.y * back); c.stroke();
@@ -2948,20 +3055,86 @@ function golfDraw(P) {
 }
 
 /* ---------------------------------- 8-Ball ---------------------------------- */
-function drawPoolBall(c, n, x, y, R) {
-  c.save(); c.beginPath(); c.arc(x, y, R, 0, Math.PI * 2); c.clip();
-  if (n === 0 || n > 8) { c.fillStyle = '#f7f5ef'; c.fillRect(x - R, y - R, 2 * R, 2 * R); }
-  if (n > 8) { c.fillStyle = poolColor(n); c.fillRect(x - R, y - R * 0.56, 2 * R, R * 1.12); }
-  else if (n > 0) { c.fillStyle = poolColor(n); c.fillRect(x - R, y - R, 2 * R, 2 * R); }
-  if (n > 0) {
-    c.beginPath(); c.arc(x, y, R * 0.5, 0, Math.PI * 2); c.fillStyle = '#fff'; c.fill();
-    c.fillStyle = '#15171c'; c.font = `800 ${R * 0.62}px -apple-system,system-ui,sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
-    c.fillText(String(n), x, y + R * 0.04);
+/* Real rolling balls: each ball keeps a 3D orientation (a rotation matrix) that turns as it rolls,
+   so numbers and stripes tumble like the real thing. Drawn pixel by pixel into a small cached
+   canvas per ball, only when the ball has turned. Display only: the physics never sees this. */
+const POOL_ROT = { id: null, m: {} };
+function poolRotFor(gid) {
+  if (POOL_ROT.id !== gid) { POOL_ROT.id = gid; POOL_ROT.m = {}; POOL_ROT.at = {}; POOL_ROT.cache = {}; }
+  return POOL_ROT;
+}
+function rotInit(n) { // number facing up, each ball turned a little differently
+  const t = n * 0.9 + 0.3, c = Math.cos(t), s = Math.sin(t), u = 0.22 * Math.sin(n * 2.1), cu = Math.cos(u), su = Math.sin(u);
+  // Rz(t) * Rx(u)
+  return [c, -s * cu, s * su, s, c * cu, -c * su, 0, su, cu];
+}
+function rotRoll(M, dx, dy, R) {
+  const d = Math.sqrt(dx * dx + dy * dy); if (d < 1e-5) return false;
+  const ux = -dy / d, uy = dx / d, a = d / R, c = Math.cos(a), s = Math.sin(a), t = 1 - c;
+  const r = [t * ux * ux + c, t * ux * uy, s * uy, t * ux * uy, t * uy * uy + c, -s * ux, -s * uy, s * ux, c];
+  const o = M.slice();
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) M[i * 3 + j] = r[i * 3] * o[j] + r[i * 3 + 1] * o[3 + j] + r[i * 3 + 2] * o[6 + j];
+  // keep it a clean rotation (columns orthonormal) so it never drifts
+  const nz = (i, j, k) => { const L = Math.hypot(M[i], M[j], M[k]) || 1; M[i] /= L; M[j] /= L; M[k] /= L; };
+  nz(0, 3, 6); const dt = M[0] * M[1] + M[3] * M[4] + M[6] * M[7]; M[1] -= dt * M[0]; M[4] -= dt * M[3]; M[7] -= dt * M[6]; nz(1, 4, 7);
+  M[2] = M[3] * M[7] - M[6] * M[4]; M[5] = M[6] * M[1] - M[0] * M[7]; M[8] = M[0] * M[4] - M[3] * M[1];
+  return true;
+}
+const hexRgb = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const LIGHT = (() => { const v = [-0.42, -0.58, 0.7], L = Math.hypot(...v); return v.map((x) => x / L); })();
+const HALF = (() => { const v = [LIGHT[0], LIGHT[1], LIGHT[2] + 1], L = Math.hypot(...v); return v.map((x) => x / L); })();
+function renderBallSprite(n, M, pxR, reuse) {
+  const S = Math.ceil(pxR * 2) + 2, cv = reuse && reuse.width === S ? reuse : document.createElement('canvas');
+  if (cv !== reuse) cv.width = cv.height = S;
+  const g = cv.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1;
+  const img = g.createImageData(S, S), D = img.data, h = S / 2;
+  const col = hexRgb(n > 8 ? poolColor(n) : n === 0 ? '#f7f5ef' : poolColor(n)), white = [247, 245, 239];
+  for (let py = 0; py < S; py++) for (let px = 0; px < S; px++) {
+    const x = (px + 0.5 - h) / pxR, y = (py + 0.5 - h) / pxR, r2 = x * x + y * y;
+    const edge = (1 - Math.sqrt(r2)) * pxR + 0.5; if (edge <= 0) continue;
+    const z = Math.sqrt(Math.max(0, 1 - r2));
+    // the ball's own coordinates for this point: M^T * normal
+    const lx = M[0] * x + M[3] * y + M[6] * z, lz = M[2] * x + M[5] * y + M[8] * z;
+    let c = col;
+    if (n > 8 && Math.abs(lx) > 0.56) c = white; // stripe: colored band, white caps
+    if (n > 0 && Math.abs(lz) > 0.88) c = white; // number spots on both sides
+    const dif = 0.42 + 0.58 * Math.max(0, x * LIGHT[0] + y * LIGHT[1] + z * LIGHT[2]);
+    const sp = Math.pow(Math.max(0, x * HALF[0] + y * HALF[1] + z * HALF[2]), 46) * 0.85 * 255;
+    const i = (py * S + px) * 4;
+    D[i] = Math.min(255, c[0] * dif + sp); D[i + 1] = Math.min(255, c[1] * dif + sp); D[i + 2] = Math.min(255, c[2] * dif + sp);
+    D[i + 3] = Math.min(1, edge) * 255;
   }
-  const g = c.createRadialGradient(x - R * 0.38, y - R * 0.45, R * 0.08, x, y, R * 1.05);
-  g.addColorStop(0, 'rgba(255,255,255,.6)'); g.addColorStop(0.3, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(0,0,0,.38)');
-  c.fillStyle = g; c.fillRect(x - R, y - R, 2 * R, 2 * R);
-  c.restore();
+  g.putImageData(img, 0, 0);
+  if (n > 0) {
+    // the numbers, drawn as decals on the sphere (foreshortened and turned with the ball)
+    g.save(); g.beginPath(); g.arc(h, h, pxR, 0, Math.PI * 2); g.clip();
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '800 20px -apple-system,system-ui,sans-serif'; g.fillStyle = '#15171c';
+    for (const sg of [1, -1]) {
+      const cz = M[8] * sg; if (cz < 0.2) continue;
+      const cx = M[2] * sg, cy = M[5] * sg; // spot center on screen
+      // right = local (0,1,0); down = local (-sg,0,0)
+      const rx = M[1], ry = M[4], dx = -sg * M[0], dy = -sg * M[3], k = pxR * 0.47 / 13;
+      g.globalAlpha = Math.min(1, (cz - 0.2) * 3);
+      g.setTransform(rx * k, ry * k, dx * k, dy * k, h + cx * pxR, h + cy * pxR);
+      g.fillText(String(n), 0, 1.5);
+    }
+    g.restore();
+  }
+  return cv;
+}
+function drawPoolBall(c, n, x, y, R, P) {
+  const RS = P && P.rot, pxR = R * (P ? P.k : 3);
+  if (!RS) { const cv = renderBallSprite(n, rotInit(n), pxR); c.drawImage(cv, x - cv.width / 2 / (pxR / R), y - cv.height / 2 / (pxR / R), cv.width * R / pxR, cv.height * R / pxR); return; }
+  let M = RS.m[n]; if (!M) M = RS.m[n] = rotInit(n);
+  const last = RS.at[n];
+  let sp = RS.cache[n];
+  // a jump bigger than a fast roll is a reset (replay start, re-spot), not rolling
+  if (last) { const dx = x - last[0], dy = y - last[1]; if (dx * dx + dy * dy < 400 && rotRoll(M, dx, dy, R) && sp) sp.dirty = true; }
+  RS.at[n] = [x, y];
+  if (!sp || sp.pxR !== pxR) sp = RS.cache[n] = { cv: renderBallSprite(n, M, pxR), pxR };
+  else if (sp.dirty) { renderBallSprite(n, M, pxR, sp.cv); sp.dirty = false; }
+  const w = sp.cv.width * R / pxR;
+  c.drawImage(sp.cv, x - w / 2, y - w / 2, w, w);
 }
 function poolGuide(P) {
   const cue = P.cue, a = P.aim, R = POOL.R; let best = Infinity, hit = null;
@@ -3002,14 +3175,15 @@ function poolDraw(P) {
   c.beginPath(); c.moveTo(0, POOL.KITCHEN); c.lineTo(W, POOL.KITCHEN); c.stroke();
   if (placing) { c.fillStyle = 'rgba(255,255,255,.06)'; c.fillRect(0, POOL.KITCHEN, W, H - POOL.KITCHEN); }
   c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.arc(POOL.FOOT[0], POOL.FOOT[1], 0.6, 0, Math.PI * 2); c.fill();
-  for (const p of POOL.pockets) {
+  for (const p of poolPockets(st && st.pv)) {
     c.beginPath(); c.arc(p[0], p[1], p[2] + 0.3, 0, Math.PI * 2); c.fillStyle = '#05070b'; c.fill();
     c.strokeStyle = 'rgba(255,255,255,.08)'; c.lineWidth = 0.4; c.stroke();
   }
   const balls = P.sim ? P.sim.B : P.balls;
   c.fillStyle = 'rgba(0,0,0,.3)';
   for (const b of balls) if (b.on) { c.beginPath(); c.arc(b.x + 0.5, b.y + 0.75, R, 0, Math.PI * 2); c.fill(); }
-  for (const b of balls) if (b.on) drawPoolBall(c, b.n, b.x, b.y, R);
+  P.rot = poolRotFor(G.id);
+  for (const b of balls) if (b.on) drawPoolBall(c, b.n, b.x, b.y, R, P);
   if (P.canPlay && !P.sim && P.cue) {
     const cue = P.cue;
     if (P.inHand) {
@@ -3024,8 +3198,11 @@ function poolDraw(P) {
       c.beginPath(); c.arc(gd.gx, gd.gy, R, 0, Math.PI * 2); c.strokeStyle = legal ? 'rgba(255,255,255,.85)' : 'rgba(255,90,110,.95)'; c.lineWidth = 0.4; c.stroke();
       if (gd.hit) {
         c.strokeStyle = legal ? 'rgba(255,255,255,.6)' : 'rgba(255,90,110,.7)'; c.lineWidth = 0.45;
-        c.beginPath(); c.moveTo(gd.hit.x, gd.hit.y); c.lineTo(gd.hit.x + gd.nx * 18, gd.hit.y + gd.ny * 18); c.stroke();
-        if (gd.tx || gd.ty) { c.strokeStyle = 'rgba(255,255,255,.28)'; c.beginPath(); c.moveTo(gd.gx, gd.gy); c.lineTo(gd.gx + gd.tx * 9, gd.gy + gd.ty * 9); c.stroke(); }
+        // where the object ball goes (longer line so you can line it up with a pocket), and where the cue ball glances off
+        const ol = (st && st.pv >= 2) ? 40 : 18, tl = (st && st.pv >= 2) ? 16 : 9;
+        c.beginPath(); c.moveTo(gd.hit.x, gd.hit.y); c.lineTo(gd.hit.x + gd.nx * ol, gd.hit.y + gd.ny * ol); c.stroke();
+        if (st && st.pv >= 2) { c.beginPath(); c.arc(gd.hit.x + gd.nx * ol, gd.hit.y + gd.ny * ol, 0.7, 0, Math.PI * 2); c.fillStyle = c.strokeStyle; c.fill(); }
+        if (gd.tx || gd.ty) { c.strokeStyle = 'rgba(255,255,255,.28)'; c.beginPath(); c.moveTo(gd.gx, gd.gy); c.lineTo(gd.gx + gd.tx * tl, gd.gy + gd.ty * tl); c.stroke(); }
       }
       // cue stick
       const pull = 1.4 + (P.power || 0) * 16, sx = cue.x - a.x * (R + pull), sy = cue.y - a.y * (R + pull), L = 92;
@@ -3041,23 +3218,42 @@ function poolDraw(P) {
   c.restore();
   if (P.canPlay && P.inHand && !P.sim) pgKick(); // keeps the ball-in-hand ring pulsing
 }
+// small SVG pool ball for the score tray (solid, striped, or the 8)
+function miniBall(n, dim) {
+  const c = poolColor(n), id = 'mb' + n;
+  const body = n > 8
+    ? `<clipPath id="${id}"><circle cx="10" cy="10" r="9"/></clipPath><circle cx="10" cy="10" r="9" fill="#f7f5ef"/><rect x="0" y="5" width="20" height="10" fill="${c}" clip-path="url(#${id})"/>`
+    : `<circle cx="10" cy="10" r="9" fill="${c}"/>`;
+  return `<svg class="mb${dim ? ' gone' : ''}" viewBox="0 0 20 20" aria-label="${n}">${body}<circle cx="10" cy="10" r="4.6" fill="#fff"/><text x="10" y="10.4" text-anchor="middle" dominant-baseline="middle" font-size="6.4" font-weight="800" fill="#15171c" font-family="-apple-system,system-ui,sans-serif">${n}</text><circle cx="10" cy="10" r="9" fill="url(#mbsh)"/></svg>`;
+}
 const Pool = {
   hud(g) {
     const st = g.state, me = S.me, o = opp(), act = g.status === 'active';
+    const tag = (p) => {
+      const gname = st.groups[p];
+      if (!gname) return '';
+      const left = GROUP_BALLS[gname].filter((n) => st.balls.some((b) => b.n === n && b.on)).length;
+      return `<span class="gtag ${gname}"><i></i>${gname === 'solids' ? 'Solids' : 'Stripes'}${left ? ` · ${left} left` : ' · on the 8'}</span>`;
+    };
     const chip = (p, mine) => `<div class="sp ${mine ? 'r' : ''} ${act && g.turn === p ? 'turn' : ''}">
       ${mine ? '' : `<span class="av">${esc(emojiOf(p))}</span>`}
-      <span class="pn"><b>${mine ? 'You' : esc(nameOf(p))}</b>${Pool.dots(st, p)}</span>
+      <span class="pn"><b>${mine ? 'You' : esc(nameOf(p))}</b>${tag(p)}</span>
       ${mine ? `<span class="av">${esc(emojiOf(p))}</span>` : ''}</div>`;
     const mid = st.isBreak ? 'Break' : !st.groups.a ? 'Open table' : '8-Ball';
     const sub = !act ? 'Final' : g.turn === me ? (st.inHand ? 'Ball in hand' : 'Your shot') : 'Their shot';
-    return `<div class="scorebar glass">${chip(o, false)}<div class="mid"><b>${mid}</b><small>${sub}</small></div>${chip(me, true)}</div>`;
+    return `<div class="scorebar glass">${chip(o, false)}<div class="mid"><b>${mid}</b><small>${sub}</small></div>${chip(me, true)}</div>${Pool.tray(st, o, me)}`;
   },
-  dots(st, p) {
-    const gname = st.groups[p];
-    if (!gname) return '';
-    const onT = (n) => st.balls.some((b) => b.n === n && b.on), nums = GROUP_BALLS[gname];
-    if (!nums.some(onT)) return `<span class="dots"><i class="bd" style="--c:#15171c"></i><small>&nbsp;On the 8</small></span>`;
-    return `<span class="dots">${nums.map((n) => `<i class="bd ${gname === 'stripes' ? 'st' : ''} ${onT(n) ? '' : 'off'}" style="--c:${poolColor(n)}"></i>`).join('')}</span>`;
+  // the balls each of you still has to sink. Sunk ones fade out. The 8 lights up when it's your target.
+  tray(st, o, me) {
+    const svgDefs = '<svg width="0" height="0" style="position:absolute"><defs><radialGradient id="mbsh" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".35" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></radialGradient></defs></svg>';
+    if (!st.groups.a) return `<div class="tray glass">${svgDefs}<span class="tray-open">${st.isBreak ? 'Break, then the first ball you sink is your group' : 'Open table · sink a solid or a stripe to pick your group'}</span></div>`;
+    const side = (p, mine) => {
+      const gname = st.groups[p], on = (n) => st.balls.some((b) => b.n === n && b.on), nums = GROUP_BALLS[gname];
+      const done = !nums.some(on);
+      const balls = nums.map((n) => miniBall(n, !on(n))).join(''), eight = `<span class="eight ${done ? 'live' : ''}">${miniBall(8, false)}</span>`;
+      return `<div class="tray-side">${mine ? eight + balls : balls + eight}</div>`;
+    };
+    return `<div class="tray glass">${svgDefs}${side(o, false)}<span class="tray-vs"></span>${side(me, true)}</div>`;
   },
   lastLine(L, viewerIsShooter) {
     if (!L) return '';
@@ -3088,7 +3284,7 @@ const Pool = {
     const P = PG = { type: 'pool', state: st, balls: st.balls.map((b) => ({ ...b })), aim: null, power: 0, sim: null, acc: 0, lastT: 0, raf: 0, rate: 72 };
     P.cue = P.balls.find((b) => b.n === 0);
     P.draw = () => poolDraw(P);
-    pgSetup(P, POOL.W + 2 * POOL.RAIL, POOL.H + 2 * POOL.RAIL, controls ? 330 : fin ? 470 : 300);
+    pgSetup(P, POOL.W + 2 * POOL.RAIL, POOL.H + 2 * POOL.RAIL, controls ? 372 : fin ? 512 : 342);
     P.onResize();
     Pool.wire(P);
     const start = () => {
@@ -3174,10 +3370,10 @@ const Pool = {
       pw.onpointercancel = () => { P.pw0 = null; P.power = 0; ui(); P.draw(); };
     }
   },
-  play(P, balls, vx, vy) {
+  play(P, balls, vx, vy, pv) {
     return new Promise((done) => {
       P.balls = balls.map((b) => ({ ...b })); P.cue = P.balls.find((b) => b.n === 0);
-      P.sim = poolSim(balls, vx, vy);
+      P.sim = poolSim(balls, vx, vy, pv);
       P.onSimDone = (s) => { P.balls = s.B.map((b) => ({ n: b.n, x: b.x, y: b.y, on: b.on })); P.cue = P.balls.find((b) => b.n === 0); done(s); };
       pgKick();
     });
@@ -3188,7 +3384,7 @@ const Pool = {
     const cuePos = [r3(P.cue.x), r3(P.cue.y)];
     const startBalls = st.balls.map((b) => (b.n === 0 ? { ...b, x: cuePos[0], y: cuePos[1], on: true } : { ...b }));
     const vx = r5(P.aim.x * v), vy = r5(P.aim.y * v);
-    const res = poolSim(startBalls, vx, vy).run();
+    const res = poolSim(startBalls, vx, vy, st.pv).run();
     const out = poolResolve({ ...st, balls: startBalls }, me, res);
     const move = { vx, vy, cue: cuePos };
     let summary = '';
@@ -3196,7 +3392,7 @@ const Pool = {
     G.busy = true; P.canPlay = false; P.inHand = false; pgOverlay('');
     const req = api('move', { id: g.id, ply: g.ply, move, state: out.state, keep: out.keep, result: out.result, summary }).then((r) => ({ r }), (e) => ({ e }));
     tone(1500, 0.035, 'square', 0.09); haptic();
-    await Pool.play(P, startBalls, vx, vy);
+    await Pool.play(P, startBalls, vx, vy, st.pv);
     const { r, e } = await req;
     G.busy = false;
     if (!G.id) return;
@@ -3229,7 +3425,7 @@ const Pool = {
       pgOverlay(`${who} · Shot ${i} of ${list.length}`, true); P.draw();
       P.t1 = setTimeout(() => {
         if (stopped) return; tone(1500, 0.035, 'square', 0.09);
-        Pool.play(P, balls, m.move.vx, m.move.vy).then(() => { if (!stopped) P.t1 = setTimeout(next, 600); });
+        Pool.play(P, balls, m.move.vx, m.move.vy, sb.pv).then(() => { if (!stopped) P.t1 = setTimeout(next, 600); });
       }, 650);
     };
     next();
@@ -3293,7 +3489,7 @@ async function loadGame() {
     if (G.chatOpen) { renderChat(); if (S.unread[id]) markRead(); }
     updateChatBadge(); updateBadges();
   } catch (e) {
-    if (e.status === 404) { toast('That game is gone.'); closeGame(); }
+    if (e.status === 404) { S.games = S.games.filter((x) => x.id !== id); toast('That game was deleted.'); closeGame(); }
   }
 }
 function chatInner(n) { return `${I.chat} Chat${n ? `<span class="badge">${n}</span>` : ''}`; }
@@ -3310,7 +3506,7 @@ function renderGame(animateTheirMove) {
   const g = d.game, me = S.me, o = opp();
   destroyPG();
   $('#g-title').textContent = GNAME[g.type] || g.type;
-  $('#g-more').style.visibility = g.status === 'active' ? 'visible' : 'hidden';
+  $('#g-more').style.visibility = g.status === 'active' || g.status === 'finished' ? 'visible' : 'hidden';
   // second line only when there's a turn timer (the players are already in the score bar)
   let sub = g.options && g.options.timer ? (g.options.timer === 24 ? '1-day turns' : '3-day turns') : '';
   if (sub && g.status === 'active' && g.turn_deadline) sub += ' · ' + left(g.turn_deadline);
@@ -3318,9 +3514,9 @@ function renderGame(animateTheirMove) {
   updateChatBadge();
 
   if (g.status === 'invited') return renderInvite(g);
-  if (!stateOk(g)) return renderBroken(g);
-  if (g.type === 'golf') return Golf.render(g);
-  if (g.type === 'pool') return Pool.render(g);
+  if (!stateOk(g)) { renderBroken(g); return addDeleteBanner(); }
+  if (g.type === 'golf') { Golf.render(g); return addDeleteBanner(); }
+  if (g.type === 'pool') { Pool.render(g); return addDeleteBanner(); }
 
   const myC = myColor(g), oC = myC === 'r' ? 'k' : 'r';
   const st = G.replay ? G.replay.frames[G.replay.i] : g.state;
@@ -3338,7 +3534,7 @@ function renderGame(animateTheirMove) {
   };
 
   let banner = '';
-  const req = d.requests[0];
+  const req = d.requests.find((r) => r.kind !== 'delete');
   if (g.status === 'active' && req && !G.replay) {
     if (req.from_player !== me) {
       banner = `<div class="banner glass"><div class="msg">${esc(emojiOf(o))} ${req.kind === 'undo' ? `${esc(nameOf(o))} wants to take back their last move` : `${esc(nameOf(o))} offered a draw`}</div>
@@ -3367,7 +3563,7 @@ function renderGame(animateTheirMove) {
     </div><div class="actions"><button class="btn" data-act="replay-done">Done</button></div>`;
   } else if (g.status === 'active') {
     const lastMine = d.moves.length ? d.moves[d.moves.length - 1].player === me : (g.turn !== me && g.ply > 0);
-    const canUndo = g.turn !== me && g.ply > 0 && lastMine && !req;
+    const canUndo = g.turn !== me && g.ply > 0 && lastMine && !d.requests.length;
     const canNudge = g.turn !== me && (!g.nudged_at || Date.now() - new Date(g.nudged_at) > 3600e3);
     actions = `<div class="actions">
       ${g.turn !== me ? `<button class="btn" data-act="nudge" ${canNudge ? '' : 'disabled'}>👋 Nudge</button>` : ''}
@@ -3385,6 +3581,20 @@ function renderGame(animateTheirMove) {
     ${pbar(me, myC, true)}${actions}`;
   drawBoard(st, { flip: myC === 'k', interactive: isMyTurn, hints, animate: animateTheirMove, color: myC });
   if (animateTheirMove && g.state.last) fx(g.state.last.caps && g.state.last.caps.length ? 'capture' : 'move');
+  addDeleteBanner();
+}
+// "Delete this game?" asks the other player first. Shown at the top of any game while it's waiting.
+const delReq = () => (G.data && G.data.requests || []).find((r) => r.kind === 'delete');
+function addDeleteBanner() {
+  const r = delReq(), body = $('#g-body'); if (!r || !body || G.replay) return;
+  const o = opp(), el = document.createElement('div');
+  el.className = 'banner glass'; el.id = 'del-banner';
+  el.innerHTML = r.from_player !== S.me
+    ? `<div class="msg">🗑️ ${esc(nameOf(o))} wants to delete this game. It'll be gone for both of you, chat included.</div>
+       <div class="acts"><button class="btn" data-answer="0" data-req="${r.id}">Keep it</button><button class="btn danger" data-answer="1" data-req="${r.id}" data-del="1">Delete</button></div>`
+    : `<div class="msg">🗑️ Asked ${esc(nameOf(o))} to delete this game · waiting on them</div>
+       <div class="acts"><button class="btn" data-act="cancel-req" data-req="${r.id}">Cancel request</button></div>`;
+  body.prepend(el);
 }
 
 function stateOk(g) {
@@ -3608,12 +3818,21 @@ function openSheet(html, cls = '') {
 function closeSheet() {
   $('#sheet').classList.remove('open'); $('#backdrop').classList.remove('open');
   G.chatOpen = false; const s = $('#sheet'); s.style.bottom = '';
+  forgetTyping();
+}
+// iPhone "Shake to Undo": iOS offers to undo the last thing you typed (a chat message, the passcode)
+// whenever you shake, even in a game. Throwing away the text boxes once you're done with them drops
+// that typing history, so the prompt has nothing to offer.
+function forgetTyping() {
+  const a = document.activeElement; if (a && a.blur && /^(INPUT|TEXTAREA)$/.test(a.tagName)) a.blur();
+  setTimeout(() => { if (!$('#sheet').classList.contains('open')) $('#sheet').innerHTML = ''; }, 420);
 }
 function openMore() {
-  const g = G.data.game, req = G.data.requests[0];
+  const g = G.data.game, req = G.data.requests[0], act = g.status === 'active';
   openSheet(`<div class="grab"></div><h3>Game options</h3><div class="menu">
-    ${['checkers', 'chess'].includes(g.type) ? `<button class="btn" data-act="req-draw" ${req ? 'disabled' : ''}>${I.hand} Offer a draw</button>` : ''}
-    <button class="btn danger" data-act="resign">${I.flag} Resign</button>
+    ${act && ['checkers', 'chess'].includes(g.type) ? `<button class="btn" data-act="req-draw" ${req ? 'disabled' : ''}>${I.hand} Offer a draw</button>` : ''}
+    ${act ? `<button class="btn danger" data-act="resign">${I.flag} Resign</button>` : ''}
+    <button class="btn danger" data-act="req-delete" ${req ? 'disabled' : ''}>${I.trash} Delete game</button>
     <button class="btn" data-act="close-sheet">Cancel</button></div>`);
 }
 function confirmSheet(title, body, okLabel, okAct, danger) {
@@ -3630,12 +3849,21 @@ function openChat() {
     <form class="composer" id="composer"><textarea id="msg" rows="1" placeholder="Message" maxlength="1000"></textarea>
     <button class="send press" type="submit" aria-label="Send">${I.send}</button></form>`, 'chat');
   renderChat(true);
-  const ta = $('#msg');
-  ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(120, ta.scrollHeight) + 'px'; });
-  ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) { e.preventDefault(); $('#composer').requestSubmit(); } });
+  let ta = $('#msg');
+  const wireBox = (el) => {
+    el.addEventListener('input', () => { el.style.height = 'auto'; el.style.height = Math.min(120, el.scrollHeight) + 'px'; });
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !('ontouchstart' in window)) { e.preventDefault(); $('#composer').requestSubmit(); } });
+  };
+  wireBox(ta);
+  // replace the box with a clean copy (keeps focus) so the sent message isn't in iOS's undo history
+  const freshBox = (old) => {
+    const nb = old.cloneNode(false); nb.value = ''; old.replaceWith(nb); wireBox(nb); ta = nb;
+    if (document.activeElement !== nb) try { nb.focus({ preventScroll: true }); } catch {}
+  };
   $('#composer').onsubmit = async (e) => {
     e.preventDefault(); const body = ta.value.trim(); if (!body) return;
     ta.value = ''; ta.style.height = 'auto';
+    freshBox(ta);
     const temp = { id: 'tmp' + Date.now(), player: S.me, body, created_at: new Date().toISOString() };
     G.data.messages.push(temp); renderChat(true); sfx('sent');
     try {
@@ -3701,10 +3929,14 @@ document.addEventListener('click', (e) => {
   }
   if (t.dataset.holes != null) { S.newGame.holes = Number(t.dataset.holes); fx('tap'); return renderNew(); }
   if (t.dataset.timer != null) { S.newGame.timer = Number(t.dataset.timer); fx('tap'); return renderNew(); }
-  if (t.dataset.themeSet) { P.theme = t.dataset.themeSet; savePrefs(); applyTheme(); fx('tap'); return renderSettings(); }
+  if (t.dataset.themeSet) { P.theme = t.dataset.themeSet; savePrefs(); fx('tap'); renderSettings(); return themeChanged(); }
   if (t.dataset.answer != null) {
     const accept = t.dataset.answer === '1';
-    return run(async () => { const r = await api('answer', { request_id: Number(t.dataset.req), accept }); fx(accept ? 'move' : 'tap'); G.lastSig = ''; await loadGame(); });
+    return run(async () => {
+      const r = await api('answer', { request_id: Number(t.dataset.req), accept });
+      if (r.deleted) { const id = G.id; S.games = S.games.filter((x) => x.id !== id); fx('lose'); toast('Game deleted'); closeGame(); return; }
+      fx(accept ? 'move' : 'tap'); G.lastSig = ''; await loadGame();
+    });
   }
   if (t.dataset.rp) {
     const R = G.replay; if (!R) return;
@@ -3732,8 +3964,11 @@ document.addEventListener('click', (e) => {
     'toggle-haptic': () => { P.haptic = !P.haptic; savePrefs(); fx('tap'); renderSettings(); },
     'edit-profile': () => editProfile(),
     'version-tap': () => versionTap(),
-    'dev-switch': () => run(() => switchTo(opp())),
-    'dev-make': () => devMake(),
+    'test-on': () => { fx('tap'); setSpace('test'); },
+    'test-off': () => { fx('tap'); setSpace('main'); },
+    'test-switch': () => run(testSwitch),
+    'test-reset': () => confirmSheet('Wipe test games?', 'Deletes every Test A / Test B game and chat. Your real games are not touched.', 'Wipe test games', 'test-reset-yes', true),
+    'test-reset-yes': () => run(async () => { closeSheet(); await api('dev_reset'); const t = await api('dev_test_setup'); S.players = t.players; store.set('players', S.players); S.games = []; store.del('games'); toast('Test games wiped'); await refreshList(); renderTab(); }),
     'dev-del': () => { const p = t.dataset.slot; G.devSlot = p;
       confirmSheet(`Delete ${nameOf(p)}?`, 'This deletes the player and every game and chat. It can’t be undone.', 'Delete', 'dev-del-yes', true); },
     'dev-del-yes': () => run(async () => { const r = await api('dev_delete_player', { slot: G.devSlot }); fx('lose'); toast('Deleted'); await devAfterDelete(r.players); }),
@@ -3771,6 +4006,8 @@ document.addEventListener('click', (e) => {
     'cancel-invite-yes': () => run(async () => { closeSheet(); await api('cancel', { id: G.data.game.id }); S.games = S.games.filter((x) => x.id !== G.id); toast('Invite canceled'); closeGame(); }),
     'nudge': () => run(async () => { t.disabled = true; const r = await api('nudge', { id: G.id }); G.data.game = r.game; fx('nudge', true); toast(`Nudged ${nameOf(opp())} 👋`); renderGame(); }),
     'req-undo': () => run(async () => { t.disabled = true; await api('request', { id: G.id, kind: 'undo' }); toast('Asked to take it back'); G.lastSig = ''; await loadGame(); }),
+    'req-delete': () => confirmSheet('Delete this game?', `${nameOf(opp())} has to OK it first. Then the game and its chat are gone for both of you, and it won't count in Stats.`, 'Ask to delete', 'req-delete-yes', true),
+    'req-delete-yes': () => run(async () => { closeSheet(); await api('request', { id: G.id, kind: 'delete' }); toast(`Asked ${nameOf(opp())} to delete it`); fx('sent'); G.lastSig = ''; await loadGame(); }),
     'req-draw': () => run(async () => { closeSheet(); await api('request', { id: G.id, kind: 'draw' }); toast('Draw offered'); G.lastSig = ''; await loadGame(); }),
     'cancel-req': () => run(async () => { await api('cancel_request', { request_id: Number(t.dataset.req) }); G.lastSig = ''; await loadGame(); }),
     'resign': () => confirmSheet('Resign this game?', `${nameOf(opp())} gets the win.`, 'Resign', 'resign-yes', true),
@@ -3817,9 +4054,10 @@ function handleUrl(url) {
 
 /* ========================== Boot ========================== */
 function startApp() {
+  try { const t = sessionStorage.getItem('volley.tab'); if (t) { S.tab = t; sessionStorage.removeItem('volley.tab'); } } catch {}
   $('#tabs').hidden = false; setupTabs(); setTab(S.tab || 'games');
   $('[data-act=close-game]').innerHTML = I.back; $('#g-more').innerHTML = I.more;
-  refreshList(); startPolling();
+  refreshList(); startPolling(); paintTestPill();
   subscribePush(false).catch(() => {}); // refresh this phone's subscription if notifications are already allowed
   handleUrl(location.href);
 }
@@ -3833,6 +4071,7 @@ if ('serviceWorker' in navigator) {
 }
 (async function boot() {
   if (!S.key) return gatePasscode();
+  if (testMode() && !S.me) { S.me = 'a'; store.set('me', 'a'); }
   if (!S.me) {
     try { const r = await call('/api/db', 'hello'); S.players = r.players; S.vapid = r.vapid; } catch (e) { if (e.status === 401) return gatePasscode(); }
     return gateWho();
