@@ -360,7 +360,7 @@ h2 .count{background:var(--accent);color:var(--accent-ink);border-radius:10px;pa
 <script>
 'use strict';
 /* ========================== Basics ========================== */
-const VERSION = 'volley-8';
+const VERSION = 'volley-9';
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1107,7 +1107,11 @@ GOLF.par = GOLF.holes.reduce((a, h) => a + h.par, 0);
 GOLF.PHYS = {
   1: { a: 0.985, c: 0.0032, sa: 0.9, sc: 0.012, stop: 0.008 },
   2: { a: 0.99, c: 0.012, sa: 0.95, sc: 0.035, stop: 0.01 },
+  // v3: no magnet. The ball's center has to be well over the hole and it has to be slow (~a foot of roll left).
+  // Faster balls catch the lip, curl, and keep going.
+  3: { a: 0.99, c: 0.012, sa: 0.95, sc: 0.035, stop: 0.01, cupR: 2.65, cupV: 0.72, lip: 0.03 },
 };
+const inPolys = (ps, x, y) => { for (const z of ps) if (inPoly(z.p || z, x, y)) return true; return false; };
 // 3- and 6-hole games use a spread of the course, not just the first holes
 GOLF.sets = { 3: [0, 4, 8], 6: [0, 2, 3, 5, 6, 8], 9: [0, 1, 2, 3, 4, 5, 6, 7, 8] };
 const golfHoles = (st) => (st && st.holes) || GOLF.sets[9];
@@ -1182,6 +1186,9 @@ function golfSim(hole, x, y, vx, vy, t0 = 0, pv = 1) {
   const H = golfHoleObj(hole), R = GOLF.R, CR = GOLF.CR, poly = H.poly, cup = H.cup;
   const movers = H.movers || [], slopes = H.slopes || [];
   const spinners = H.spinners || [], mbumpers = H.mbumpers || [], hills = H.hills || [], portals = H.portals || [], boosts = H.boosts || [];
+  // shaped zones (organic courses): ponds, bunkers, ice, slopes and speed pads that aren't rectangles
+  const waterP = H.waterP || [], sandP = H.sandP || [], iceP = H.iceP || [], slopeP = H.slopeP || [], boostP = H.boostP || [];
+  const wet = (x2, y2) => inRects(H.water, x2, y2) || inPolys(waterP, x2, y2);
   const b = { x, y, vx, vy };
   const sim = { b, done: false, res: null, ev: [], steps: 0, t0 };
   let plock = null; // tunnel exit we just came out of
@@ -1194,21 +1201,21 @@ function golfSim(hole, x, y, vx, vy, t0 = 0, pv = 1) {
       if (b.x > z[0] && b.x < z[2] && b.y > z[1] && b.y < z[3]) {
         const opts = [[z[0], b.y], [z[2], b.y], [b.x, z[1]], [b.x, z[3]]]
           .map((p) => ({ p, d: (p[0] - b.x) * (p[0] - b.x) + (p[1] - b.y) * (p[1] - b.y) }))
-          .filter((o) => inPoly(poly, o.p[0], o.p[1]) && !inRects(H.water, o.p[0], o.p[1]))
+          .filter((o) => inPoly(poly, o.p[0], o.p[1]) && !wet(o.p[0], o.p[1]))
           .sort((u, v) => u.d - v.d);
         if (opts.length) { b.x = opts[0].p[0]; b.y = opts[0].p[1]; }
       }
     }
     for (const sp of spinners) {
       const dx = b.x - sp.c[0], dy = b.y - sp.c[1], rr = sp.L + sp.w + R + 0.1, d2 = dx * dx + dy * dy;
-      if (d2 < rr * rr) { const d = SQ(d2) || 1e-6, px = sp.c[0] + dx / d * rr, py = sp.c[1] + dy / d * rr; if (inPoly(poly, px, py) && !inRects(H.water, px, py)) { b.x = px; b.y = py; } }
+      if (d2 < rr * rr) { const d = SQ(d2) || 1e-6, px = sp.c[0] + dx / d * rr, py = sp.c[1] + dy / d * rr; if (inPoly(poly, px, py) && !wet(px, py)) { b.x = px; b.y = py; } }
     }
     for (const m of mbumpers) {
       const z = moverSweep({ a: m.a, b: m.a, dx: m.dx, dy: m.dy }, R + m.r + 0.05);
       if (b.x > z[0] && b.x < z[2] && b.y > z[1] && b.y < z[3]) {
         const opts = [[z[0], b.y], [z[2], b.y], [b.x, z[1]], [b.x, z[3]]]
           .map((p) => ({ p, d: (p[0] - b.x) * (p[0] - b.x) + (p[1] - b.y) * (p[1] - b.y) }))
-          .filter((o) => inPoly(poly, o.p[0], o.p[1]) && !inRects(H.water, o.p[0], o.p[1])).sort((u, v) => u.d - v.d);
+          .filter((o) => inPoly(poly, o.p[0], o.p[1]) && !wet(o.p[0], o.p[1])).sort((u, v) => u.d - v.d);
         if (opts.length) { b.x = opts[0].p[0]; b.y = opts[0].p[1]; }
       }
     }
@@ -1269,9 +1276,15 @@ function golfSim(hole, x, y, vx, vy, t0 = 0, pv = 1) {
           if (vn < 0) { b.vx -= 2 * vn * nx; b.vy -= 2 * vn * ny; b.vx += nx * 0.35; b.vy += ny * 0.35; sim.ev.push(['bump', -vn]); }
         }
       }
-      if (inRects(H.water, b.x, b.y)) { sim.done = true; sim.res = 'water'; b.vx = 0; b.vy = 0; sim.ev.push(['water']); return; }
+      if (wet(b.x, b.y)) { sim.done = true; sim.res = 'water'; b.vx = 0; b.vy = 0; sim.ev.push(['water']); return; }
       const cx = b.x - cup[0], cy = b.y - cup[1], cd2 = cx * cx + cy * cy;
-      if (cd2 < CR * CR) {
+      if (cd2 < CR * CR && F.cupR) {
+        const s2 = SQ(b.vx * b.vx + b.vy * b.vy);
+        if (cd2 < F.cupR * F.cupR && s2 < F.cupV) {
+          sim.done = true; sim.res = 'cup'; b.x = cup[0]; b.y = cup[1]; b.vx = 0; b.vy = 0; sim.ev.push(['cup']); return;
+        }
+        b.vx -= cx * F.lip / n; b.vy -= cy * F.lip / n; // the lip curls the ball
+      } else if (cd2 < CR * CR) {
         const s2 = SQ(b.vx * b.vx + b.vy * b.vy);
         if (s2 < 1.05 || (cd2 < CR * CR * 0.25 && s2 < 1.9)) {
           sim.done = true; sim.res = 'cup'; b.x = cup[0]; b.y = cup[1]; b.vx = 0; b.vy = 0; sim.ev.push(['cup']); return;
@@ -1279,19 +1292,24 @@ function golfSim(hole, x, y, vx, vy, t0 = 0, pv = 1) {
       }
     }
     const px = cup[0] - b.x, py = cup[1] - b.y, pd2 = px * px + py * py, pr = CR * 1.25;
-    if (pd2 < pr * pr) { b.vx += px * 0.008; b.vy += py * 0.008; }
+    if (!F.cupR && pd2 < pr * pr) { b.vx += px * 0.008; b.vy += py * 0.008; }
     for (const z of slopes) if (b.x >= z[0] && b.x <= z[2] && b.y >= z[1] && b.y <= z[3]) { b.vx += z[4]; b.vy += z[5]; }
     for (const h of hills) {
       const dx = b.x - h.c[0], dy = b.y - h.c[1], d2 = dx * dx + dy * dy;
       if (d2 < h.r * h.r && d2 > 1e-6) { const d = SQ(d2), f = h.s * (1 - d / h.r); b.vx += dx / d * f; b.vy += dy / d * f; }
+    }
+    for (const z of slopeP) if (inPoly(z.p, b.x, b.y)) { b.vx += z.ax; b.vy += z.ay; }
+    for (const z of boostP) if (inPoly(z.p, b.x, b.y)) {
+      b.vx += z.dx * 0.09; b.vy += z.dy * 0.09;
+      const s2 = SQ(b.vx * b.vx + b.vy * b.vy); if (s2 > 4.6) { b.vx *= 4.6 / s2; b.vy *= 4.6 / s2; }
     }
     for (const z of boosts) if (b.x >= z[0] && b.x <= z[2] && b.y >= z[1] && b.y <= z[3]) {
       b.vx += z[4] * 0.09; b.vy += z[5] * 0.09;
       const s2 = SQ(b.vx * b.vx + b.vy * b.vy); if (s2 > 4.6) { b.vx *= 4.6 / s2; b.vy *= 4.6 / s2; }
     }
     sp = SQ(b.vx * b.vx + b.vy * b.vy);
-    const sand = inRects(H.sand, b.x, b.y);
-    const ns = sand ? sp * F.sa - F.sc : inRects(H.ice, b.x, b.y) ? sp * 0.997 - 0.0025 : sp * F.a - F.c;
+    const sand = inRects(H.sand, b.x, b.y) || inPolys(sandP, b.x, b.y);
+    const ns = sand ? sp * F.sa - F.sc : (inRects(H.ice, b.x, b.y) || inPolys(iceP, b.x, b.y)) ? sp * 0.997 - 0.0025 : sp * F.a - F.c;
     if (ns <= F.stop) stop();
     else { const f = ns / sp; b.vx *= f; b.vy *= f; }
     slow = sp < 0.06 ? slow + 1 : 0;
@@ -1317,7 +1335,7 @@ function genHole(seed, ver = 1) {
   if (HOLE_CACHE.has(key)) return HOLE_CACHE.get(key);
   const r = mulberry32(seed);
   let h = null;
-  for (let tries = 0; tries < 60 && !h; tries++) h = ver >= 3 ? buildHole3(r) : ver >= 2 ? buildHole2(r) : buildHole(r);
+  for (let tries = 0; tries < 80 && !h; tries++) h = ver >= 4 ? buildHole4(r) : ver >= 3 ? buildHole3(r) : ver >= 2 ? buildHole2(r) : buildHole(r);
   if (!h) h = { ...GOLF.holes[8], name: 'Finale' };
   HOLE_CACHE.set(key, h);
   return h;
@@ -1900,12 +1918,250 @@ function buildHole3(r) {
   H.type = type;
   return H;
 }
+
+/* Generator v4: organic courses. Draw a winding path from tee to cup, grow a fairway around it
+   (wider and narrower in places, rounded ends), then dress it with obstacles that follow the path's
+   direction. Same rules as before: integer-seeded, + - * / sqrt and dsin/dcos only, path-checked. */
+const NAMES4 = ['Wanderer', 'Switchback', 'River Bend', 'Lazy S', 'Long Way Round', 'Detour', 'Meander', 'Crooked Creek', 'Winding Road', 'The Snake', 'Dog Leg', 'Twister', 'Boomerang', 'Sidewinder', 'Hairpin Hollow'];
+function blobPoly(cx, cy, rad, r, pts = 10, jitter = 0.18) {
+  const out = [];
+  for (let i = 0; i < pts; i++) {
+    const a = DTAU * i / pts, rr = rad * (1 - jitter + 2 * jitter * r());
+    out.push([Math.round((cx + dcos(a) * rr) * 2) / 2, Math.round((cy + dsin(a) * rr) * 2) / 2]);
+  }
+  return out;
+}
+function segsCross(a, b, c, d) {
+  const o = (p, q, r2) => (q[0] - p[0]) * (r2[1] - p[1]) - (q[1] - p[1]) * (r2[0] - p[0]);
+  const d1 = o(c, d, a), d2 = o(c, d, b), d3 = o(a, b, c), d4 = o(a, b, d);
+  return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+}
+function buildHole4(r) {
+  const R = GOLF.R;
+  const U = (a, b) => a + (b - a) * r();
+  const I = (a, b) => Math.floor(U(a, b + 1));
+  const q = (v) => Math.round(v * 2) / 2;
+  const pick = (arr) => arr[Math.floor(r() * arr.length) % arr.length];
+  const LEN = pick([150, 170, 210, 260]);
+  const H = { gen: true, organic: true, h: LEN, walls: [], bumpers: [], sand: [], water: [], slopes: [], movers: [], spinners: [], mbumpers: [], hills: [], ice: [], boosts: [], portals: [], waterP: [], sandP: [], iceP: [], slopeP: [], boostP: [], rocks: [] };
+  // 1. the path
+  const nPts = LEN <= 170 ? I(3, 4) : LEN <= 210 ? I(4, 5) : I(5, 6);
+  const spine = [], y0 = LEN - 18, y1 = 22;
+  let x = U(22, 78);
+  for (let i = 0; i < nPts; i++) {
+    const t = i / (nPts - 1);
+    const y = y0 + (y1 - y0) * t + (i > 0 && i < nPts - 1 ? U(-9, 9) : 0);
+    if (i > 0) {
+      const jump = r() < 0.5 ? U(28, 56) : U(4, 24);
+      let nx = x + (r() < 0.5 ? -jump : jump);
+      if (nx < 18 || nx > 82) nx = x - (nx - x);
+      x = Math.max(18, Math.min(82, nx));
+    }
+    spine.push([q(x), q(y)]);
+  }
+  const N = spine.length;
+  // mostly roomy, with the odd tight neck, and sometimes a big round green at the cup
+  const widths = spine.map((_, i) => (i > 0 && i < nPts - 1 && r() < 0.22 ? U(17, 21) : U(25, 37)));
+  if (r() < 0.45) widths[N - 1] = U(36, 44);
+  const seg = [];
+  for (let i = 0; i < N - 1; i++) { const dx = spine[i + 1][0] - spine[i][0], dy = spine[i + 1][1] - spine[i][1], L = SQ(dx * dx + dy * dy); seg.push([dx / L, dy / L, L]); }
+  for (let i = 0; i < N - 2; i++) { const a = seg[i], b = seg[i + 1]; if (a[0] * b[0] + a[1] * b[1] < -0.2) return null; } // no hairpins sharper than ~100°
+  // 2. grow the fairway around the path (mitered sides, rounded ends)
+  const Lft = [], Rgt = [], nrm = [];
+  for (let i = 0; i < N; i++) {
+    let nx, ny, m = 1;
+    if (i === 0) { nx = -seg[0][1]; ny = seg[0][0]; }
+    else if (i === N - 1) { nx = -seg[N - 2][1]; ny = seg[N - 2][0]; }
+    else {
+      const a = seg[i - 1], b = seg[i], n1x = -a[1], n1y = a[0], n2x = -b[1], n2y = b[0];
+      let sx = n1x + n2x, sy = n1y + n2y; const sl = SQ(sx * sx + sy * sy) || 1; sx /= sl; sy /= sl;
+      m = 1 / Math.max(0.62, sx * n1x + sy * n1y); nx = sx; ny = sy;
+    }
+    nrm.push([nx, ny]);
+    const hw = widths[i] / 2 * m;
+    Lft.push([q(spine[i][0] + nx * hw), q(spine[i][1] + ny * hw)]);
+    Rgt.push([q(spine[i][0] - nx * hw), q(spine[i][1] - ny * hw)]);
+  }
+  const cap = (c, nx, ny, dx, dy, hw, sign) => { const out = []; for (let k = 1; k <= 5; k++) { const th = k * DPI / 6, cs = dcos(th), sn = dsin(th); out.push([q(c[0] + sign * (nx * cs * hw + dx * sn * hw)), q(c[1] + sign * (ny * cs * hw + dy * sn * hw))]); } return out; };
+  const dl = seg[N - 2], d0 = seg[0];
+  const endCap = cap(spine[N - 1], nrm[N - 1][0], nrm[N - 1][1], dl[0], dl[1], widths[N - 1] / 2, 1);
+  const startCap = cap(spine[0], nrm[0][0], nrm[0][1], d0[0], d0[1], widths[0] / 2, -1);
+  H.poly = [...Lft, ...endCap, ...Rgt.slice().reverse(), ...startCap];
+  for (const p of H.poly) if (p[0] < 3 || p[0] > 97 || p[1] < 4 || p[1] > LEN - 3) return null;
+  const E = H.poly.length;
+  for (let i = 0; i < E; i++) for (let j = i + 2; j < E; j++) {
+    if (i === 0 && j === E - 1) continue;
+    if (segsCross(H.poly[i], H.poly[(i + 1) % E], H.poly[j], H.poly[(j + 1) % E])) return null;
+  }
+  H.tee = [q(spine[0][0] + d0[0] * 3), q(spine[0][1] + d0[1] * 3)];
+  H.cup = [q(spine[N - 1][0] - dl[0] * 4), q(spine[N - 1][1] - dl[1] * 4)];
+  // 3. obstacles placed along the path, turned to match it
+  const cum = [0]; for (let i = 0; i < N - 1; i++) cum.push(cum[i] + seg[i][2]);
+  const total = cum[N - 1];
+  const at = (sArc) => {
+    let i = 0; while (i < N - 2 && cum[i + 1] < sArc) i++;
+    const f = (sArc - cum[i]) / seg[i][2];
+    return { p: [spine[i][0] + (spine[i + 1][0] - spine[i][0]) * f, spine[i][1] + (spine[i + 1][1] - spine[i][1]) * f], t: [seg[i][0], seg[i][1]], n: [-seg[i][1], seg[i][0]], hw: (widths[i] + (widths[i + 1] - widths[i]) * f) / 2, nearJoin: Math.min(sArc - cum[i], cum[i + 1] - sArc) };
+  };
+  const used = new Set();
+  const KINDS = ['stub', 'chicane', 'bumpers', 'spinner', 'spinner', 'slider', 'gate', 'mbumper', 'pond', 'pond', 'bunker', 'ice', 'slope', 'boost', 'hill', 'rock', 'rock'];
+  const SPECIAL = ['spinner', 'spinner', 'slider', 'gate', 'mbumper', 'rock', 'hill'];
+  const pickKind = (list) => { const fresh = list.filter((k) => !used.has(k)); const k = pick(fresh.length ? fresh : list); used.add(k); return k; };
+  let features = 0;
+  const place = (kind, F) => {
+    const { p, t, n } = F, hw = F.hw;
+    const P = (a, b) => [q(p[0] + n[0] * a + t[0] * b), q(p[1] + n[1] * a + t[1] * b)];
+    const rectP = (a1, b1, a2, b2) => [P(a1, b1), P(a2, b1), P(a2, b2), P(a1, b2)];
+    const side = r() < 0.5 ? 1 : -1;
+    features++;
+    if (kind === 'stub') {
+      const gap = U(13, 17), tilt = U(-5, 5);
+      H.walls.push([...P(side * (hw + 1), 0), ...P(side * (hw + 1) - side * (2 * hw + 1 - gap), tilt)]);
+    } else if (kind === 'chicane') {
+      if (hw * 2 < 24) return place('stub', F);
+      const gap = U(12, 15);
+      H.walls.push([...P(side * (hw + 1), -7), ...P(side * (hw + 1) - side * (2 * hw + 1 - gap), -7 + U(-3, 3))]);
+      H.walls.push([...P(-side * (hw + 1), 7), ...P(-side * (hw + 1) + side * (2 * hw + 1 - gap), 7 + U(-3, 3))]);
+    } else if (kind === 'bumpers') {
+      const k = hw > 12 ? 3 : 2;
+      for (let i = 0; i < k; i++) { const c = P(-hw + (i + 0.5) * 2 * hw / k + U(-1.5, 1.5), U(-6, 6)); H.bumpers.push([c[0], c[1], q(U(3, 4.5))]); }
+    } else if (kind === 'spinner') {
+      const L = Math.min(hw - 3, U(10, 13));
+      if (L < 7) return place('mbumper', F);
+      H.spinners.push({ c: P(U(-1.5, 1.5), 0), L: q(L), p: I(150, 230), dir: side, arms: 2, w: 1.3 });
+    } else if (kind === 'slider') {
+      const len = Math.min(U(11, 15), 2 * hw - 9), A = P(-hw + 1.5, 0), B = P(-hw + 1.5 + len, 0), tr = 2 * hw - 3 - len;
+      H.movers.push({ a: A, b: B, dx: q(n[0] * tr), dy: q(n[1] * tr), p: I(100, 160), w: 1.7 });
+    } else if (kind === 'gate') {
+      const gap = U(14, 17); if (2 * hw - gap < 8) return place('slider', F);
+      const g1 = -hw + U(4, 2 * hw - gap - 4);
+      H.walls.push([...P(-hw - 1, 0), ...P(g1, 0)], [...P(g1 + gap, 0), ...P(hw + 1, 0)]);
+      H.movers.push({ a: P(g1 + 2.2, -5), b: P(g1 + 2.2, 5), dx: q(n[0] * (gap - 4.4)), dy: q(n[1] * (gap - 4.4)), p: I(70, 110), w: 1.8 });
+    } else if (kind === 'mbumper') {
+      const rad = q(U(3.5, 4.5)), tr = 2 * hw - 2 * rad - 3;
+      H.mbumpers.push({ a: P(-hw + rad + 1.5, 0), dx: q(n[0] * tr), dy: q(n[1] * tr), p: I(90, 150), r: rad });
+    } else if (kind === 'pond' || kind === 'bunker') {
+      const off = side * hw * U(0.25, 0.5), rad = Math.min(kind === 'pond' ? U(6, 10) : U(4.5, 8), hw + Math.abs(off) - 10);
+      if (rad < 4) return place('bumpers', F);
+      const c = P(off, U(-3, 3)), blob = blobPoly(c[0], c[1], rad, r, 11, 0.2);
+      (kind === 'pond' ? H.waterP : H.sandP).push(blob);
+    } else if (kind === 'ice') {
+      const h = U(12, 18); H.iceP.push(rectP(-hw - 4, -h / 2, hw + 4, h / 2));
+    } else if (kind === 'slope') {
+      const h = U(12, 18), push = U(0.024, 0.032) * side;
+      H.slopeP.push({ p: rectP(-hw - 4, -h / 2, hw + 4, h / 2), ax: r5(n[0] * push), ay: r5(n[1] * push) });
+    } else if (kind === 'boost') {
+      const w = Math.min(U(11, 15), 2 * hw - 6), c = U(-hw + w / 2 + 2, hw - w / 2 - 2);
+      H.boostP.push({ p: rectP(c - w / 2, -4, c + w / 2, 4), dx: r5(t[0]), dy: r5(t[1]) });
+    } else if (kind === 'hill') {
+      H.hills.push({ c: P(U(-hw * 0.35, hw * 0.35), 0), r: q(Math.min(hw - 1, U(8, 11))), s: r5(U(0.035, 0.05)) });
+    } else if (kind === 'rock') {
+      // a planter in the middle: go around it either way
+      const rad = Math.min(U(4, 5.5), hw - 10);
+      if (rad < 3) return place('bumpers', F);
+      const c = P(U(-2, 2), 0), rock = blobPoly(c[0], c[1], rad, r, 7, 0.15); H.rocks.push(rock);
+      for (let i = 0; i < rock.length; i++) H.walls.push([...rock[i], ...rock[(i + 1) % rock.length]]);
+    }
+  };
+  let sArc = 24 + U(0, 6);
+  while (sArc < total - 24) {
+    let F = at(sArc);
+    if (F.nearJoin < 9) { sArc += 9 - F.nearJoin + 0.5; continue; }
+    const special = !SPECIAL.some((k) => used.has(k));
+    place(pickKind(special ? SPECIAL : KINDS), F);
+    sArc += U(24, 31);
+  }
+  // 4. cup guard, open toward where you're coming from (sometimes the hard way)
+  let guard = false;
+  if (r() < 0.4) {
+    const s2 = 6.5, [cx, cy] = H.cup;
+    const sides = [[cx - s2, cy - s2, cx + s2, cy - s2], [cx - s2, cy - s2, cx - s2, cy + s2], [cx + s2, cy - s2, cx + s2, cy + s2], [cx - s2, cy + s2, cx + s2, cy + s2]];
+    const outN = [[0, -1], [-1, 0], [1, 0], [0, 1]];
+    let open = 0, best = -9;
+    for (let i = 0; i < 4; i++) { const v = -(outN[i][0] * dl[0] + outN[i][1] * dl[1]); if (v > best) { best = v; open = i; } }
+    if (r() < 0.3) open = (open + 1 + I(0, 2)) % 4;
+    const corners = [[cx - s2 - 3, cy - s2 - 3], [cx + s2 + 3, cy - s2 - 3], [cx - s2 - 3, cy + s2 + 3], [cx + s2 + 3, cy + s2 + 3]];
+    if (corners.every((c) => inPoly(H.poly, c[0], c[1]))) { sides.forEach((w, i) => { if (i !== open) H.walls.push(w.map(q)); }); guard = true; features++; }
+  }
+  // 5. maybe a tunnel that skips a stretch
+  const segDist = (x2, y2, a, b) => { const ex = b[0] - a[0], ey = b[1] - a[1], L2 = ex * ex + ey * ey || 1e-9; let tt = ((x2 - a[0]) * ex + (y2 - a[1]) * ey) / L2; tt = tt < 0 ? 0 : tt > 1 ? 1 : tt; const dx = x2 - a[0] - tt * ex, dy = y2 - a[1] - tt * ey; return SQ(dx * dx + dy * dy); };
+  const busy = (x2, y2, pad) => {
+    if (!inPoly(H.poly, x2, y2)) return true;
+    for (let i = 0; i < H.poly.length; i++) if (segDist(x2, y2, H.poly[i], H.poly[(i + 1) % H.poly.length]) < pad + 3) return true;
+    for (const w of H.walls) if (segDist(x2, y2, [w[0], w[1]], [w[2], w[3]]) < pad + 2) return true;
+    for (const b of H.bumpers) if ((b[0] - x2) * (b[0] - x2) + (b[1] - y2) * (b[1] - y2) < (b[2] + pad) * (b[2] + pad)) return true;
+    for (const sp of H.spinners) if ((sp.c[0] - x2) * (sp.c[0] - x2) + (sp.c[1] - y2) * (sp.c[1] - y2) < (sp.L + sp.w + pad) * (sp.L + sp.w + pad)) return true;
+    for (const h of H.hills) if ((h.c[0] - x2) * (h.c[0] - x2) + (h.c[1] - y2) * (h.c[1] - y2) < (h.r + pad) * (h.r + pad)) return true;
+    for (const m of H.movers) { const z = moverSweep(m, m.w + pad); if (x2 > z[0] && x2 < z[2] && y2 > z[1] && y2 < z[3]) return true; }
+    for (const m of H.mbumpers) { const z = moverSweep({ a: m.a, b: m.a, dx: m.dx, dy: m.dy }, m.r + pad); if (x2 > z[0] && x2 < z[2] && y2 > z[1] && y2 < z[3]) return true; }
+    const near = (ps) => ps.some((z) => { const pp = z.p || z; if (inPoly(pp, x2, y2)) return true; for (let i = 0; i < pp.length; i++) if (segDist(x2, y2, pp[i], pp[(i + 1) % pp.length]) < pad) return true; return false; });
+    return near(H.waterP) || near(H.sandP) || near(H.iceP) || near(H.slopeP) || near(H.boostP);
+  };
+  if (total > 90 && r() < 0.35) {
+    let A = null, B = null;
+    for (let k = 0; k < 20 && !A; k++) { const F = at(U(total * 0.2, total * 0.45)), c = [q(F.p[0] + F.n[0] * U(-F.hw + 6, F.hw - 6)), q(F.p[1] + F.n[1] * U(-F.hw + 6, F.hw - 6))]; if (!busy(c[0], c[1], 5) && (c[0] - H.tee[0]) * (c[0] - H.tee[0]) + (c[1] - H.tee[1]) * (c[1] - H.tee[1]) > 196) A = c; }
+    for (let k = 0; k < 20 && !B && A; k++) { const F = at(U(total * 0.6, total * 0.85)), c = [q(F.p[0] + F.n[0] * U(-F.hw + 6, F.hw - 6)), q(F.p[1] + F.n[1] * U(-F.hw + 6, F.hw - 6))]; if (!busy(c[0], c[1], 5) && (c[0] - H.cup[0]) * (c[0] - H.cup[0]) + (c[1] - H.cup[1]) * (c[1] - H.cup[1]) > 256) B = c; }
+    if (A && B) { H.portals.push({ a: A, b: B, r: 3.2 }); features++; }
+  }
+  // 6. tee and cup clear, and a path the ball fits through
+  const clear = (c, pad) => !busy(c[0], c[1], pad) || false;
+  if (busy(H.tee[0], H.tee[1], 1) || busy(H.cup[0], H.cup[1], 0)) {
+    // tee/cup sit close to the rounded ends on purpose, so only check hazards, not the edge distance
+    const hz = (c, pad) => {
+      for (const w of H.walls) if (segDist(c[0], c[1], [w[0], w[1]], [w[2], w[3]]) < pad + 2) return true;
+      for (const b of H.bumpers) if ((b[0] - c[0]) * (b[0] - c[0]) + (b[1] - c[1]) * (b[1] - c[1]) < (b[2] + pad + R) * (b[2] + pad + R)) return true;
+      for (const sp of H.spinners) if ((sp.c[0] - c[0]) * (sp.c[0] - c[0]) + (sp.c[1] - c[1]) * (sp.c[1] - c[1]) < (sp.L + sp.w + R + pad) * (sp.L + sp.w + R + pad)) return true;
+      for (const m of H.movers) { const z = moverSweep(m, m.w + R + pad); if (c[0] > z[0] && c[0] < z[2] && c[1] > z[1] && c[1] < z[3]) return true; }
+      for (const m of H.mbumpers) { const z = moverSweep({ a: m.a, b: m.a, dx: m.dx, dy: m.dy }, m.r + R + pad); if (c[0] > z[0] && c[0] < z[2] && c[1] > z[1] && c[1] < z[3]) return true; }
+      return inPolys(H.waterP, c[0], c[1]) || inPolys(H.sandP, c[0], c[1]) || inPolys(H.iceP, c[0], c[1]) || inPolys(H.slopeP, c[0], c[1]) || inPolys(H.boostP, c[0], c[1]) || H.hills.some((h) => (h.c[0] - c[0]) * (h.c[0] - c[0]) + (h.c[1] - c[1]) * (h.c[1] - c[1]) < (h.r + pad) * (h.r + pad)) || H.portals.some((pt) => [pt.a, pt.b].some((e) => (e[0] - c[0]) * (e[0] - c[0]) + (e[1] - c[1]) * (e[1] - c[1]) < 64));
+    };
+    if (hz(H.tee, 3) || hz(H.cup, 1) || !inPoly(H.poly, H.tee[0], H.tee[1]) || !inPoly(H.poly, H.cup[0], H.cup[1])) return null;
+  }
+  void clear;
+  const C = 2, cols = 50, rows = Math.ceil(LEN / C), free = new Uint8Array(cols * rows);
+  for (let gy = 0; gy < rows; gy++) for (let gx = 0; gx < cols; gx++) {
+    const x2 = gx * C + 1, y2 = gy * C + 1;
+    if (!inPoly(H.poly, x2, y2) || inPolys(H.waterP, x2, y2)) continue;
+    let ok = true;
+    for (let i = 0; i < H.poly.length && ok; i++) if (segDist(x2, y2, H.poly[i], H.poly[(i + 1) % H.poly.length]) < R + 0.2) ok = false;
+    for (const w of H.walls) if (ok && segDist(x2, y2, [w[0], w[1]], [w[2], w[3]]) < R + 1.1) ok = false;
+    for (const bb of H.bumpers) if (ok && (bb[0] - x2) * (bb[0] - x2) + (bb[1] - y2) * (bb[1] - y2) < (bb[2] + R + 0.2) * (bb[2] + R + 0.2)) ok = false;
+    for (const sp of H.spinners) if (ok && (sp.c[0] - x2) * (sp.c[0] - x2) + (sp.c[1] - y2) * (sp.c[1] - y2) < (2.4 + R) * (2.4 + R)) ok = false;
+    if (ok) free[gy * cols + gx] = 1;
+  }
+  const cell = (c) => Math.min(rows - 1, Math.max(0, Math.floor(c[1] / C))) * cols + Math.min(cols - 1, Math.max(0, Math.floor(c[0] / C)));
+  const start = cell(H.tee), dist = new Int16Array(cols * rows).fill(-1), queue = [start];
+  if (!free[start]) return null;
+  dist[start] = 0;
+  let found = -1;
+  for (let qi = 0; qi < queue.length; qi++) {
+    const c = queue[qi], gx = c % cols, gy = (c - gx) / cols, x2 = gx * C + 1, y2 = gy * C + 1;
+    if ((x2 - H.cup[0]) * (x2 - H.cup[0]) + (y2 - H.cup[1]) * (y2 - H.cup[1]) < 9) { found = dist[c]; break; }
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = gx + dx, ny = gy + dy; if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
+      const nc = ny * cols + nx; if (!free[nc] || dist[nc] >= 0) continue;
+      dist[nc] = dist[c] + 1; queue.push(nc);
+    }
+    for (const pt of H.portals) for (const [from, to] of [[pt.a, pt.b], [pt.b, pt.a]]) {
+      if ((x2 - from[0]) * (x2 - from[0]) + (y2 - from[1]) * (y2 - from[1]) > pt.r * pt.r) continue;
+      const nc = cell(to); if (free[nc] && dist[nc] < 0) { dist[nc] = dist[c] + 1; queue.push(nc); }
+    }
+  }
+  if (found < 0 || features < 3) return null;
+  const len = found * C;
+  H.len = len;
+  H.par = Math.min(6, 2 + (len > 125 ? 1 : 0) + (len > 205 ? 1 : 0) + (len > 300 ? 1 : 0) + (guard && len > 90 ? 1 : 0));
+  H.name = pick(NAMES4);
+  H.type = 'organic';
+  return H;
+}
+
 const golfSeed = (st, i) => (st.rseed ^ Math.imul(i + 1, 0x9E3779B1)) >>> 0;
 // New games get a fresh random course. max/pen: up to 8 strokes, miss the 8th and you take a 9.
 const golfNew = (first, n = 9, seed = (Math.random() * 4294967296) >>> 0, max = 8) => {
   n = [3, 6, 9].includes(n) ? n : 9;
   max = [0, 6, 8, 10].includes(max) ? max : 8;
-  return { course: 'random', rseed: seed, gen: 3, phys: 2, first, scores: { a: Array(n).fill(null), b: Array(n).fill(null) }, cur: null, max, pen: max ? max + 1 : 0 };
+  return { course: 'random', rseed: seed, gen: 4, phys: 3, first, scores: { a: Array(n).fill(null), b: Array(n).fill(null) }, cur: null, max, pen: max ? max + 1 : 0 };
 };
 const golfNextHole = (st, p) => st.scores[p].findIndex((v) => v == null);
 const golfTotal = (st, p) => st.scores[p].reduce((a, v) => a + (v || 0), 0);
@@ -2127,9 +2383,13 @@ function pgFrame(t) {
     if (!P.lastT) P.lastT = t;
     P.acc += Math.min(80, t - P.lastT); P.lastT = t;
     const stepMs = 1000 / ((P.rate || 60) * (window.__speed || 1)); // __speed is only set by automated tests
-    while (P.acc >= stepMs && !P.sim.done) { P.sim.step(); P.acc -= stepMs; }
+    while (P.acc >= stepMs && !P.sim.done) {
+      if (P.type === 'golf') P.prevB = { x: P.sim.b.x, y: P.sim.b.y };
+      P.sim.step(); P.acc -= stepMs;
+    }
+    P.alpha = Math.min(1, P.acc / stepMs);
     pgSounds(P.sim.ev); P.sim.ev.length = 0;
-    if (P.sim.done) { const s = P.sim, cb = P.onSimDone; P.sim = null; P.onSimDone = null; P.lastT = 0; P.acc = 0; if (cb) cb(s); }
+    if (P.sim.done) { const s = P.sim, cb = P.onSimDone; P.sim = null; P.onSimDone = null; P.lastT = 0; P.acc = 0; P.prevB = null; if (cb) cb(s); }
     again = true;
   }
   if (P.tween) { const tw = P.tween; if (!tw.t0) tw.t0 = t; tw.p = Math.min(1, (t - tw.t0) / tw.ms); if (tw.p >= 1) { P.tween = null; tw.done && tw.done(); } again = true; }
@@ -2189,11 +2449,36 @@ function resultBanner(g, line) {
 }
 // canvas helpers
 function rrect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function polyBox(p) { let a = 1e9, b = 1e9, cc = -1e9, d = -1e9; for (const q of p) { a = Math.min(a, q[0]); b = Math.min(b, q[1]); cc = Math.max(cc, q[0]); d = Math.max(d, q[1]); } return [a, b, cc, d]; }
+// smooth closed curve through a blob's points (reads as a pond, not a polygon)
+function blobPath(c, p) {
+  const n = p.length, mid = (i) => [(p[i % n][0] + p[(i + 1) % n][0]) / 2, (p[i % n][1] + p[(i + 1) % n][1]) / 2];
+  c.beginPath(); const m0 = mid(0); c.moveTo(m0[0], m0[1]);
+  for (let i = 1; i <= n; i++) { const m = mid(i); c.quadraticCurveTo(p[i % n][0], p[i % n][1], m[0], m[1]); }
+  c.closePath();
+}
+// ball spin: dimples on a sphere, turned by how far the ball rolled since the last frame
+function golfRoll(P, b) {
+  if (!P.spin) { P.spin = []; const N = 16; for (let i = 0; i < N; i++) { const y = 1 - (i + 0.5) * 2 / N, rr = Math.sqrt(1 - y * y), th = i * 2.39996; P.spin.push([Math.cos(th) * rr, y, Math.sin(th) * rr]); } }
+  const lb = P.spinAt; P.spinAt = { x: b.x, y: b.y };
+  if (!lb) return;
+  const dx = b.x - lb.x, dy = b.y - lb.y, d = Math.sqrt(dx * dx + dy * dy);
+  if (d < 1e-4 || d > 6) return;
+  // rolling toward (dx,dy) turns the ball about the axis k = (-dy, dx, 0)/d (Rodrigues rotation)
+  const ang = d / GOLF.R, ux = -dy / d, uy = dx / d, cs = Math.cos(ang), sn = Math.sin(ang);
+  for (const v of P.spin) {
+    const [x, y, zz] = v, dot = ux * x + uy * y;
+    v[0] = x * cs + uy * zz * sn + ux * dot * (1 - cs);
+    v[1] = y * cs - ux * zz * sn + uy * dot * (1 - cs);
+    v[2] = zz * cs + (ux * y - uy * x) * sn;
+  }
+}
 function polyPath(c, poly) { c.beginPath(); poly.forEach((p, i) => (i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]))); c.closePath(); }
 const canvasPt = (P, e, off = 0) => { const r = P.canvas.getBoundingClientRect(); return { x: (e.clientX - r.left) / P.css - off, y: (e.clientY - r.top) / P.css - off }; };
 
 /* ---------------------------------- Mini Golf ---------------------------------- */
 const pgClock = () => Math.floor(performance.now() / (1000 / 60)); // obstacle clock, in physics steps
+const GOLF_CANCEL = 26; // px around where your finger went down: let go here and nothing happens
 function golfScoreName(score, par, pen = GOLF.PEN) {
   if (!pen) pen = Infinity; // no stroke limit
   if (score === 1) return 'Hole in one! 🎉';
@@ -2262,14 +2547,18 @@ const Golf = {
       Golf.zoomBtn(P);
       if (P.canPlay) {
         const shotN = (st.cur && st.cur.player === me && st.cur.hole === hole ? st.cur.strokes : 0) + 1;
-        pgHint(`Shot ${shotN}${st.max ? ` of ${st.max}` : ''} · Drag back anywhere to aim, let go to putt`);
+        P.hintIdle = `Shot ${shotN}${st.max ? ` of ${st.max}` : ''} · Drag back anywhere to aim, let go to putt`;
+        pgHint(P.hintIdle);
         if (!(st.cur && st.cur.player === me && st.cur.hole === hole)) {
           pgOverlay(`<b>Hole ${hole + 1}</b> · ${esc(golfCourse(st, hole).name)} · Par ${golfCourse(st, hole).par}`);
           P.t2 = setTimeout(() => PG === P && pgOverlay(''), 1800);
           // tall hole: show the whole thing first, then glide down to your ball
           if ((P.H.h || 150) > 150) { P.cam = null; P.overview = true; Golf.zoomBtn(P); P.t3 = setTimeout(() => { if (PG === P && P.overview && !P.userZoom) { P.overview = false; Golf.zoomBtn(P); pgKick(); } }, 1600); }
         }
-      } else if (g.status === 'active') pgHint(`Waiting on ${nameOf(o)}…`);
+      } else if (g.status === 'active') {
+        const c = st.cur;
+        pgHint(c && c.player === o ? `${nameOf(o)} is on hole ${c.hole + 1} · ${c.strokes} shot${c.strokes === 1 ? '' : 's'} so far (the ${emojiOf(o)} ball). Counts when the hole's done.` : `Waiting on ${nameOf(o)}…`);
+      }
       P.draw();
       pgKick();
     };
@@ -2292,24 +2581,30 @@ const Golf = {
     c.onpointerdown = (e) => {
       if (!P.canPlay || P.sim || G.busy || !P.ball) return;
       audio(); try { c.setPointerCapture(e.pointerId); } catch {}
-      P.drag = { x: e.clientX, y: e.clientY }; P.aim = null; P.tick = 0; pgOverlay('');
+      P.drag = { x: e.clientX, y: e.clientY, armed: false, cancel: false }; P.aim = null; P.tick = 0; pgOverlay('');
       pgKick();
     };
     c.onpointermove = (e) => {
-      if (!P.drag) return;
-      const dx = e.clientX - P.drag.x, dy = e.clientY - P.drag.y, len = Math.sqrt(dx * dx + dy * dy);
-      const full = (P.pv >= 2 ? 0.45 : 0.42) * c.getBoundingClientRect().width;
-      P.aim = len < 5 ? null : { x: -dx / len, y: -dy / len, p: Math.min(1, len / full) };
+      const d = P.drag; if (!d) return;
+      const dx = e.clientX - d.x, dy = e.clientY - d.y, len = Math.sqrt(dx * dx + dy * dy);
+      const full = (P.pv >= 2 ? 0.45 : 0.42) * c.getBoundingClientRect().width, zone = GOLF_CANCEL;
+      if (len > zone && !d.armed) { d.armed = true; pgHint('Slide back to ✕ and let go to cancel'); }
+      const inZone = d.armed && len <= zone;
+      if (inZone !== d.cancel) { d.cancel = inZone; if (inZone) haptic(); }
+      P.aim = len <= zone ? null : { x: -dx / len, y: -dy / len, p: Math.min(1, (len - zone) / full) };
       const tk = P.aim ? Math.floor(P.aim.p * 4) : 0;
       if (tk !== P.tick) { P.tick = tk; if (tk) haptic(); }
       P.draw();
     };
-    c.onpointerup = () => {
+    const end = (shoot) => {
       if (!P.drag) return;
       P.drag = null; const a = P.aim; P.aim = null;
-      if (a && a.p > 0.03) Golf.shoot(P, a); else P.draw();
+      if (shoot && a && a.p > 0.005) return Golf.shoot(P, a);
+      if (P.hintIdle && P.canPlay) pgHint(P.hintIdle);
+      P.draw();
     };
-    c.onpointercancel = () => { P.drag = null; P.aim = null; P.draw(); };
+    c.onpointerup = () => end(true);
+    c.onpointercancel = () => end(false);
   },
   // Animate one stroke. Resolves when the ball has stopped / dropped / splashed.
   play(P, H, from, vx, vy, t0, pv) {
@@ -2384,9 +2679,12 @@ const Golf = {
 function golfDraw(P) {
   const c = P.ctx; if (!c || !P.k) return;
   const k = P.k, H = P.H, R = GOLF.R, cup = H.cup, hh = H.h || 150, CW = P.canvas.width, CH = P.canvas.height;
-  const phase = P.sim ? P.sim.t0 + P.sim.steps : pgClock();
+  // obstacles and ball are drawn between physics steps so motion stays smooth on 120Hz screens
+  const lerp = P.sim && P.prevB ? P.alpha || 0 : 1;
+  const phase = P.sim ? P.sim.t0 + P.sim.steps - 1 + lerp : performance.now() / (1000 / 60);
   // Camera: short holes fit the screen. Tall holes follow the ball, or zoom out to show the whole hole.
-  const fb = P.sim ? P.sim.b : P.ball;
+  let fb = P.sim ? P.sim.b : P.ball;
+  if (P.sim && P.prevB) { const pb = P.prevB, sb = P.sim.b; if ((sb.x - pb.x) ** 2 + (sb.y - pb.y) ** 2 < 36) fb = { x: pb.x + (sb.x - pb.x) * lerp, y: pb.y + (sb.y - pb.y) * lerp }; }
   // center on the hole itself, not the 100-wide play area (narrow lanes sit off to one side)
   if (!H._cx) { let a = 1e9, b = -1e9; for (const p of H.poly) { a = Math.min(a, p[0]); b = Math.max(b, p[0]); } H._cx = (a + b) / 2; }
   const tx = H._cx;
@@ -2455,6 +2753,51 @@ function golfDraw(P) {
     }
     c.restore();
   }
+  for (const z of H.sandP || []) {
+    blobPath(c, z); c.fillStyle = '#efd79e'; c.fill(); c.strokeStyle = 'rgba(160,120,50,.35)'; c.lineWidth = 0.5; c.stroke();
+    c.save(); blobPath(c, z); c.clip(); c.fillStyle = 'rgba(160,120,50,.25)';
+    const bb = polyBox(z); for (let y = bb[1] + 1; y < bb[3]; y += 3) for (let x = bb[0] + ((y * 7) % 3); x < bb[2]; x += 3.4) c.fillRect(x, y, 0.45, 0.45);
+    c.restore();
+  }
+  for (const z of H.waterP || []) {
+    const bb = polyBox(z);
+    blobPath(c, z); gr = c.createLinearGradient(0, bb[1], 0, bb[3]); gr.addColorStop(0, '#66cdfc'); gr.addColorStop(1, '#2f8fdc');
+    c.fillStyle = gr; c.fill(); c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 0.6; c.stroke();
+    c.save(); blobPath(c, z); c.clip(); c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 0.5; c.lineCap = 'round';
+    const wob = phase * 0.03;
+    for (let y = bb[1] + 4; y < bb[3] - 1; y += 5) { c.beginPath(); for (let x = bb[0]; x < bb[2]; x += 1) c.lineTo(x, y + Math.sin(x * 0.6 + wob) * 0.6); c.stroke(); }
+    c.restore();
+  }
+  for (const z of H.iceP || []) {
+    const bb = polyBox(z);
+    polyPath(c, z); gr = c.createLinearGradient(bb[0], bb[1], bb[2], bb[3]); gr.addColorStop(0, '#e8f8ff'); gr.addColorStop(1, '#bfe8fb');
+    c.fillStyle = gr; c.fill();
+    c.save(); polyPath(c, z); c.clip(); c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 0.6;
+    for (let x = bb[0] - 30; x < bb[2]; x += 9) { c.beginPath(); c.moveTo(x, bb[3]); c.lineTo(x + (bb[3] - bb[1]) * 0.6, bb[1]); c.stroke(); }
+    c.restore();
+  }
+  for (const z of H.slopeP || []) {
+    const bb = polyBox(z.p), L = Math.sqrt(z.ax * z.ax + z.ay * z.ay) || 1, dx = z.ax / L, dy = z.ay / L, off = (phase * 0.08) % 7;
+    polyPath(c, z.p); c.fillStyle = 'rgba(20,90,50,.28)'; c.fill();
+    c.save(); polyPath(c, z.p); c.clip();
+    c.strokeStyle = 'rgba(255,255,255,.42)'; c.lineWidth = 0.55; c.lineCap = 'round'; c.lineJoin = 'round';
+    for (let y = bb[1] - 7; y < bb[3] + 7; y += 7) for (let x = bb[0] - 7; x < bb[2] + 7; x += 7) {
+      const px = x + dx * off, py = y + dy * off;
+      c.beginPath(); c.moveTo(px - dx * 1.4 - dy * 1.4, py - dy * 1.4 + dx * 1.4); c.lineTo(px, py); c.lineTo(px - dx * 1.4 + dy * 1.4, py - dy * 1.4 - dx * 1.4); c.stroke();
+    }
+    c.restore();
+  }
+  for (const z of H.boostP || []) {
+    const bb = polyBox(z.p), dx = z.dx, dy = z.dy, off = (phase * 0.35) % 5;
+    polyPath(c, z.p); c.fillStyle = '#ffd23f'; c.fill(); c.strokeStyle = '#e0a400'; c.lineWidth = 0.5; c.stroke();
+    c.save(); polyPath(c, z.p); c.clip(); c.strokeStyle = 'rgba(150,90,0,.75)'; c.lineWidth = 0.8; c.lineCap = 'round'; c.lineJoin = 'round';
+    const cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2;
+    for (let t = -14 + off; t < 14; t += 5) for (let s2 = -9; s2 <= 9; s2 += 6) {
+      const px = cx + dx * t - dy * s2, py = cy + dy * t + dx * s2;
+      c.beginPath(); c.moveTo(px - dx * 1.4 - dy * 1.6, py - dy * 1.4 + dx * 1.6); c.lineTo(px, py); c.lineTo(px - dx * 1.4 + dy * 1.6, py - dy * 1.4 - dx * 1.6); c.stroke();
+    }
+    c.restore();
+  }
   for (const z of H.slopes || []) {
     // slopes: darker band with chevrons drifting downhill
     rrect(c, z[0], z[1], z[2] - z[0], z[3] - z[1], 3); c.fillStyle = 'rgba(20,90,50,.28)'; c.fill();
@@ -2474,6 +2817,16 @@ function golfDraw(P) {
   c.beginPath(); c.arc(cup[0], cup[1], GOLF.CR, 0, Math.PI * 2);
   gr = c.createRadialGradient(cup[0], cup[1] - 0.8, 0.5, cup[0], cup[1], GOLF.CR); gr.addColorStop(0, '#0c2219'); gr.addColorStop(1, '#1d3f30');
   c.fillStyle = gr; c.fill(); c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 0.4; c.stroke();
+  for (const z of H.rocks || []) {
+    // planter in the fairway
+    const bb = polyBox(z), cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2, rr = (bb[2] - bb[0]) / 2;
+    c.save(); polyPath(c, z); c.shadowColor = 'rgba(0,0,0,.35)'; c.shadowBlur = 2.5 * T; c.shadowOffsetY = 0.8 * T; c.fillStyle = '#8b5e3c'; c.fill(); c.restore();
+    c.save(); polyPath(c, z); c.clip();
+    gr = c.createRadialGradient(cx - rr * 0.3, cy - rr * 0.35, 0.3, cx, cy, rr * 1.1); gr.addColorStop(0, '#4fb35f'); gr.addColorStop(1, '#23693a');
+    c.beginPath(); c.arc(cx, cy, rr * 0.86, 0, Math.PI * 2); c.fillStyle = gr; c.fill();
+    for (const [fx, fy, col] of [[-0.35, -0.2, '#ff8fb1'], [0.3, 0.25, '#ffe066'], [0.05, -0.45, '#fff'], [-0.15, 0.4, '#ff8fb1']]) { c.beginPath(); c.arc(cx + fx * rr, cy + fy * rr, 0.75, 0, Math.PI * 2); c.fillStyle = col; c.fill(); }
+    c.restore();
+  }
   // walls
   c.save(); c.lineCap = 'round'; c.shadowColor = 'rgba(0,0,0,.3)'; c.shadowBlur = 2 * T; c.shadowOffsetY = 0.5 * T;
   for (const w of H.walls || []) { c.beginPath(); c.moveTo(w[0], w[1]); c.lineTo(w[2], w[3]); c.lineWidth = 1.8; c.strokeStyle = '#f6f2ea'; c.stroke(); }
@@ -2527,21 +2880,36 @@ function golfDraw(P) {
     c.save(); c.lineCap = 'butt'; c.setLineDash([1.4, 1.4]); c.beginPath(); c.moveTo(at.x1, at.y1); c.lineTo(at.x2, at.y2); c.lineWidth = m.w * 1.1; c.strokeStyle = 'rgba(255,255,255,.55)'; c.stroke(); c.restore();
   }
   // rails
-  polyPath(c, H.poly); c.lineJoin = 'round'; c.lineWidth = 3; c.strokeStyle = '#f6f2ea'; c.stroke();
-  c.lineWidth = 0.5; c.strokeStyle = 'rgba(0,0,0,.08)'; c.stroke();
+  // (only outside the playing surface, so a ball touching the edge never looks like it's sitting on the rail)
+  c.save(); c.beginPath(); c.rect(-200, -200, 500, hh + 400); H.poly.forEach((p, i) => (i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]))); c.closePath(); c.clip('evenodd');
+  polyPath(c, H.poly); c.lineJoin = 'round'; c.lineWidth = 4.4; c.strokeStyle = '#f6f2ea'; c.stroke();
+  c.restore();
+  polyPath(c, H.poly); c.lineJoin = 'round'; c.lineWidth = 0.45; c.strokeStyle = 'rgba(0,0,0,.14)'; c.stroke();
   // ball
-  const b = P.sim ? P.sim.b : P.ball;
+  const b = P.sim ? fb : P.ball;
   const near = b && (b.x - cup[0]) ** 2 + (b.y - cup[1]) ** 2 < 100;
   if (b) {
     let s = 1, alpha = 1;
     if (P.tween && P.tween.kind === 'sink') { s = 1 - P.tween.p * 0.75; alpha = 1 - P.tween.p; }
+    const ghost = P.ball && P.ball.ghost;
+    golfRoll(P, b);
     c.globalAlpha = alpha;
     c.beginPath(); c.arc(b.x + 0.35, b.y + 0.55, R * s, 0, Math.PI * 2); c.fillStyle = 'rgba(0,0,0,.28)'; c.fill();
     c.beginPath(); c.arc(b.x, b.y, R * s, 0, Math.PI * 2);
-    gr = c.createRadialGradient(b.x - 0.7, b.y - 0.8, 0.2, b.x, b.y, R * s);
-    const ghost = P.ball && P.ball.ghost;
-    gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, ghost ? '#ffc94d' : '#d9dde8');
-    c.fillStyle = gr; c.fill(); c.globalAlpha = 1;
+    gr = c.createRadialGradient(b.x - 0.5, b.y - 0.6, 0.1, b.x, b.y, R * s);
+    gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.55, ghost ? '#ffe7a6' : '#f1f3f8'); gr.addColorStop(1, ghost ? '#f2b630' : '#c9cedb');
+    c.fillStyle = gr; c.fill();
+    // dimples turn with the ball as it rolls
+    c.fillStyle = ghost ? 'rgba(150,95,0,.32)' : 'rgba(70,80,110,.26)';
+    for (const d of P.spin) if (d[2] > 0.15) { c.beginPath(); c.ellipse(b.x + d[0] * R * s * 0.9, b.y + d[1] * R * s * 0.9, 0.24 * s, 0.24 * s * d[2], Math.atan2(d[1], d[0]) + Math.PI / 2, 0, Math.PI * 2); c.fill(); }
+    c.beginPath(); c.arc(b.x - 0.55 * s, b.y - 0.65 * s, 0.45 * s, 0, Math.PI * 2); c.fillStyle = 'rgba(255,255,255,.85)'; c.fill();
+    c.globalAlpha = 1;
+    if (ghost && !P.sim && !P.tween) {
+      // whose ball this is
+      const fs = 5.2 * z;
+      c.font = `${fs}px -apple-system,system-ui,"Apple Color Emoji",sans-serif`; c.textAlign = 'center'; c.textBaseline = 'bottom';
+      c.fillText(emojiOf(opp()), b.x, b.y - R - 0.8 * z);
+    }
   }
   // flag (fades when the ball is close so you can see the lip)
   c.globalAlpha = near ? 0.35 : 1;
@@ -2567,6 +2935,15 @@ function golfDraw(P) {
     c.beginPath(); c.moveTo(tx + a.x * 2.6 * z, ty2 + a.y * 2.6 * z); c.lineTo(tx - a.y * 1.7 * z, ty2 + a.x * 1.7 * z); c.lineTo(tx + a.y * 1.7 * z, ty2 - a.x * 1.7 * z); c.closePath(); c.fill();
     c.restore();
     c.beginPath(); c.arc(b.x, b.y, R + 1.3 * z, -Math.PI / 2, -Math.PI / 2 + a.p * Math.PI * 2); c.strokeStyle = col; c.lineWidth = 0.8 * z; c.stroke();
+  }
+  // cancel spot where the finger went down
+  if (P.drag && P.drag.armed) {
+    const r = P.canvas.getBoundingClientRect(), sc = CW / r.width, x = (P.drag.x - r.left) * sc, y = (P.drag.y - r.top) * sc, on = P.drag.cancel, rad = GOLF_CANCEL * sc * (on ? 1 : 0.8);
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.beginPath(); c.arc(x, y, rad, 0, Math.PI * 2); c.fillStyle = on ? 'rgba(242,68,95,.9)' : 'rgba(0,0,0,.28)'; c.fill();
+    c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 1.5 * sc; c.stroke();
+    const m = rad * 0.36; c.lineCap = 'round'; c.lineWidth = 2.4 * sc;
+    c.beginPath(); c.moveTo(x - m, y - m); c.lineTo(x + m, y + m); c.moveTo(x + m, y - m); c.lineTo(x - m, y + m); c.stroke();
   }
 }
 

@@ -14,7 +14,7 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
   catch (e) { console.error('VAPID setup failed:', e.message); }
 }
 
-const APP_VERSION = 'volley-8'; // must match VERSION in index.html
+const APP_VERSION = 'volley-9'; // must match VERSION in index.html
 
 const configured = () => !!(SUPA_URL && SUPA_KEY && PASSCODE);
 
